@@ -466,9 +466,6 @@ public class ExifTool {
 			try {
 				// Read the single-line reply (version number)
 				ver = streams.reader.readLine();
-
-				// Close r/w streams to exited process.
-				streams.close();
 			} catch (Exception e) {
 				/*
 				 * no-op, while it is important to know that we COULD launch the
@@ -488,7 +485,10 @@ public class ExifTool {
 				 * scenarios, so making this method easier to use is more
 				 * important that robust IOException handling right here.
 				 */
-			}
+			} finally {
+                // Close r/w streams to exited process.
+                streams.close();
+            }
 
 			// Ensure the version found is >= the required version.
 			if (ver != null && ver.compareTo(feature.version) >= 0) {
