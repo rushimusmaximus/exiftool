@@ -942,6 +942,16 @@ public class ExifTool {
 		}
 	}
 
+    public void shutdownCleanupTask() {
+        if(currentCleanupTask != null) {
+            currentCleanupTask.cancel();
+        }
+        currentCleanupTask = null;
+        if(cleanupTimer != null) {
+            cleanupTimer.cancel();
+        }
+    }
+
 	/**
 	 * Used to shutdown the external ExifTool process and close the read/write
 	 * streams used to communicate with it when {@link Feature#STAY_OPEN} is
