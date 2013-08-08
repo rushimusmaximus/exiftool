@@ -15,6 +15,7 @@ limitations under the License.
 -->
 <project name="exiftool" default="dist">
 	<property name="dir.src" value="src/main/java" />
+	<property name="dir.lib" value="src/main/lib" />
 	<property name="dir.bin" value="bin" />
 	<property name="dir.dist" value="dist" />
 	<property name="dir.javadoc" value="${dir.dist}/javadoc" />
@@ -35,12 +36,18 @@ limitations under the License.
 	</target>
 
 	<target name="compile" depends="clean">
-		<javac destdir="${dir.bin}" debug="true" source="1.5" target="1.5">
-			<src path="${dir.src}" />
+		<javac destdir="${dir.bin}" debug="true" source="1.7" target="1.7">
+			<src path="${dir.src}"/>
+      <classpath>
+        <fileset dir="${dir.lib}">
+          <include name="**/*.jar"/>
+        </fileset>
+      </classpath>
 		</javac>
 		<copy todir="${dir.bin}">
 			<fileset dir="${dir.src}">
 				<exclude name="**/*.java" />
+        <exclude name="**/log4j.properties"/>
 			</fileset>
 		</copy>
 	</target>
@@ -51,7 +58,7 @@ limitations under the License.
 		<javadoc 
 			destdir="${dir.javadoc}" author="true" windowtitle="ExifTool v${version.major}.${version.minor} - Enhanced ExifTool Interface for Java" 
 			footer="Copyright 2011 The Buzz Media, LLC" link="http://download.oracle.com/javase/1.5.0/docs/api/" 
-			linksource="true" public="true" source="1.5" use="true">
+			linksource="true" public="true" source="1.7" use="true">
 			<sourcepath path="${dir.src}" />
 		</javadoc>
 	</target>
