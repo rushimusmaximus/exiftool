@@ -17,11 +17,7 @@ package com.thebuzzmedia.exiftool;
 
 import org.apache.log4j.Logger;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
+import java.io.*;
 import java.util.*;
 import java.util.regex.Pattern;
 
@@ -925,16 +921,6 @@ public class ExifTool {
     }
   }
 
-  public void shutdownCleanupTask() {
-    if(currentCleanupTask != null) {
-      currentCleanupTask.cancel();
-    }
-    currentCleanupTask = null;
-    if(cleanupTimer != null) {
-      cleanupTimer.cancel();
-    }
-  }
-
 	/**
 	 * Used to shutdown the external ExifTool process and close the read/write
 	 * streams used to communicate with it when {@link Feature#STAY_OPEN} is
@@ -984,6 +970,14 @@ public class ExifTool {
 
     stream = null;
 		log.debug("ExifTool daemon process successfully terminated.");
+
+    if(currentCleanupTask != null) {
+      currentCleanupTask.cancel();
+    }
+    currentCleanupTask = null;
+    if(cleanupTimer != null) {
+      cleanupTimer.cancel();
+    }
 	}
 
 	/**
