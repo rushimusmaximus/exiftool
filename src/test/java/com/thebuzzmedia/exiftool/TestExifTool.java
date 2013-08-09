@@ -27,7 +27,7 @@ public class TestExifTool extends TestCase {
 
     imageFile = new File(TEST_FILES_PATH + "/kureckjones_jett_075_02-cropped.tif");
     metadata = tool.getImageMeta(imageFile, ExifTool.Format.HUMAN_READABLE, ExifTool.Tag.values());
-    assertEquals(20, metadata.size());
+    assertEquals(22, metadata.size());
 
     keys = metadata.keySet();
 
@@ -44,7 +44,7 @@ public class TestExifTool extends TestCase {
 
     imageFile = new File(TEST_FILES_PATH + "/nexus-s-electric-cars.jpg");
     metadata = tool.getImageMeta(imageFile, ExifTool.Format.HUMAN_READABLE, ExifTool.Tag.values());
-    assertEquals(22, metadata.size());
+    assertEquals(23, metadata.size());
 
     keys = metadata.keySet();
     tag = ExifTool.Tag.IMAGE_WIDTH;
