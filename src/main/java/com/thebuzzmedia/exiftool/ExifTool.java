@@ -921,7 +921,32 @@ public class ExifTool {
     }
   }
 
-	/**
+  /**
+   * Used to startup the external ExifTool process and open the read/write
+   * streams used to communicate with it when {@link Feature#STAY_OPEN} is
+   * enabled. This method has no effect if the stay open feature is not enabled.
+   */
+  public void startUp(){
+    if (featureSet.contains(Feature.STAY_OPEN)){
+      if (!isRunning()) {
+        synchronized (this){
+          if (!isRunning()){
+            log.debug("Starting daemon ExifTool process and creating read/write streams (this only happens once)...");
+            stream = startExifToolProcess(ARGS_STAY_OPEN);
+          }
+        }
+      }
+    }
+  }
+
+  /**
+   * This is same as {@link #close()}, added for consistency with {@link #startUp()}
+   */
+  public void shutDown(){
+    close();
+  }
+
+  /**
 	 * Used to shutdown the external ExifTool process and close the read/write
 	 * streams used to communicate with it when {@link Feature#STAY_OPEN} is
 	 * enabled.
@@ -1090,20 +1115,8 @@ public class ExifTool {
 
 			// Always reset the cleanup task.
 			resetCleanupTask();
-
-			/*
-			 * If this is our first time calling getImageMeta with a stayOpen
-			 * connection, set up the persistent process and run it so it is
-			 * ready to receive commands from us.
-			 */
-      if (stream == null) {
-        synchronized (this){
-          if (stream == null){
-            log.debug("Starting daemon ExifTool process and creating read/write streams (this only happens once)...");
-            // Begin the persistent ExifTool process.
-            stream = startExifToolProcess(ARGS_STAY_OPEN);
-          }
-        }
+      if (!isRunning()){
+        startUp();
       }
 
 			log.debug("Streaming arguments to ExifTool process...");
