@@ -1,11 +1,11 @@
 package com.thebuzzmedia.exiftool;
 
-import java.io.File;
-import java.io.IOException;
-
 import com.thebuzzmedia.exiftool.ExifTool.Feature;
 import com.thebuzzmedia.exiftool.ExifTool.Tag;
 import org.apache.log4j.Logger;
+
+import java.io.File;
+import java.io.IOException;
 
 public class Benchmark {
 
@@ -37,6 +37,7 @@ public class Benchmark {
 		long elapsedTime = 0;
 
 		for (int i = 0; i < ITERATIONS; i++){
+      log.info(String.format("iteration %s of %s", i, ITERATIONS));
 			elapsedTime += run(tool, images, tags);
     }
 
@@ -46,10 +47,11 @@ public class Benchmark {
 		/*
 		 * -stay_open True
 		 */
-		log.info("\t[-stay_open True]");
+		log.info("\n\t[-stay_open True]");
 		long elapsedTimeSO = 0;
 
 		for (int i = 0; i < ITERATIONS; i++) {
+      log.info(String.format("iteration %s of %s", i, ITERATIONS));
 			elapsedTimeSO += run(toolSO, images, tags);
 		}
 
