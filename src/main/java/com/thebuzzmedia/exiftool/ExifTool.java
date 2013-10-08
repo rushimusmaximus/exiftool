@@ -926,7 +926,7 @@ public class ExifTool {
    * streams used to communicate with it when {@link Feature#STAY_OPEN} is
    * enabled. This method has no effect if the stay open feature is not enabled.
    */
-  public void startUp(){
+  public void startup(){
     if (featureSet.contains(Feature.STAY_OPEN)){
       if (!isRunning()) {
         synchronized (this){
@@ -940,9 +940,9 @@ public class ExifTool {
   }
 
   /**
-   * This is same as {@link #close()}, added for consistency with {@link #startUp()}
+   * This is same as {@link #close()}, added for consistency with {@link #startup()}
    */
-  public void shutDown(){
+  public void shutdown(){
     close();
   }
 
@@ -1116,7 +1116,7 @@ public class ExifTool {
 			// Always reset the cleanup task.
 			resetCleanupTask();
       if (!isRunning()){
-        startUp();
+        startup();
       }
 
 			log.debug("Streaming arguments to ExifTool process...");
