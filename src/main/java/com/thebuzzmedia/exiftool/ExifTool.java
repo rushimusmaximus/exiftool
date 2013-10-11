@@ -746,7 +746,7 @@ public class ExifTool {
 				"GPSDestBearing", Double.class), GPS_BEARING_REF(
 				"GPSDestBearingRef", String.class), GPS_TIMESTAMP(
 				"GPSTimeStamp", String.class), ROTATION("Rotation",Integer.class),
-				EXIF_VERSION("ExifVersion",String.class);
+				EXIF_VERSION("ExifVersion",String.class), FILE_TYPE("FileType",String.class);
 
 		private static final Map<String, Tag> TAG_LOOKUP_MAP;
 
@@ -1443,6 +1443,209 @@ public class ExifTool {
 
 		public Feature getFeature() {
 			return feature;
+		}
+	}
+	
+	/**
+	 * Class used to handle XMP Sidecar files using exiftool. 
+	 * 
+	 * @author Clinton LaForest (clafore@bgsu.edu)
+	 * @since 1.2_thespiritx
+	 */
+	public class Sidecar {
+		public Sidecar(Feature feature) {
+			
+		}
+
+		/**
+		 * Used to merge a XMP Sidecar file with an image.
+		 * 
+		 * @param xmp
+		 *            The xmp sidecar file.
+		 *            
+		 * @param file
+		 * 			  The image file.
+		 * 
+		 * @param preserve
+		 * 			  <code>true</code> - preserves name mappings
+		 * 			  <code>false</code> - uses preferred name mappings
+		 * 
+		 * @return <code>void</code>
+		 * 
+		 */
+		public void merge(File xmp, File file, Boolean preserve) {
+			if (xmp == null)
+				throw new IllegalArgumentException(
+						"xmp cannot be null and must be a valid xmp sidecar stream.");
+			if (file == null)
+				throw new IllegalArgumentException("file cannot be null");
+			if (preserve == null)
+				preserve = false;
+			if (!file.canWrite())
+				throw new SecurityException(
+						"Unable to read the given image ["
+								+ file.getAbsolutePath()
+								+ "], ensure that the image exists at the given path and that the executing Java process has permissions to read it.");
+
+			long startTime = System.currentTimeMillis();
+
+			if (DEBUG)
+				log("Writing %s tags to image: %s", xmp.getAbsolutePath(), file.getAbsolutePath());
+
+			long exifToolCallElapsedTime = 0;
+
+			/*
+			 * Using ExifTool in daemon mode (-stay_open True) executes different
+			 * code paths below. So establish the flag for this once and it is
+			 * reused a multitude of times later in this method to figure out where
+			 * to branch to.
+			 */
+			boolean stayOpen = featureSet.contains(Feature.STAY_OPEN);
+			
+			args.clear();
+			
+			if (stayOpen) {
+				log("\tUsing ExifTool in daemon mode (-stay_open True)...");
+
+				// Always reset the cleanup task.
+				resetCleanupTask();
+
+				/*
+				 * If this is our first time calling getImageMeta with a stayOpen
+				 * connection, set up the persistent process and run it so it is
+				 * ready to receive commands from us.
+				 */
+				if (streams == null) {
+					log("\tStarting daemon ExifTool process and creating read/write streams (this only happens once)...");
+
+					args.add(EXIF_TOOL_PATH);
+					args.add("-stay_open");
+					args.add("True");
+					args.add("-@");
+					args.add("-");
+
+					// Begin the persistent ExifTool process.
+					streams = startExifToolProcess(args);
+				}
+
+				log("\tStreaming arguments to ExifTool process...");
+
+				try {
+					streams.writer.write("-tagsfromfile\n");
+				
+					streams.writer.write(file.getAbsolutePath());
+					streams.writer.write("\n");
+					
+					if(preserve){
+						streams.writer.write("-all:all");
+						streams.writer.write("\n");
+					} else {
+						streams.writer.write("-xmp");
+						streams.writer.write("\n");
+					}
+					
+					streams.writer.write(xmp.getAbsolutePath());
+					streams.writer.write("\n");
+	
+					log("\tExecuting ExifTool...");
+	
+					// Begin tracking the duration ExifTool takes to respond.
+					exifToolCallElapsedTime = System.currentTimeMillis();
+	
+					// Run ExifTool on our file with all the given arguments.
+					streams.writer.write("-execute\n");
+					streams.writer.flush();
+					
+				} catch (IOException e) {
+					log("\tError received in stayopen stream: %s",
+							e.getMessage());
+				} // compact output
+			} else {
+				log("\tUsing ExifTool in non-daemon mode (-stay_open False)...");
+
+				/*
+				 * Since we are not using a stayOpen process, we need to setup the
+				 * execution arguments completely each time.
+				 */
+				args.add(EXIF_TOOL_PATH);
+
+				args.add("-tagsfromfile"); // compact output
+
+				args.add(file.getAbsolutePath());
+				
+				if(preserve) {
+					args.add("-all:all");
+				} else {
+					args.add("-xmp");
+				}
+				
+				args.add(xmp.getAbsolutePath());
+
+				// Run the ExifTool with our args.
+				streams = startExifToolProcess(args);
+
+				// Begin tracking the duration ExifTool takes to respond.
+				exifToolCallElapsedTime = System.currentTimeMillis();
+			}
+			
+			log("\tReading response back from ExifTool...");
+
+			String line = null;
+
+			try {
+				while ((line = streams.reader.readLine()) != null) {
+					/*
+					 * When using a persistent ExifTool process, it terminates its
+					 * output to us with a "{ready}" clause on a new line, we need to
+					 * look for it and break from this loop when we see it otherwise
+					 * this process will hang indefinitely blocking on the input stream
+					 * with no data to read.
+					 */
+					if (stayOpen && line.equals("{ready}"))
+						break;
+				}
+			} catch (IOException e) {
+				log("\tError received in response: %d",
+						e.getMessage());
+			}
+
+			// Print out how long the call to external ExifTool process took.
+			log("\tFinished reading ExifTool response in %d ms.",
+					(System.currentTimeMillis() - exifToolCallElapsedTime));
+
+			/*
+			 * If we are not using a persistent ExifTool process, then after running
+			 * the command above, the process exited in which case we need to clean
+			 * our streams up since it no longer exists. If we were using a
+			 * persistent ExifTool process, leave the streams open for future calls.
+			 */
+			if (!stayOpen)
+				streams.close();
+
+			if (DEBUG)
+				log("\tImage Meta Processed in %d ms [write %s tags]",
+						(System.currentTimeMillis() - startTime), xmp.getAbsolutePath());
+			
+		}
+		
+		/**
+		 * Used to export a XMP Sidecar file from an image.
+		 * 
+		 * @param xmp
+		 *            The xmp sidecar file.
+		 *            
+		 * @param file
+		 * 			  The image file.
+		 * 
+		 * @param preserve
+		 * 			  <code>true</code> - preserves name mappings
+		 * 			  <code>false</code> - uses preferred name mappings
+		 * 
+		 * @return <code>void</code>
+		 * 
+		 */
+		public void export(File xmp, File file, boolean preserve) {
+			
 		}
 	}
 }
