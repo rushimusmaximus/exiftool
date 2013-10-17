@@ -199,7 +199,7 @@ public class ExifTool {
 
   public static final String ENV_EXIF_TOOL_PATH = "exiftool.path";
   public static final String ENV_EXIF_TOOL_PROCESSCLEANUPDELAY = "exiftool.processCleanupDelay";
-  public static final long DEFAULT_PROCESS_CLEANUP_DELAY = 600000;
+  public static final long DEFAULT_PROCESS_CLEANUP_DELAY = 0;
 
   /**
    * Name used to identify the (optional) cleanup {@link Thread}.
