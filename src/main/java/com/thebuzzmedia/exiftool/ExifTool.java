@@ -1121,34 +1121,52 @@ public class ExifTool {
 
 			log.debug("Streaming arguments to ExifTool process...");
 
+
       synchronized (this){
-        if (format == Format.NUMERIC){
-          stream.writer.write("-n\n"); // numeric output
-        }
-        if (!suppressDuplicates){
-          stream.writer.write("-a\n"); // Allow duplicate tags to be extracted
-        }
-
-        stream.writer.write("-S\n"); // compact output
-
-        for (String tag : tags) {
-          stream.writer.write('-');
-          stream.writer.write(tag);
-          stream.writer.write("\n");
-        }
-
-        stream.writer.write(image.getAbsolutePath());
-        stream.writer.write("\n");
-
-        log.debug("Executing ExifTool...");
-
-        // Begin tracking the duration ExifTool takes to respond.
+        boolean success = false;
+        int attempts = 0;
         exifToolCallStartTime = System.currentTimeMillis();
+        while (!success && attempts <= 2){
+          attempts++;
+          if (format == Format.NUMERIC){
+            stream.writer.write("-n\n"); // numeric output
+          }
+          if (!suppressDuplicates){
+            stream.writer.write("-a\n"); // Allow duplicate tags to be extracted
+          }
 
-        // Run ExifTool on our file with all the given arguments.
-        stream.writer.write("-execute\n");
-        stream.writer.flush();
+          stream.writer.write("-S\n"); // compact output
 
+          for (String tag : tags) {
+            stream.writer.write('-');
+            stream.writer.write(tag);
+            stream.writer.write("\n");
+          }
+
+          stream.writer.write(image.getAbsolutePath());
+          stream.writer.write("\n");
+
+          log.debug("Executing ExifTool...");
+
+          // Begin tracking the duration ExifTool takes to respond.
+          exifToolCallStartTime = System.currentTimeMillis();
+
+          // Run ExifTool on our file with all the given arguments.
+          stream.writer.write("-execute\n");
+          try {
+            stream.writer.flush();
+            success = true;
+          } catch (IOException e){
+            success = false;
+            //only catch "Stream Closed" error (happens when process has died
+            if (!e.getMessage().equals("Stream closed")){
+              throw e; //
+            }
+            log.warn("Caught IOException / Stream closed, trying to restart daemon");
+            stream = null;
+            startup();
+          }
+        }
         resultMap = readResponse(stream, stayOpen);
       }
 
