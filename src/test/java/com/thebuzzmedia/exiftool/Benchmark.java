@@ -36,21 +36,20 @@ public class Benchmark {
 		log.info("\t[-stay_open False]");
 		long elapsedTime = 0;
 
-		for (int i = 0; i < ITERATIONS; i++){
+		for (int i = 1; i <= ITERATIONS; i++){
       log.info(String.format("iteration %s of %s", i, ITERATIONS));
 			elapsedTime += run(tool, images, tags);
     }
 
 		log.info("\t\tElapsed Time: " + elapsedTime + " ms ("
             + ((double) elapsedTime / 1000) + " secs)");
-
 		/*
 		 * -stay_open True
 		 */
 		log.info("\n\t[-stay_open True]");
 		long elapsedTimeSO = 0;
 
-		for (int i = 0; i < ITERATIONS; i++) {
+		for (int i = 1; i <= ITERATIONS; i++) {
       log.info(String.format("iteration %s of %s", i, ITERATIONS));
 			elapsedTimeSO += run(toolSO, images, tags);
 		}
