@@ -15,11 +15,12 @@
  */
 package com.thebuzzmedia.exiftool;
 
-import org.apache.log4j.Logger;
-
 import java.io.*;
 import java.util.*;
 import java.util.regex.Pattern;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Class used to provide a Java-like interface to Phil Harvey's excellent,
@@ -218,7 +219,7 @@ public class ExifTool {
    */
   private static final Pattern TAG_VALUE_PATTERN = Pattern.compile("\\s*:\\s*");
 
-  private static Logger log = Logger.getLogger(ExifTool.class);
+  private static Logger log = LoggerFactory.getLogger(ExifTool.class);
 
   /**
    * The absolute path to the ExifTool executable on the host system running
@@ -988,7 +989,7 @@ public class ExifTool {
 
       log.debug("\tSuccessful");
     } catch (IOException e) {
-      log.error(e, e);
+      log.error(e.getMessage(), e);
     } finally {
       stream.close();
     }
