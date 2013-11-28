@@ -1,11 +1,13 @@
 package com.thebuzzmedia.exiftool;
 
-import junit.framework.TestCase;
-import org.apache.log4j.Logger;
+import org.junit.Test;
 
 import java.io.File;
 import java.util.Map;
 import java.util.Set;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 /**
  * TestMetadata<p>
@@ -13,11 +15,10 @@ import java.util.Set;
  * @author Michael Rush (michaelrush@gmail.com)
  * @since Initially created 8/8/13
  */
-public class TestExifTool extends TestCase {
-
   private static final String TEST_FILES_PATH = "src/test/resources";
-  private static Logger log = Logger.getLogger(TestExifTool.class);
+public class TestExifTool {
 
+  @Test
   public void testTags() throws Exception {
     ExifTool tool = new ExifTool(ExifTool.Feature.STAY_OPEN);
     Map<ExifTool.Tag,String> metadata;
@@ -65,6 +66,7 @@ public class TestExifTool extends TestCase {
     assertEquals(0.015625, tag.parseValue(metadata.get(tag)));
   }
 
+  @Test
   public void testGroupTags() throws Exception {
     ExifTool tool = new ExifTool(ExifTool.Feature.STAY_OPEN);
     Map<String,String> metadata;
@@ -79,6 +81,7 @@ public class TestExifTool extends TestCase {
     //}
   }
 
+  @Test
   public void testTag(){
     assertEquals("string value", "John Doe", ExifTool.Tag.AUTHOR.parseValue("John Doe"));
     assertEquals("integer value", 200, ExifTool.Tag.ISO.parseValue("200"));
