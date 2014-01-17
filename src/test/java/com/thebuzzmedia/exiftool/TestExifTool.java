@@ -4,6 +4,9 @@ import junit.framework.TestCase;
 import org.apache.log4j.Logger;
 
 import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -18,8 +21,47 @@ public class TestExifTool extends TestCase {
   private static final String TEST_FILES_PATH = "src/test/resources";
   private static Logger log = Logger.getLogger(TestExifTool.class);
 
-  public void testTags() throws Exception {
+
+  public void testSingleTool() throws Exception {
     ExifTool tool = new ExifTool(ExifTool.Feature.STAY_OPEN);
+    runTests(tool, "");
+    tool.shutdown();
+  }
+
+  public void testConcurrent() throws Exception {
+
+    int toolCount = 5;
+
+    List<Thread> threads = new ArrayList<Thread>(toolCount);
+    for (int i=1; i <= toolCount; i++){
+      String toolName = "tool"+i;
+      Thread t = new Thread(toolName){
+        @Override
+        public void run() {
+          log.info(getName() + ": starting");
+          ExifTool tool = new ExifTool(ExifTool.Feature.STAY_OPEN);
+          try {
+            runTests(tool, getName());
+          } catch (IOException e) {
+            log.error(e,e);
+            fail(e.getMessage());
+          }
+          log.info(getName() + ": finished");
+          tool.shutdown();
+        }
+      };
+      t.start();
+      threads.add(t);
+    }
+
+    for (Thread t : threads){
+      t.run();
+    }
+  }
+
+
+  public void runTests(ExifTool tool, String runId) throws IOException {
+
     Map<ExifTool.Tag,String> metadata;
     File imageFile;
     Set<ExifTool.Tag> keys;
@@ -40,6 +82,7 @@ public class TestExifTool extends TestCase {
 
     tag = ExifTool.Tag.MODEL;
     assertEquals("P 45+", tag.parseValue(metadata.get(tag)));
+    log.info(runId + ": finished image 1");
 
 
     imageFile = new File(TEST_FILES_PATH + "/nexus-s-electric-cars.jpg");
@@ -63,6 +106,7 @@ public class TestExifTool extends TestCase {
     tag = ExifTool.Tag.SHUTTER_SPEED;
     assertEquals("1/64", metadata.get(tag));
     assertEquals(0.015625, tag.parseValue(metadata.get(tag)));
+    log.info(runId + ": finished image 2");
   }
 
   public void testGroupTags() throws Exception {
@@ -85,4 +129,8 @@ public class TestExifTool extends TestCase {
     assertEquals("double value, from fraction", .25, ExifTool.Tag.SHUTTER_SPEED.parseValue("1/4"));
     assertEquals("double value, from decimal", .25, ExifTool.Tag.SHUTTER_SPEED.parseValue(".25"));
   }
+
+
+
+  //todo TEST automatic daemon restart by killing perl process
 }
