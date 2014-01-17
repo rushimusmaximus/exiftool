@@ -317,7 +317,7 @@ public class ExifTool {
   private TimerTask currentCleanupTask = null;
   private AtomicBoolean shuttingDown = new AtomicBoolean(false);
   private volatile IOStream stream;
-  public int timeoutWhenKeepAlive = 10*1000;
+  private int timeoutWhenKeepAlive = 0;
 
   public ExifTool(){
     this((Feature[]) null);
@@ -394,6 +394,12 @@ public class ExifTool {
     } else {
       cleanupTimer = null;
     }
+  }
+
+
+  public ExifTool setRunTimeout(int mills) {
+    timeoutWhenKeepAlive = mills;
+    return this;
   }
 
   /**

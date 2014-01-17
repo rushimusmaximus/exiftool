@@ -5,7 +5,7 @@
     <ignored path="ExifTool.iws" />
     <ignored path=".idea/workspace.xml" />
     <file path="/Dummy.txt" changelist="337343be-11e9-491f-bc2e-2b2155846884" time="1382984754456" ignored="false" />
-    <file path="/ExifTool.java" changelist="337343be-11e9-491f-bc2e-2b2155846884" time="1389957744395" ignored="false" />
+    <file path="/ExifTool.java" changelist="337343be-11e9-491f-bc2e-2b2155846884" time="1389958081571" ignored="false" />
     <file path="/Example.java" changelist="337343be-11e9-491f-bc2e-2b2155846884" time="1375999350457" ignored="false" />
     <file path="/Benchmark.java" changelist="337343be-11e9-491f-bc2e-2b2155846884" time="1382033081120" ignored="false" />
     <file path="/fragment.java" changelist="337343be-11e9-491f-bc2e-2b2155846884" time="1389953997496" ignored="false" />
@@ -244,7 +244,7 @@
       <file leaf-file-name="ExifTool.java" pinned="false" current="true" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/src/main/java/com/thebuzzmedia/exiftool/ExifTool.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="319" column="9" selection-start="16074" selection-end="16074" vertical-scroll-proportion="0.21694915">
+            <state line="1152" column="28" selection-start="46617" selection-end="46617" vertical-scroll-proportion="0.23050848">
               <folding />
             </state>
           </provider>
@@ -714,7 +714,7 @@
       <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.24954017" sideWeight="0.59621805" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Application Servers" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
       <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.19374616" sideWeight="0.6727689" order="0" side_tool="false" content_ui="combo" />
-      <window_info id="Run" active="true" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.5346413" sideWeight="0.59621805" order="11" side_tool="false" content_ui="tabs" />
+      <window_info id="Run" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.5346413" sideWeight="0.59621805" order="11" side_tool="false" content_ui="tabs" />
       <window_info id="Cvs" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Message" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
       <window_info id="Commander" active="false" anchor="right" auto_hide="false" internal_type="SLIDING" type="SLIDING" visible="false" weight="0.4" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
@@ -898,7 +898,7 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/src/main/java/com/thebuzzmedia/exiftool/ExifTool.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="319" column="9" selection-start="16074" selection-end="16074" vertical-scroll-proportion="0.21694915">
+        <state line="1152" column="28" selection-start="46617" selection-end="46617" vertical-scroll-proportion="0.23050848">
           <folding />
         </state>
       </provider>
