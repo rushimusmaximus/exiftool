@@ -23,7 +23,11 @@ public class TestExifTool extends TestCase {
 
 
   public void testSingleTool() throws Exception {
-    ExifTool tool = new ExifTool(ExifTool.Feature.STAY_OPEN);
+    ExifTool tool = new ExifTool();
+    runTests(tool, "");
+    tool.shutdown();
+
+    tool = new ExifTool(ExifTool.Feature.STAY_OPEN);
     runTests(tool, "");
     tool.shutdown();
   }
