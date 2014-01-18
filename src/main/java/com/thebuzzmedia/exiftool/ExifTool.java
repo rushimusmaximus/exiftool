@@ -45,7 +45,7 @@ import java.util.regex.Pattern;
  * application by utilizing this class.
  * <h3>Usage</h3>
  * Assuming ExifTool is installed on the host system correctly and either in the
- * system path or pointed to by {@link #EXIF_TOOL_PATH}, using this class to
+ * system path or pointed to by {@link #exifCmd}, using this class to
  * communicate with ExifTool is as simple as creating an instance (
  * <code>ExifTool tool = new ExifTool()</code>) and then making calls to
  * {@link #getImageMeta(File, Tag...)} or
@@ -98,7 +98,7 @@ import java.util.regex.Pattern;
  * <p/>
  * Because this feature requires ExifTool 8.36 or later, this class will
  * actually verify support for the feature in the version of ExifTool pointed at
- * by {@link #EXIF_TOOL_PATH} before successfully instantiating the class and
+ * by {@link #exifCmd} before successfully instantiating the class and
  * will notify you via an {@link UnsupportedFeatureException} if the native
  * ExifTool doesn't support the requested feature.
  * <p/>
@@ -114,7 +114,7 @@ import java.util.regex.Pattern;
  * of inactivity to clean up those stray resources.
  * <p/>
  * The inactivity period can be controlled by modifying the
- * {@link #PROCESS_CLEANUP_DELAY} system variable. A value of <code>0</code> or
+ * {@link #processCleanupDelay} system variable. A value of <code>0</code> or
  * less disabled the automatic cleanup process and requires you to cleanup
  * ExifTool instances on your own by calling {@link #close()} manually.
  * <p/>
@@ -252,7 +252,7 @@ public class ExifTool {
    * the directory that <code>new File(".").getAbsolutePath()</code> points at
    * during runtime.
    */
-  private final String EXIF_TOOL_PATH;
+  private final String exifCmd;
 
   /**
    * Interval (in milliseconds) of inactivity before the cleanup thread wakes
@@ -281,42 +281,16 @@ public class ExifTool {
    * <p/>
    * Default value is <code>600,000</code> (10 minutes).
    */
-  private final long PROCESS_CLEANUP_DELAY;
+  private final long processCleanupDelay;
 
-	/**
-	 * Map shared across all instances of this class that maintains the state of
-	 * {@link Feature}s and if they are supported or not (supported=true,
-	 * unsupported=false) by the underlying native ExifTool process being used
-	 * in conjunction with this class.
-	 * <p/>
-	 * If a {@link Feature} is missing from the map (has no <code>true</code> or
-	 * <code>false</code> flag associated with it, but <code>null</code>
-	 * instead) then that means that feature has not been checked for support
-	 * yet and this class will know to call
-	 * {@link #checkFeatureSupport(Feature...)} on it to determine its supported
-	 * state.
-	 * <p/>
-	 * For efficiency reasons, individual {@link Feature}s are checked for
-	 * support one time during each run of the VM and never again during the
-	 * session of that running VM.
-	 */
-  private final Map<Feature, Boolean> FEATURE_SUPPORT_MAP = new HashMap<ExifTool.Feature, Boolean>();
-
-	/**
-	 * List of args used to execute ExifTool using the '-ver' flag in
-	 * order to get it to print out its version number. Used by the
-	 * {@link #checkFeatureSupport(Feature...)} method to check all the required
-	 * feature versions.
-	 */
-  private final List<String> ARGS_VERIFY_FEATURE;
-  private final List<String> ARGS_STAY_OPEN;
-  private final Set<Feature> featureSet;
-
+  private final Map<Feature, Boolean> featureSupportedMap = new HashMap<ExifTool.Feature, Boolean>();
+  private final Set<Feature> featureSet = EnumSet.noneOf(Feature.class);
   private final ReentrantLock lock = new ReentrantLock();
+  private final VersionNumber exifVersion;
   private final Timer cleanupTimer;
   private TimerTask currentCleanupTask = null;
   private AtomicBoolean shuttingDown = new AtomicBoolean(false);
-  private volatile IOStream stream;
+  private volatile ExifProcess process;
   private int timeoutWhenKeepAlive = 0;
 
   public ExifTool(){
@@ -327,7 +301,6 @@ public class ExifTool {
    * In this constructor, exifToolPath and processCleanupDelay are gotten from system properties
    * exiftool.path and exiftool.processCleanupDelay. processCleanupDelay is optional. If not found,
    * the default is used.
-   * @param features
    */
   public ExifTool (Feature ... features){
     this(
@@ -345,58 +318,34 @@ public class ExifTool {
     this(exifToolPath, DEFAULT_PROCESS_CLEANUP_DELAY, features);
   }
 
-  public ExifTool(String exifToolPath, long processCleanupDelay, Feature ... features) {
-    this.EXIF_TOOL_PATH = exifToolPath;
-    this.PROCESS_CLEANUP_DELAY = processCleanupDelay;
-
-    ARGS_VERIFY_FEATURE = Arrays.asList(EXIF_TOOL_PATH, "-ver");
-    ARGS_STAY_OPEN = Arrays.asList(EXIF_TOOL_PATH, "-stay_open", "True", "-@", "-");
-
-    featureSet = new HashSet<ExifTool.Feature>();
-
+  public ExifTool(String exifCmd, long processCleanupDelay, Feature ... features) {
+    this.exifCmd = exifCmd;
+    this.processCleanupDelay = processCleanupDelay;
+    this.exifVersion = ExifProcess.readVersion(exifCmd);
     if (features != null && features.length > 0) {
-     /*
-      * Process all features to ensure we checked them for support in the
-      * installed version of ExifTool. If the feature has already been
-      * checked before, this method will return immediately.
-      */
-      checkFeatureSupport(features);
-
-     /*
-      * Now we need to verify that all the features requested for this
-      * instance of ExifTool to use WERE supported after all.
-      */
       for (Feature feature : features) {
-
-       /*
-        * If the Feature was supported, record it in the local
-      	* featureSet so this instance knows what features are being
-      	* turned on by the caller.
-      	*
-      	* If the Feature was not supported, throw an exception
-      	* reporting it to the caller so they know it cannot be used.
-      	*/
-        if (FEATURE_SUPPORT_MAP.get(feature)){
-          featureSet.add(feature);
-        } else {
+        if ( ! feature.isSupported(exifVersion) ) {
           throw new UnsupportedFeatureException(feature);
         }
+        this.featureSet.add(feature);
+        this.featureSupportedMap.put(feature,true);
       }
     }
 
-
-   /*
+    /*
     * Now that initialization is done, init the cleanup timer if we are
     * using STAY_OPEN and the delay time set is non-zero.
     */
     if (isFeatureEnabled(Feature.STAY_OPEN) ) {
-      this.cleanupTimer = new Timer(CLEANUP_THREAD_NAME, true);
+      cleanupTimer = new Timer(CLEANUP_THREAD_NAME, true);
     } else {
       cleanupTimer = null;
     }
   }
 
-
+  /**
+   * Limits the amount of time (in mills) an exif operation can take. Setting value to greater than 0 to enable.
+   */
   public ExifTool setRunTimeout(int mills) {
     timeoutWhenKeepAlive = mills;
     return this;
@@ -405,7 +354,7 @@ public class ExifTool {
   /**
 	 * Used to determine if the given {@link Feature} is supported by the
 	 * underlying native install of ExifTool pointed at by
-	 * {@link #EXIF_TOOL_PATH}.
+	 * {@link #exifCmd}.
 	 * <p/>
 	 * If support for the given feature has not been checked for yet, this
 	 * method will automatically call out to ExifTool and ensure the requested
@@ -434,7 +383,7 @@ public class ExifTool {
 			throw new IllegalArgumentException("feature cannot be null");
     }
 
-		Boolean supported = FEATURE_SUPPORT_MAP.get(feature);
+		Boolean supported = featureSupportedMap.get(feature);
 
 		/*
 		 * If there is no Boolean flag for the feature, support for it hasn't
@@ -443,543 +392,16 @@ public class ExifTool {
 		 */
 		if (supported == null) {
 			log.debug("Support for feature %s has not been checked yet, checking...");
-			checkFeatureSupport(feature);
-
-			// Re-query for the supported state
-			supported = FEATURE_SUPPORT_MAP.get(feature);
+      supported = feature.isSupported(exifVersion);
+      featureSupportedMap.put(feature,supported);
 		}
 
 		return supported;
 	}
 
-	/**
-	 * Used to verify the version of ExifTool installed is a high enough version
-	 * to support the given features.
-	 * <p/>
-	 * This method runs the command "<code>exiftool -ver</code>" to get the
-	 * version of the installed ExifTool and then compares that version to the
-	 * least required version specified by the given features (see
-	 * {@link Feature#getVersion()}).
-	 * 
-	 * @param features
-	 *            The features whose required versions will be checked against
-	 *            the installed ExifTool for support.
-	 * 
-	 * @throws RuntimeException
-	 *             if any exception occurs communicating with the external
-	 *             ExifTool process spun up in order to check its version.
-	 */
-  protected void checkFeatureSupport(Feature... features) throws RuntimeException {
-    // Ensure there is work to do.
-    if (features == null || features.length == 0)
-      return;
 
-    log.debug(String.format("Checking %d feature(s) for support in the external ExifTool install...",features.length));
 
-    for (Feature feature : features) {
-      String ver = null;
-      Boolean supported;
 
-      log.debug(String.format("\tChecking feature %s for support, requires ExifTool version %s or higher...", feature, feature.version));
-
-      // Execute 'exiftool -ver'
-      IOStream streams = startExifToolProcess(ARGS_VERIFY_FEATURE);
-
-      try {
-        // Read the single-line reply (version number)
-        ver = streams.reader.readLine();
-      } catch (Exception e) {
-        /*
-				 * no-op, while it is important to know that we COULD launch the
-				 * ExifTool process (i.e. startExifToolProcess call worked) but
-				 * couldn't communicate with it, the context with which this
-				 * method is called is from the constructor of this class which
-				 * would just wrap this exception and discard it anyway if it
-				 * failed.
-				 * 
-				 * the caller will realize there is something wrong with the
-				 * ExifTool process communication as soon as they make their
-				 * first call to getImageMeta in which case whatever was causing
-				 * the exception here will popup there and then need to be
-				 * corrected.
-				 * 
-				 * This is an edge case that should only happen in really rare
-				 * scenarios, so making this method easier to use is more
-				 * important that robust IOException handling right here.
-				 */
-
-      } finally {
-        // Close r/w streams to exited process.
-        streams.close();
-      }
-      // Ensure the version found is >= the required version.
-      if (ver != null && ver.compareTo(feature.version) >= 0) {
-        supported = Boolean.TRUE;
-        log.debug(String.format("\tFound ExifTool version %s, feature %s is SUPPORTED.",
-                ver, feature));
-      } else {
-        supported = Boolean.FALSE;
-        log.debug(String.format("\tFound ExifTool version %s, feature %s is NOT SUPPORTED.",
-                ver, feature));
-      }
-
-      // Update feature support map
-      FEATURE_SUPPORT_MAP.put(feature, supported);
-    }
-  }
-
-  protected  IOStream startExifToolProcess(List<String> args) throws RuntimeException {
-    log.debug(String.format("Attempting to start external ExifTool process using args: %s", args));
-    try {
-      Process process = new ProcessBuilder(args).start();
-      log.debug("\tSuccessful");
-      return new IOStream(process);
-    } catch (Exception e) {
-      String message = "Unable to start external ExifTool process using the execution arguments: "
-        + args
-        + ". Ensure ExifTool is installed correctly and runs using the command path '"
-        + EXIF_TOOL_PATH
-        + "' as specified by the 'exiftool.path' system property.";
-
-      log.debug(message);
-      throw new RuntimeException(message, e);
-    }
-  }
-
-	/**
-	 * Simple class used to house the read/write streams used to communicate
-	 * with an external ExifTool process as well as the logic used to safely
-	 * close the streams when no longer needed.
-	 * <p/>
-	 * This class is just a convenient way to group and manage the read/write
-	 * streams as opposed to making them dangling member variables off of
-	 * ExifTool directly.
-	 * 
-	 * @author Riyad Kalla (software@thebuzzmedia.com)
-	 * @since 1.1
-	 */
-	private static class IOStream {
-    private Process process;
-		private BufferedReader reader;
-		private OutputStreamWriter writer;
-    private volatile boolean closed = false;
-
-		public IOStream(Process process) {
-      this.process = process;
-			this.reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
-			this.writer = new OutputStreamWriter(process.getOutputStream());
-		}
-
-    public void writeFlush(String message) throws IOException {
-      if ( closed )  throw new IOException(STREAM_CLOSED_MESSAGE);
-      writer.write(message);
-      writer.flush();
-    }
-
-    public Map<String,String> readResponse(boolean stayOpen) throws IOException {
-      if ( closed )  throw new IOException(STREAM_CLOSED_MESSAGE);
-      log.debug("Reading response back from ExifTool...");
-      Map<String, String> resultMap = new HashMap<String, String>(500);
-      String line;
-
-      while ((line = reader.readLine()) != null) {
-        if ( closed )  throw new IOException(STREAM_CLOSED_MESSAGE);
-        String[] pair = TAG_VALUE_PATTERN.split(line, 2);
-
-        if (pair.length == 2) {
-          resultMap.put(pair[0], pair[1]);
-          log.debug(String.format("\tRead Tag [name=%s, value=%s]", pair[0], pair[1]));
-        }
-
-      /*
-       * When using a persistent ExifTool process, it terminates its
-       * output to us with a "{ready}" clause on a new line, we need to
-       * look for it and break from this loop when we see it otherwise
-       * this process will hang indefinitely blocking on the input stream
-       * with no data to read.
-       */
-        if (stayOpen && line.equals("{ready}")){
-          break;
-        }
-      }
-      return resultMap;
-    }
-
-    public boolean isClosed() {
-      return closed;
-    }
-
-		public void close() {
-      if ( ! closed ) {
-        synchronized (this) {
-          if ( ! closed ) {
-            closed = true;
-            log.debug("Attempting to close ExifTool daemon process, issuing '-stay_open\\nFalse\\n' command...");
-            try {
-              writer.write("-stay_open\nFalse\n");
-              writer.flush();
-            } catch (IOException ex) {
-              //log.error(ex,ex);
-            }
-            try {
-              log.debug("Closing Read stream...");
-              reader.close();
-              log.debug("\tSuccessful");
-            } catch (Exception e) {
-              // no-op, just try to close it.
-            }
-
-            try {
-              log.debug("Closing Write stream...");
-              writer.close();
-              log.debug("\tSuccessful");
-            } catch (Exception e) {
-              // no-op, just try to close it.
-            }
-
-            // Null the stream references.
-            //reader = null;
-            //writer = null;
-
-            log.debug("Read/Write streams successfully closed.");
-
-            try {
-              process.destroy();
-            } catch (Exception e) {
-              //
-            }
-            //process = null;
-
-          }
-        }
-      }
-		}
-	}
-
-	/**
-	 * Enum used to define the different kinds of features in the native
-	 * ExifTool executable that this class can help you take advantage of.
-	 * <p/>
-	 * These flags are different from {@link Tag}s in that a "feature" is
-	 * determined to be a special functionality of the underlying ExifTool
-	 * executable that requires a different code-path in this class to take
-	 * advantage of; for example, <code>-stay_open True</code> support.
-	 * 
-	 * @author Riyad Kalla (software@thebuzzmedia.com)
-	 * @since 1.1
-	 */
-	public enum Feature {
-		/**
-		 * Enum used to specify that you wish to launch the underlying ExifTool
-		 * process with <code>-stay_open True</code> support turned on that this
-		 * class can then take advantage of.
-		 * <p/>
-		 * Required ExifTool version is <code>8.36</code> or higher.
-		 */
-		STAY_OPEN("8.36");
-
-		/**
-		 * Used to get the version of ExifTool required by this feature in order
-		 * to work.
-		 * 
-		 * @return the version of ExifTool required by this feature in order to
-		 *         work.
-		 */
-		public String getVersion() {
-			return version;
-		}
-
-		private String version;
-
-		private Feature(String version) {
-			this.version = version;
-		}
-	}
-
-	/**
-	 * Enum used to define the 2 different output formats that {@link Tag}
-	 * values can be returned in: numeric or human-readable text.
-	 * <p/>
-	 * ExifTool, via the <code>-n</code> command line arg, is capable of
-	 * returning most values in their raw numeric form (e.g.
-	 * Aperture="2.8010323841") as well as a more human-readable/friendly format
-	 * (e.g. Aperture="2.8").
-	 * <p/>
-	 * While the {@link Tag}s defined on this class do provide a hint at the
-	 * type of the result (see {@link Tag#getType()}), that hint only applies
-	 * when the {@link Format#NUMERIC} form of the value is returned.
-	 * <p/>
-	 * If the caller finds the human-readable format easier to process,
-	 * {@link Format#HUMAN_READABLE} can be specified when calling
-	 * {@link ExifTool#getImageMeta(File, Format, Tag...)} and the returned
-	 * {@link String} values processed manually by the caller.
-	 * <p/>
-	 * In order to see the types of values that are returned when
-	 * {@link Format#HUMAN_READABLE} is used, you can check the comprehensive <a
-	 * href="http://www.sno.phy.queensu.ca/~phil/exiftool/TagNames/index.html">
-	 * ExifTool Tag Guide</a>.
-	 * <p/>
-	 * This makes sense with some values like Aperture that in
-	 * {@link Format#NUMERIC} format end up returning as 14-decimal-place, high
-	 * precision values that are near the intended value (e.g.
-	 * "2.79999992203711" instead of just returning "2.8"). On the other hand,
-	 * other values (like Orientation) are easier to parse when their numeric
-	 * value (1-8) is returned instead of a much longer friendly name (e.g.
-	 * "Mirror horizontal and rotate 270 CW").
-	 * 
-	 * @author Riyad Kalla (software@thebuzzmedia.com)
-	 * @since 1.1
-	 */
-	public enum Format {
-		NUMERIC, HUMAN_READABLE
-	}
-
-	/**
-	 * Enum used to pre-define a convenient list of tags that can be easily
-	 * extracted from images using this class with an external install of
-	 * ExifTool.
-	 * <p/>
-	 * Each tag defined also includes a type hint for the parsed value
-	 * associated with it when the default {@link Format#NUMERIC} value format
-	 * is used.
-	 * <p/>
-	 * All replies from ExifTool are parsed as {@link String}s and using the
-	 * type hint from each {@link Tag} can easily be converted to the correct
-	 * data format by using the provided {@link Tag#parseValue(String)}
-	 * method.
-	 * <p/>
-	 * This class does not make an attempt at converting the value automatically
-	 * in case the caller decides they would prefer tag values returned in
-	 * {@link Format#HUMAN_READABLE} format and to avoid any compatibility
-	 * issues with future versions of ExifTool if a tag's return value is
-	 * changed. This approach to leaving returned tag values as strings until
-	 * the caller decides they want to parse them is a safer and more robust
-	 * approach.
-	 * <p/>
-	 * The types provided by each tag are merely a hint based on the <a
-	 * href="http://www.sno.phy.queensu.ca/~phil/exiftool/TagNames/index.html"
-	 * >ExifTool Tag Guide</a> by Phil Harvey; the caller is free to parse or
-	 * process the returned {@link String} values any way they wish.
-	 * <h3>Tag Support</h3>
-	 * ExifTool is capable of parsing almost every tag known to man (1000+), but
-	 * this class makes an attempt at pre-defining a convenient list of the most
-	 * common tags for use.
-	 * <p/>
-	 * This list was determined by looking at the common metadata tag values
-	 * written to images by popular mobile devices (iPhone, Android) as well as
-	 * cameras like simple point and shoots as well as DSLRs. As an additional
-	 * source of input the list of supported/common EXIF formats that Flickr
-	 * supports was also reviewed to ensure the most common/useful tags were
-	 * being covered here.
-	 * <p/>
-	 * Please email me or <a
-	 * href="https://github.com/thebuzzmedia/imgscalr/issues">file an issue</a>
-	 * if you think this list is missing a commonly used tag that should be
-	 * added to it.
-	 * 
-	 * @author Riyad Kalla (software@thebuzzmedia.com)
-	 * @since 1.1
-	 */
-  public enum Tag {
-    //single entry tags
-    APERTURE("ApertureValue", Double.class),
-    AUTHOR("XPAuthor", String.class),
-    COLOR_SPACE("ColorSpace", Integer.class),
-    COMMENT("XPComment", String.class),
-    CONTRAST("Contrast", Integer.class),
-    CREATE_DATE("CreateDate", String.class),
-    CREATION_DATE("CreationDate", String.class),
-    DATE_CREATED("DateCreated", String.class),
-    DATE_TIME_ORIGINAL("DateTimeOriginal", String.class),
-    DIGITAL_ZOOM_RATIO("DigitalZoomRatio", Double.class),
-    EXIF_VERSION("ExifVersion", String.class),
-    EXPOSURE_COMPENSATION("ExposureCompensation", Double.class),
-    EXPOSURE_PROGRAM("ExposureProgram", Integer.class),
-    EXPOSURE_TIME("ExposureTime", Double.class),
-    FLASH("Flash", Integer.class),
-    FOCAL_LENGTH("FocalLength", Double.class),
-    FOCAL_LENGTH_35MM("FocalLengthIn35mmFormat", Integer.class),
-    FNUMBER("FNumber", String.class),
-    GPS_ALTITUDE("GPSAltitude", Double.class),
-    GPS_ALTITUDE_REF("GPSAltitudeRef", Integer.class),
-    GPS_BEARING("GPSDestBearing", Double.class),
-    GPS_BEARING_REF("GPSDestBearingRef", String.class),
-    GPS_DATESTAMP("GPSDateStamp", String.class),
-    GPS_LATITUDE("GPSLatitude", Double.class),
-    GPS_LATITUDE_REF("GPSLatitudeRef", String.class),
-    GPS_LONGITUDE("GPSLongitude", Double.class),
-    GPS_LONGITUDE_REF("GPSLongitudeRef", String.class),
-    GPS_PROCESS_METHOD("GPSProcessingMethod", String.class),
-    GPS_SPEED("GPSSpeed", Double.class),
-    GPS_SPEED_REF("GPSSpeedRef", String.class),
-    GPS_TIMESTAMP("GPSTimeStamp", String.class),
-    IMAGE_HEIGHT("ImageHeight", Integer.class),
-    IMAGE_WIDTH("ImageWidth", Integer.class),
-    ISO("ISO", Integer.class),
-    KEYWORDS("XPKeywords", String.class),
-    LENS_MAKE("LensMake", String.class),
-    LENS_MODEL("LensModel", String.class),
-    MAKE("Make", String.class),
-    METERING_MODE("MeteringMode", Integer.class),
-    MODEL("Model", String.class),
-    ORIENTATION("Orientation", Integer.class),
-    OWNER_NAME("OwnerName", String.class),
-    RATING("Rating", Integer.class),
-    RATING_PERCENT("RatingPercent", Integer.class),
-    ROTATION("Rotation", Integer.class),
-    SATURATION("Saturation", Integer.class),
-    SENSING_METHOD("SensingMethod", Integer.class),
-    SHARPNESS("Sharpness", Integer.class),
-    SHUTTER_SPEED("ShutterSpeedValue", Double.class),
-    SOFTWARE("Software", String.class),
-    SUBJECT("XPSubject", String.class),
-    TITLE("XPTitle", String.class),
-    WHITE_BALANCE("WhiteBalance", Integer.class),
-    X_RESOLUTION("XResolution", Double.class),
-    Y_RESOLUTION("YResolution", Double.class),
-  ;
-
-    /**
-     * Used to get the {@link Tag} identified by the given, case-sensitive,
-     * tag name.
-     *
-     * @param name
-     *            The case-sensitive name of the tag that will be searched
-     *            for.
-     *
-     * @return the {@link Tag} identified by the given, case-sensitive, tag
-     *         name or <code>null</code> if one couldn't be found.
-     */
-    public static Tag forName(String name) {
-      for (Tag tag : Tag.values()){
-        if (tag.getName().equals(name)){
-          return tag;
-        }
-      }
-      return null;
-    }
-
-		/**
-		 * Convenience method used to convert the given string Tag value
-		 * (returned from the external ExifTool process) into the type described
-		 * by the associated {@link Tag}.
-		 * 
-		 * @param <T>
-		 *            The type of the returned value.
-		 * @param value
-		 *            The {@link String} representation of the tag's value as
-		 *            parsed from the image.
-		 * 
-		 * @return the given string value converted to a native Java type (e.g.
-		 *         Integer, Double, etc.).
-		 * 
-		 * @throws IllegalArgumentException
-		 *             if <code>tag</code> is <code>null</code>.
-		 * @throws NumberFormatException
-		 *             if any exception occurs while trying to parse the given
-		 *             <code>value</code> to any of the supported numeric types
-		 *             in Java via calls to the respective <code>parseXXX</code>
-		 *             methods defined on all the numeric wrapper classes (e.g.
-		 *             {@link Integer#parseInt(String)} ,
-		 *             {@link Double#parseDouble(String)} and so on).
-		 * @throws ClassCastException
-		 *             if the type defined by <code>T</code> is incompatible
-		 *             with the type defined by {@link Tag#getType()} returned
-		 *             by the <code>tag</code> argument passed in. This class
-		 *             performs an implicit/unchecked cast to the type
-		 *             <code>T</code> before returning the parsed result of the
-		 *             type indicated by {@link Tag#getType()}. If the types do
-		 *             not match, a <code>ClassCastException</code> will be
-		 *             generated by the VM.
-		 */
-		@SuppressWarnings("unchecked")
-		public <T> T parseValue(String value) throws IllegalArgumentException {
-
-			if (value != null) {
-        if (Boolean.class.isAssignableFrom(this.getType())){
-          return (T) Boolean.valueOf(value);
-        } else if (Byte.class.isAssignableFrom(this.getType())){
-          return (T) Byte.valueOf(Byte.parseByte(value));
-        } else if (Integer.class.isAssignableFrom(this.getType())){
-          return  (T) Integer.valueOf(Integer.parseInt(value));
-        } else if (Short.class.isAssignableFrom(this.getType())){
-          return  (T) Short.valueOf(Short.parseShort(value));
-        } else if (Long.class.isAssignableFrom(this.getType())){
-          return  (T) Long.valueOf(Long.parseLong(value));
-        } else if (Float.class.isAssignableFrom(this.getType())){
-          return (T) Float.valueOf(Float.parseFloat(value));
-        } else if (Double.class.isAssignableFrom(this.getType())){
-          return  (T) parseDouble(value);
-        } else if (Character.class.isAssignableFrom(this.getType())){
-          return  (T) Character.valueOf(value.charAt(0));
-        } else if (String.class.isAssignableFrom(this.getType())){
-          return  (T) value;
-        }
-      }
-			return null;
-		}
-
-    private Double parseDouble(String in) {
-      if (in.contains("/")) {
-        String[] enumeratorAndDivisor = in.split("/");
-        return Double.parseDouble(enumeratorAndDivisor[0]) / Double.parseDouble(enumeratorAndDivisor[1]);
-      } else {
-        return Double.parseDouble(in);
-      }
-    }
-
-		/**
-		 * Used to get the name of the tag (e.g. "Orientation", "ISO", etc.).
-		 * 
-		 * @return the name of the tag (e.g. "Orientation", "ISO", etc.).
-		 */
-		public String getName() {
-			return name;
-		}
-
-		/**
-		 * Used to get a hint for the native type of this tag's value as
-		 * specified by Phil Harvey's <a href=
-		 * "http://www.sno.phy.queensu.ca/~phil/exiftool/TagNames/index.html"
-		 * >ExifTool Tag Guide</a>.
-		 * 
-		 * @return a hint for the native type of this tag's value.
-		 */
-		public Class<?> getType() {
-			return type;
-		}
-
-		private String name;
-		private Class<?> type;
-
-		private Tag(String name, Class<?> type) {
-			this.name = name;
-			this.type = type;
-		}
-	}
-
-  public enum TagGroup {
-    EXIF("EXIF","exif:all"),
-    IPTC("IPTC", "iptc:all"),
-    XMP("XMP", "xmp:all"),
-    ALL("ALL", "all");
-
-    private final String name;
-    private final String value;
-
-    private TagGroup(String name, String value) {
-      this.name = name;
-      this.value = value;
-    }
-
-    public String getName() {
-      return name;
-    }
-
-    public String getValue() {
-      return value;
-    }
-  }
 
   /**
    * Used to startup the external ExifTool process and open the read/write
@@ -988,11 +410,11 @@ public class ExifTool {
    */
   public void startup(){
     if (featureSet.contains(Feature.STAY_OPEN)){
-      if (stream==null && ! stream.isClosed()) {
+      if (process ==null && ! process.isClosed()) {
         synchronized (this){
-          if (stream==null && ! stream.isClosed() ){
+          if (process ==null && ! process.isClosed() ){
             log.debug("Starting daemon ExifTool process and creating read/write streams (this only happens once)...");
-            stream = startExifToolProcess(ARGS_STAY_OPEN);
+            process = ExifProcess.startup(ENV_EXIF_TOOL_PATH);
           }
         }
       }
@@ -1018,21 +440,25 @@ public class ExifTool {
 	 * <code>getImageMeta</code> causes them to be re-instantiated.
 	 * <p/>
 	 * The cleanup thread will automatically call this after an interval of
-	 * inactivity defined by {@link #PROCESS_CLEANUP_DELAY}.
+	 * inactivity defined by {@link #processCleanupDelay}.
 	 * <p/>
 	 * Calling this method on an instance of this class without
 	 * {@link Feature#STAY_OPEN} support enabled has no effect.
 	 */
 	public synchronized void close() {
     shuttingDown.set(true);
-    if ( stream != null ) {
-      stream.close();
+    if ( process != null ) {
+      process.close();
     }
     if(currentCleanupTask != null) {
       currentCleanupTask.cancel();
       currentCleanupTask = null;
     }
 	}
+
+  public boolean isStayOpen() {
+    return featureSet.contains(Feature.STAY_OPEN);
+  }
 
 	/**
 	 * For {@link ExifTool} instances with {@link Feature#STAY_OPEN} support
@@ -1049,7 +475,7 @@ public class ExifTool {
 	 *         <code>false</code>.
 	 */
 	public boolean isRunning() {
-		return stream != null && ! stream.isClosed();
+		return process != null && ! process.isClosed();
 	}
 
 	/**
@@ -1146,7 +572,7 @@ public class ExifTool {
 
 			// Always reset the cleanup task.
 
-      if ( PROCESS_CLEANUP_DELAY > 0 ) {
+      if ( processCleanupDelay > 0 ) {
         if ( currentCleanupTask != null ) {
           currentCleanupTask.cancel();
         }
@@ -1154,17 +580,17 @@ public class ExifTool {
           @Override
           public void run() {
             log.info("Auto cleanup task running...");
-            if ( stream != null ) stream.close();
+            if ( process != null ) process.close();
           }
         };
-        cleanupTimer.schedule(currentCleanupTask, PROCESS_CLEANUP_DELAY);
+        cleanupTimer.schedule(currentCleanupTask, processCleanupDelay);
       }
       final AtomicBoolean stopProcess = new AtomicBoolean(false);
       if ( timeoutWhenKeepAlive > 0 ) {
         cleanupTimer.schedule(new TimerTask() {
           public void run() {
             stopProcess.set(true);
-            if ( stream != null ) stream.close();
+            if ( process != null ) process.close();
           }
         }, timeoutWhenKeepAlive );
       }
@@ -1209,18 +635,18 @@ public class ExifTool {
           args.append("-execute\n");
           //stream.writer.write("-execute\n");
           try {
-            if (stream ==null || stream.isClosed() ){
+            if (process == null || process.isClosed() ){
               log.debug("Starting daemon ExifTool process and creating read/write streams (this only happens once)...");
-              stream = startExifToolProcess(ARGS_STAY_OPEN);
+              process = ExifProcess.startup(exifCmd);
             }
-            stream.writeFlush(args.toString());
+            process.writeFlush(args.toString());
             success = true;
           } catch (IOException ex){
             success = false;
             //only catch "Stream Closed" error (happens when process has died
             if ( STREAM_CLOSED_MESSAGE.equals(ex.getMessage()) ){
               log.warn("Caught IOException / Stream closed, trying to restart daemon");
-              stream.close();
+              process.close();
             } else {
               throw ex;
             }
@@ -1233,7 +659,7 @@ public class ExifTool {
           throw new IOException("Ran Too Long");
         }
 
-        resultMap = stream.readResponse(stayOpen);
+        resultMap = process.readResponse();
       } finally {
         lock.unlock();
       }
@@ -1249,7 +675,7 @@ public class ExifTool {
 			 */
 
       List<String> args = new ArrayList<String>(64);
-			args.add(EXIF_TOOL_PATH);
+			args.add(exifCmd);
 
 			if (format == Format.NUMERIC){
 				args.add("-n"); // numeric output
@@ -1263,13 +689,13 @@ public class ExifTool {
 			args.add(image.getAbsolutePath());
 
 			// Run the ExifTool with our args.
-      IOStream stream = startExifToolProcess(args);
+      ExifProcess process = ExifProcess.execute(args);
       try {
         // Begin tracking the duration ExifTool takes to respond.
         exifToolCallStartTime = System.currentTimeMillis();
-        resultMap = stream.readResponse(stayOpen);
+        resultMap = process.readResponse();
       } finally {
-        stream.close();
+        process.close();
       }
 		}
 
@@ -1300,6 +726,530 @@ public class ExifTool {
     return tagMap;
   }
 
+
+  //================================================================================
+  /**
+   * Represents an Exif Process.
+   */
+  public static class ExifProcess {
+    private final boolean keepAlive;
+    private final Process process;
+    private final BufferedReader reader;
+    private final OutputStreamWriter writer;
+    private volatile boolean closed = false;
+
+    public static VersionNumber readVersion(String exifCmd) {
+      ExifProcess process =execute(Arrays.asList(exifCmd,"-ver"));
+      try {
+        return new VersionNumber(process.readLine());
+      } catch (IOException ex) {
+        throw new RuntimeException(String.format("Unable to check version number of ExifTool: %s",exifCmd));
+      } finally {
+        process.close();
+      }
+    }
+
+    public static ExifProcess execute(boolean keepAlive,List<String> args) {
+      log.debug(String.format("Attempting to start external ExifTool process using args: %s", args));
+      try {
+        Process process = new ProcessBuilder(args).start();
+        log.debug("\tSuccessful");
+        return new ExifProcess(keepAlive,process);
+      } catch (Exception e) {
+        String message = "Unable to start external ExifTool process using the execution arguments: "
+          + args
+          + ". Ensure ExifTool is installed correctly and runs using the command path '"
+          + args.get(0)
+          + "' as specified by the 'exiftool.path' system property.";
+
+        log.debug(message);
+        throw new RuntimeException(message, e);
+      }
+    }
+    public static ExifProcess execute(List<String> args) {
+      return execute(false,args);
+    }
+
+    public static ExifProcess startup(String exifCmd) {
+      List<String> args = Arrays.asList(exifCmd,"-stay_open", "True", "-@", "-");
+      return execute(true,args);
+    }
+
+    public ExifProcess(boolean keepAlive,Process process) {
+      this.keepAlive = keepAlive;
+      this.process = process;
+      this.reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+      this.writer = new OutputStreamWriter(process.getOutputStream());
+    }
+
+    public void writeFlush(String message) throws IOException {
+      if ( closed )  throw new IOException(STREAM_CLOSED_MESSAGE);
+      writer.write(message);
+      writer.flush();
+    }
+
+    public String readLine() throws IOException {
+      return reader.readLine();
+    }
+
+    public Map<String,String> readResponse() throws IOException {
+      if ( closed )  throw new IOException(STREAM_CLOSED_MESSAGE);
+      log.debug("Reading response back from ExifTool...");
+      Map<String, String> resultMap = new HashMap<String, String>(500);
+      String line;
+
+      while ((line = reader.readLine()) != null) {
+        if ( closed )  throw new IOException(STREAM_CLOSED_MESSAGE);
+        String[] pair = TAG_VALUE_PATTERN.split(line, 2);
+
+        if (pair.length == 2) {
+          resultMap.put(pair[0], pair[1]);
+          log.debug(String.format("\tRead Tag [name=%s, value=%s]", pair[0], pair[1]));
+        }
+
+      /*
+       * When using a persistent ExifTool process, it terminates its
+       * output to us with a "{ready}" clause on a new line, we need to
+       * look for it and break from this loop when we see it otherwise
+       * this process will hang indefinitely blocking on the input stream
+       * with no data to read.
+       */
+        if (keepAlive && line.equals("{ready}")){
+          break;
+        }
+      }
+      return resultMap;
+    }
+
+    public boolean isClosed() {
+      return closed;
+    }
+
+    public void close() {
+      if ( ! closed ) {
+        synchronized (this) {
+          if ( ! closed ) {
+            closed = true;
+            log.debug("Attempting to close ExifTool daemon process, issuing '-stay_open\\nFalse\\n' command...");
+            try {
+              writer.write("-stay_open\nFalse\n");
+              writer.flush();
+            } catch (IOException ex) {
+              //log.error(ex,ex);
+            }
+            try {
+              log.debug("Closing Read stream...");
+              reader.close();
+              log.debug("\tSuccessful");
+            } catch (Exception e) {
+              // no-op, just try to close it.
+            }
+
+            try {
+              log.debug("Closing Write stream...");
+              writer.close();
+              log.debug("\tSuccessful");
+            } catch (Exception e) {
+              // no-op, just try to close it.
+            }
+
+            // Null the stream references.
+            //reader = null;
+            //writer = null;
+
+            log.debug("Read/Write streams successfully closed.");
+
+            try {
+              process.destroy();
+            } catch (Exception e) {
+              //
+            }
+            //process = null;
+
+          }
+        }
+      }
+    }
+  }
+
+  //================================================================================
+  /**
+   * Enum used to define the different kinds of features in the native
+   * ExifTool executable that this class can help you take advantage of.
+   * <p/>
+   * These flags are different from {@link Tag}s in that a "feature" is
+   * determined to be a special functionality of the underlying ExifTool
+   * executable that requires a different code-path in this class to take
+   * advantage of; for example, <code>-stay_open True</code> support.
+   *
+   * @author Riyad Kalla (software@thebuzzmedia.com)
+   * @since 1.1
+   */
+  public enum Feature {
+    /**
+     * Enum used to specify that you wish to launch the underlying ExifTool
+     * process with <code>-stay_open True</code> support turned on that this
+     * class can then take advantage of.
+     * <p/>
+     * Required ExifTool version is <code>8.36</code> or higher.
+     */
+    STAY_OPEN(8,36);
+
+
+    private VersionNumber requireVersion;
+    private Feature(int... numbers) {
+      this.requireVersion = new VersionNumber(numbers);
+    }
+    /**
+     * Used to get the version of ExifTool required by this feature in order
+     * to work.
+     *
+     * @return the version of ExifTool required by this feature in order to
+     *         work.
+     */
+    VersionNumber getVersion() {
+      return requireVersion;
+    }
+
+    boolean isSupported(VersionNumber exifVersionNumber) {
+      return requireVersion.isBeforeOrEqualTo(exifVersionNumber);
+    }
+  }
+
+  //================================================================================
+  /**
+   * Version Number used to determine if one version is after another.
+   */
+  static class VersionNumber {
+    private final int[] numbers;
+
+    public VersionNumber(String str) {
+      String[] versionParts =  str.trim().split("\\.");
+      this.numbers = new int[versionParts.length];
+      for(int i=0; i<versionParts.length; i++) {
+        numbers[i] = Integer.parseInt(versionParts[i]);
+      }
+    }
+
+    public VersionNumber(int... numbers) {
+      this.numbers = numbers;
+    }
+
+    public boolean isBeforeOrEqualTo(VersionNumber other) {
+      int max = Math.min(this.numbers.length, other.numbers.length);
+      for(int i=0; i<max; i++) {
+        if ( this.numbers[i] >  other.numbers[i] ) {
+          return false;
+        } else  if ( this.numbers[i] < other.numbers[i] ) {
+          return true;
+        }
+      }
+      //assume missing number as zero, so if the current process number is more digits it is a higher version
+      return this.numbers.length <= other.numbers.length;
+    }
+
+    public String toString() {
+      StringBuilder builder = new StringBuilder();
+      for(int i=0; i<numbers.length; i++) {
+        if ( builder.length() > 0 ) {
+          builder.append(".");
+        }
+        builder.append(numbers[i]);
+      }
+      return builder.toString();
+    }
+  }
+
+
+  //================================================================================
+  /**
+   * Enum used to define the 2 different output formats that {@link Tag}
+   * values can be returned in: numeric or human-readable text.
+   * <p/>
+   * ExifTool, via the <code>-n</code> command line arg, is capable of
+   * returning most values in their raw numeric form (e.g.
+   * Aperture="2.8010323841") as well as a more human-readable/friendly format
+   * (e.g. Aperture="2.8").
+   * <p/>
+   * While the {@link Tag}s defined on this class do provide a hint at the
+   * type of the result (see {@link Tag#getType()}), that hint only applies
+   * when the {@link Format#NUMERIC} form of the value is returned.
+   * <p/>
+   * If the caller finds the human-readable format easier to process,
+   * {@link Format#HUMAN_READABLE} can be specified when calling
+   * {@link ExifTool#getImageMeta(File, Format, Tag...)} and the returned
+   * {@link String} values processed manually by the caller.
+   * <p/>
+   * In order to see the types of values that are returned when
+   * {@link Format#HUMAN_READABLE} is used, you can check the comprehensive <a
+   * href="http://www.sno.phy.queensu.ca/~phil/exiftool/TagNames/index.html">
+   * ExifTool Tag Guide</a>.
+   * <p/>
+   * This makes sense with some values like Aperture that in
+   * {@link Format#NUMERIC} format end up returning as 14-decimal-place, high
+   * precision values that are near the intended value (e.g.
+   * "2.79999992203711" instead of just returning "2.8"). On the other hand,
+   * other values (like Orientation) are easier to parse when their numeric
+   * value (1-8) is returned instead of a much longer friendly name (e.g.
+   * "Mirror horizontal and rotate 270 CW").
+   *
+   * @author Riyad Kalla (software@thebuzzmedia.com)
+   * @since 1.1
+   */
+  public enum Format {
+    NUMERIC, HUMAN_READABLE
+  }
+  //================================================================================
+  /**
+   * Enum used to pre-define a convenient list of tags that can be easily
+   * extracted from images using this class with an external install of
+   * ExifTool.
+   * <p/>
+   * Each tag defined also includes a type hint for the parsed value
+   * associated with it when the default {@link Format#NUMERIC} value format
+   * is used.
+   * <p/>
+   * All replies from ExifTool are parsed as {@link String}s and using the
+   * type hint from each {@link Tag} can easily be converted to the correct
+   * data format by using the provided {@link Tag#parseValue(String)}
+   * method.
+   * <p/>
+   * This class does not make an attempt at converting the value automatically
+   * in case the caller decides they would prefer tag values returned in
+   * {@link Format#HUMAN_READABLE} format and to avoid any compatibility
+   * issues with future versions of ExifTool if a tag's return value is
+   * changed. This approach to leaving returned tag values as strings until
+   * the caller decides they want to parse them is a safer and more robust
+   * approach.
+   * <p/>
+   * The types provided by each tag are merely a hint based on the <a
+   * href="http://www.sno.phy.queensu.ca/~phil/exiftool/TagNames/index.html"
+   * >ExifTool Tag Guide</a> by Phil Harvey; the caller is free to parse or
+   * process the returned {@link String} values any way they wish.
+   * <h3>Tag Support</h3>
+   * ExifTool is capable of parsing almost every tag known to man (1000+), but
+   * this class makes an attempt at pre-defining a convenient list of the most
+   * common tags for use.
+   * <p/>
+   * This list was determined by looking at the common metadata tag values
+   * written to images by popular mobile devices (iPhone, Android) as well as
+   * cameras like simple point and shoots as well as DSLRs. As an additional
+   * source of input the list of supported/common EXIF formats that Flickr
+   * supports was also reviewed to ensure the most common/useful tags were
+   * being covered here.
+   * <p/>
+   * Please email me or <a
+   * href="https://github.com/thebuzzmedia/imgscalr/issues">file an issue</a>
+   * if you think this list is missing a commonly used tag that should be
+   * added to it.
+   *
+   * @author Riyad Kalla (software@thebuzzmedia.com)
+   * @since 1.1
+   */
+  public enum Tag {
+    //single entry tags
+    APERTURE("ApertureValue", Double.class),
+    AUTHOR("XPAuthor", String.class),
+    COLOR_SPACE("ColorSpace", Integer.class),
+    COMMENT("XPComment", String.class),
+    CONTRAST("Contrast", Integer.class),
+    CREATE_DATE("CreateDate", String.class),
+    CREATION_DATE("CreationDate", String.class),
+    DATE_CREATED("DateCreated", String.class),
+    DATE_TIME_ORIGINAL("DateTimeOriginal", String.class),
+    DIGITAL_ZOOM_RATIO("DigitalZoomRatio", Double.class),
+    EXIF_VERSION("ExifVersion", String.class),
+    EXPOSURE_COMPENSATION("ExposureCompensation", Double.class),
+    EXPOSURE_PROGRAM("ExposureProgram", Integer.class),
+    EXPOSURE_TIME("ExposureTime", Double.class),
+    FLASH("Flash", Integer.class),
+    FOCAL_LENGTH("FocalLength", Double.class),
+    FOCAL_LENGTH_35MM("FocalLengthIn35mmFormat", Integer.class),
+    FNUMBER("FNumber", String.class),
+    GPS_ALTITUDE("GPSAltitude", Double.class),
+    GPS_ALTITUDE_REF("GPSAltitudeRef", Integer.class),
+    GPS_BEARING("GPSDestBearing", Double.class),
+    GPS_BEARING_REF("GPSDestBearingRef", String.class),
+    GPS_DATESTAMP("GPSDateStamp", String.class),
+    GPS_LATITUDE("GPSLatitude", Double.class),
+    GPS_LATITUDE_REF("GPSLatitudeRef", String.class),
+    GPS_LONGITUDE("GPSLongitude", Double.class),
+    GPS_LONGITUDE_REF("GPSLongitudeRef", String.class),
+    GPS_PROCESS_METHOD("GPSProcessingMethod", String.class),
+    GPS_SPEED("GPSSpeed", Double.class),
+    GPS_SPEED_REF("GPSSpeedRef", String.class),
+    GPS_TIMESTAMP("GPSTimeStamp", String.class),
+    IMAGE_HEIGHT("ImageHeight", Integer.class),
+    IMAGE_WIDTH("ImageWidth", Integer.class),
+    ISO("ISO", Integer.class),
+    KEYWORDS("XPKeywords", String.class),
+    LENS_MAKE("LensMake", String.class),
+    LENS_MODEL("LensModel", String.class),
+    MAKE("Make", String.class),
+    METERING_MODE("MeteringMode", Integer.class),
+    MODEL("Model", String.class),
+    ORIENTATION("Orientation", Integer.class),
+    OWNER_NAME("OwnerName", String.class),
+    RATING("Rating", Integer.class),
+    RATING_PERCENT("RatingPercent", Integer.class),
+    ROTATION("Rotation", Integer.class),
+    SATURATION("Saturation", Integer.class),
+    SENSING_METHOD("SensingMethod", Integer.class),
+    SHARPNESS("Sharpness", Integer.class),
+    SHUTTER_SPEED("ShutterSpeedValue", Double.class),
+    SOFTWARE("Software", String.class),
+    SUBJECT("XPSubject", String.class),
+    TITLE("XPTitle", String.class),
+    WHITE_BALANCE("WhiteBalance", Integer.class),
+    X_RESOLUTION("XResolution", Double.class),
+    Y_RESOLUTION("YResolution", Double.class),
+    ;
+
+    /**
+     * Used to get the {@link Tag} identified by the given, case-sensitive,
+     * tag name.
+     *
+     * @param name
+     *            The case-sensitive name of the tag that will be searched
+     *            for.
+     *
+     * @return the {@link Tag} identified by the given, case-sensitive, tag
+     *         name or <code>null</code> if one couldn't be found.
+     */
+    public static Tag forName(String name) {
+      for (Tag tag : Tag.values()){
+        if (tag.getName().equals(name)){
+          return tag;
+        }
+      }
+      return null;
+    }
+
+    /**
+     * Convenience method used to convert the given string Tag value
+     * (returned from the external ExifTool process) into the type described
+     * by the associated {@link Tag}.
+     *
+     * @param <T>
+     *            The type of the returned value.
+     * @param value
+     *            The {@link String} representation of the tag's value as
+     *            parsed from the image.
+     *
+     * @return the given string value converted to a native Java type (e.g.
+     *         Integer, Double, etc.).
+     *
+     * @throws IllegalArgumentException
+     *             if <code>tag</code> is <code>null</code>.
+     * @throws NumberFormatException
+     *             if any exception occurs while trying to parse the given
+     *             <code>value</code> to any of the supported numeric types
+     *             in Java via calls to the respective <code>parseXXX</code>
+     *             methods defined on all the numeric wrapper classes (e.g.
+     *             {@link Integer#parseInt(String)} ,
+     *             {@link Double#parseDouble(String)} and so on).
+     * @throws ClassCastException
+     *             if the type defined by <code>T</code> is incompatible
+     *             with the type defined by {@link Tag#getType()} returned
+     *             by the <code>tag</code> argument passed in. This class
+     *             performs an implicit/unchecked cast to the type
+     *             <code>T</code> before returning the parsed result of the
+     *             type indicated by {@link Tag#getType()}. If the types do
+     *             not match, a <code>ClassCastException</code> will be
+     *             generated by the VM.
+     */
+    @SuppressWarnings("unchecked")
+    public <T> T parseValue(String value) throws IllegalArgumentException {
+
+      if (value != null) {
+        if (Boolean.class.isAssignableFrom(this.getType())){
+          return (T) Boolean.valueOf(value);
+        } else if (Byte.class.isAssignableFrom(this.getType())){
+          return (T) Byte.valueOf(Byte.parseByte(value));
+        } else if (Integer.class.isAssignableFrom(this.getType())){
+          return  (T) Integer.valueOf(Integer.parseInt(value));
+        } else if (Short.class.isAssignableFrom(this.getType())){
+          return  (T) Short.valueOf(Short.parseShort(value));
+        } else if (Long.class.isAssignableFrom(this.getType())){
+          return  (T) Long.valueOf(Long.parseLong(value));
+        } else if (Float.class.isAssignableFrom(this.getType())){
+          return (T) Float.valueOf(Float.parseFloat(value));
+        } else if (Double.class.isAssignableFrom(this.getType())){
+          return  (T) parseDouble(value);
+        } else if (Character.class.isAssignableFrom(this.getType())){
+          return  (T) Character.valueOf(value.charAt(0));
+        } else if (String.class.isAssignableFrom(this.getType())){
+          return  (T) value;
+        }
+      }
+      return null;
+    }
+
+    private Double parseDouble(String in) {
+      if (in.contains("/")) {
+        String[] enumeratorAndDivisor = in.split("/");
+        return Double.parseDouble(enumeratorAndDivisor[0]) / Double.parseDouble(enumeratorAndDivisor[1]);
+      } else {
+        return Double.parseDouble(in);
+      }
+    }
+
+    /**
+     * Used to get the name of the tag (e.g. "Orientation", "ISO", etc.).
+     *
+     * @return the name of the tag (e.g. "Orientation", "ISO", etc.).
+     */
+    public String getName() {
+      return name;
+    }
+
+    /**
+     * Used to get a hint for the native type of this tag's value as
+     * specified by Phil Harvey's <a href=
+     * "http://www.sno.phy.queensu.ca/~phil/exiftool/TagNames/index.html"
+     * >ExifTool Tag Guide</a>.
+     *
+     * @return a hint for the native type of this tag's value.
+     */
+    public Class<?> getType() {
+      return type;
+    }
+
+    private String name;
+    private Class<?> type;
+
+    private Tag(String name, Class<?> type) {
+      this.name = name;
+      this.type = type;
+    }
+  }
+
+  //================================================================================
+  public enum TagGroup {
+    EXIF("EXIF","exif:all"),
+    IPTC("IPTC", "iptc:all"),
+    XMP("XMP", "xmp:all"),
+    ALL("ALL", "all");
+
+    private final String name;
+    private final String value;
+
+    private TagGroup(String name, String value) {
+      this.name = name;
+      this.value = value;
+    }
+
+    public String getName() {
+      return name;
+    }
+
+    public String getValue() {
+      return value;
+    }
+  }
+
+
+  //================================================================================
 	/**
 	 * Class used to define an exception that occurs when the caller attempts to
 	 * use a {@link Feature} that the underlying native ExifTool install does
