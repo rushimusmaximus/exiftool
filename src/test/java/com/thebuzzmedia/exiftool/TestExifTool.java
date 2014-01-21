@@ -134,6 +134,12 @@ public class TestExifTool extends TestCase {
     assertEquals("double value, from decimal", .25, ExifTool.Tag.SHUTTER_SPEED.parseValue(".25"));
   }
 
+  public void testVersionNumber() {
+    assertTrue(new ExifTool.VersionNumber("1.2").isBeforeOrEqualTo(new ExifTool.VersionNumber("1.2.3")));
+    assertTrue(new ExifTool.VersionNumber(1,2).isBeforeOrEqualTo(new ExifTool.VersionNumber("1.2")));
+    assertTrue(new ExifTool.VersionNumber(1,2,3).isBeforeOrEqualTo(new ExifTool.VersionNumber("1.3")));
+    assertTrue(new ExifTool.VersionNumber(1,2,3).isBeforeOrEqualTo(new ExifTool.VersionNumber(2,1)));
+  }
 
 
   //todo TEST automatic daemon restart by killing perl process
