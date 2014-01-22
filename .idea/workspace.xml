@@ -4,8 +4,8 @@
     <list default="true" id="337343be-11e9-491f-bc2e-2b2155846884" name="Default" comment="" />
     <ignored path="ExifTool.iws" />
     <ignored path=".idea/workspace.xml" />
-    <file path="/Dummy.txt" changelist="337343be-11e9-491f-bc2e-2b2155846884" time="1382984754456" ignored="false" />
-    <file path="/ExifTool.java" changelist="337343be-11e9-491f-bc2e-2b2155846884" time="1390009255634" ignored="false" />
+    <file path="/Dummy.txt" changelist="337343be-11e9-491f-bc2e-2b2155846884" time="1390244036620" ignored="false" />
+    <file path="/ExifTool.java" changelist="337343be-11e9-491f-bc2e-2b2155846884" time="1390352357609" ignored="false" />
     <file path="/Example.java" changelist="337343be-11e9-491f-bc2e-2b2155846884" time="1375999350457" ignored="false" />
     <file path="/Benchmark.java" changelist="337343be-11e9-491f-bc2e-2b2155846884" time="1382033081120" ignored="false" />
     <file path="/fragment.java" changelist="337343be-11e9-491f-bc2e-2b2155846884" time="1389953997496" ignored="false" />
@@ -16,7 +16,7 @@
     <file path="$PROJECT_DIR$/../dfs-trunk/core/src/digitalfusion/studio/projectfolder/ProjectFolder.java" changelist="337343be-11e9-491f-bc2e-2b2155846884" time="1375896783074" ignored="false" />
     <file path="$PROJECT_DIR$/../dfs-trunk/shared/src/digitalfusion/shared/imageman2/ImageOpExtractMetadata.java" changelist="337343be-11e9-491f-bc2e-2b2155846884" time="1376002361480" ignored="false" />
     <file path="$PROJECT_DIR$/../dfs-trunk/shared/src/digitalfusion/shared/task/TaskQueueSet.java" changelist="337343be-11e9-491f-bc2e-2b2155846884" time="1375899541832" ignored="false" />
-    <file path="/a.dummy" changelist="337343be-11e9-491f-bc2e-2b2155846884" time="1390006992039" ignored="false" />
+    <file path="/a.dummy" changelist="337343be-11e9-491f-bc2e-2b2155846884" time="1390350247164" ignored="false" />
     <file path="$PROJECT_DIR$/../dfs-trunk/shared/src/digitalfusion/shared/io/MimeType.java" changelist="337343be-11e9-491f-bc2e-2b2155846884" time="1375899531833" ignored="false" />
     <file path="$PROJECT_DIR$/../dfs-trunk/shared/src/digitalfusion/shared/util/DateUtil.java" changelist="337343be-11e9-491f-bc2e-2b2155846884" time="1375899554905" ignored="false" />
     <file path="/DateUtil.java" changelist="337343be-11e9-491f-bc2e-2b2155846884" time="1375899210148" ignored="false" />
@@ -29,7 +29,7 @@
     <file path="$PROJECT_DIR$/../dfs-trunk/shared/src/digitalfusion/shared/imageman2/ImageMagickEngine.java" changelist="337343be-11e9-491f-bc2e-2b2155846884" time="1375913108262" ignored="false" />
     <file path="/ImageMagickEngine.java" changelist="337343be-11e9-491f-bc2e-2b2155846884" time="1375913101625" ignored="false" />
     <file path="$PROJECT_DIR$/../dfs-trunk/shared/src/digitalfusion/shared/imageman2/ImageManDiContext.java" changelist="337343be-11e9-491f-bc2e-2b2155846884" time="1381276897209" ignored="false" />
-    <file path="/ImageManDiContext.java" changelist="337343be-11e9-491f-bc2e-2b2155846884" time="1381276896097" ignored="false" />
+    <file path="/ImageManDiContext.java" changelist="337343be-11e9-491f-bc2e-2b2155846884" time="1390237345868" ignored="false" />
     <file path="/ImagePerformanceMain.java" changelist="337343be-11e9-491f-bc2e-2b2155846884" time="1375913293266" ignored="false" />
     <file path="$PROJECT_DIR$/../dfs-trunk/shared/src/digitalfusion/shared/imageman2/ImagePerformanceMain.java" changelist="337343be-11e9-491f-bc2e-2b2155846884" time="1375913294515" ignored="false" />
     <file path="$PROJECT_DIR$/../dfs-trunk/shared/test-src/digitalfusion/shared/imageman2/TestImageEngineSpeed.java" changelist="337343be-11e9-491f-bc2e-2b2155846884" time="1375913324017" ignored="false" />
@@ -50,7 +50,7 @@
     <file path="$PROJECT_DIR$/../dfs-trunk/core/test-src/digitalfusion/studio/image/TestExtractMetadata.java" changelist="337343be-11e9-491f-bc2e-2b2155846884" time="1381279237743" ignored="false" />
     <file path="/TestExtractMetadata.java" changelist="337343be-11e9-491f-bc2e-2b2155846884" time="1381279231161" ignored="false" />
     <file path="/TestMetadata.java" changelist="337343be-11e9-491f-bc2e-2b2155846884" time="1375982077412" ignored="false" />
-    <file path="/TestExifTool.java" changelist="337343be-11e9-491f-bc2e-2b2155846884" time="1390009405304" ignored="false" />
+    <file path="/TestExifTool.java" changelist="337343be-11e9-491f-bc2e-2b2155846884" time="1390353496969" ignored="false" />
     <file path="$PROJECT_DIR$/../dfs-trunk/shared/lib/exiftool.info" changelist="337343be-11e9-491f-bc2e-2b2155846884" time="1376001784490" ignored="false" />
     <file path="$PROJECT_DIR$/../dfs-trunk/shared/src/digitalfusion/shared/email/EmailSender.java" changelist="337343be-11e9-491f-bc2e-2b2155846884" time="1376066232176" ignored="false" />
     <file path="$PROJECT_DIR$/../dfs-trunk/shared/src/digitalfusion/shared/email/LogOnlyEmailSender.java" changelist="337343be-11e9-491f-bc2e-2b2155846884" time="1376066202009" ignored="false" />
@@ -119,7 +119,29 @@
     <file path="$PROJECT_DIR$/../dfs-trunk/shared/src/digitalfusion/shared/collection/LookupCache.java" changelist="337343be-11e9-491f-bc2e-2b2155846884" time="1382073725919" ignored="false" />
     <file path="/TimeoutRunnable.java" changelist="337343be-11e9-491f-bc2e-2b2155846884" time="1389915883434" ignored="false" />
     <file path="/TimeoutThread.java" changelist="337343be-11e9-491f-bc2e-2b2155846884" time="1389922615110" ignored="false" />
-    <file path="$PROJECT_DIR$/../df-quasar-update3/shared/src/digitalfusion/shared/imageman2/ImageOpExtractMetadata.java" changelist="337343be-11e9-491f-bc2e-2b2155846884" time="1389984671908" ignored="false" />
+    <file path="$PROJECT_DIR$/../df-quasar-update3/shared/src/digitalfusion/shared/imageman2/ImageOpExtractMetadata.java" changelist="337343be-11e9-491f-bc2e-2b2155846884" time="1390235489844" ignored="false" />
+    <file path="$PROJECT_DIR$/../df-quasar-update3/shared/src/digitalfusion/shared/imageman2/ImageManDiContext.java" changelist="337343be-11e9-491f-bc2e-2b2155846884" time="1390238871115" ignored="false" />
+    <file path="$PROJECT_DIR$/../df-quasar-update3/core/conf/config.dev.msgile.xml" changelist="337343be-11e9-491f-bc2e-2b2155846884" time="1390237444154" ignored="false" />
+    <file path="$PROJECT_DIR$/../df-quasar/core/src/digitalfusion/studio/billing/LiveCompleteInvoice.kt" changelist="337343be-11e9-491f-bc2e-2b2155846884" time="1390275615311" ignored="false" />
+    <file path="/LiveCompleteInvoice.kt" changelist="337343be-11e9-491f-bc2e-2b2155846884" time="1390265157987" ignored="false" />
+    <file path="$PROJECT_DIR$/../df-quasar/core/src/digitalfusion/studio/billing/LiveInvoiceItem.java" changelist="337343be-11e9-491f-bc2e-2b2155846884" time="1390258772343" ignored="false" />
+    <file path="/LiveInvoiceItem.java" changelist="337343be-11e9-491f-bc2e-2b2155846884" time="1390258757885" ignored="false" />
+    <file path="$PROJECT_DIR$/../df-quasar/core/test-src/digitalfusion/studio/billing/TestLiveInvoiceItem.java" changelist="337343be-11e9-491f-bc2e-2b2155846884" time="1390263428359" ignored="false" />
+    <file path="$PROJECT_DIR$/../df-quasar/core/test-src/digitalfusion/studio/billing/TestLiveInvoiceItem.kt" changelist="337343be-11e9-491f-bc2e-2b2155846884" time="1390264303599" ignored="false" />
+    <file path="$PROJECT_DIR$/../df-quasar/core/src/digitalfusion/studio/billing/ItemId.java" changelist="337343be-11e9-491f-bc2e-2b2155846884" time="1390263769654" ignored="false" />
+    <file path="$PROJECT_DIR$/../df-quasar/core/src/digitalfusion/studio/common/Quantity.java" changelist="337343be-11e9-491f-bc2e-2b2155846884" time="1390263832828" ignored="false" />
+    <file path="$PROJECT_DIR$/../df-quasar/core/src/digitalfusion/studio/billing/BillingDiContext.java" changelist="337343be-11e9-491f-bc2e-2b2155846884" time="1390264589120" ignored="false" />
+    <file path="/BillingDiContext.java" changelist="337343be-11e9-491f-bc2e-2b2155846884" time="1390264588352" ignored="false" />
+    <file path="$PROJECT_DIR$/../df-quasar/core/test-src/digitalfusion/studio/billing/TestBillingActivity.java" changelist="337343be-11e9-491f-bc2e-2b2155846884" time="1390264600447" ignored="false" />
+    <file path="/TestBillingActivity.java" changelist="337343be-11e9-491f-bc2e-2b2155846884" time="1390264596790" ignored="false" />
+    <file path="$PROJECT_DIR$/../df-quasar/core/test-src/digitalfusion/studio/billing/TestLiveCompleteInvoice.kt" changelist="337343be-11e9-491f-bc2e-2b2155846884" time="1390278309229" ignored="false" />
+    <file path="/TestLiveCompleteInvoice.kt" changelist="337343be-11e9-491f-bc2e-2b2155846884" time="1390278301620" ignored="false" />
+    <file path="$PROJECT_DIR$/../df-quasar/core/src/digitalfusion/studio/billing/ItemQuantity.java" changelist="337343be-11e9-491f-bc2e-2b2155846884" time="1390278342902" ignored="false" />
+    <file path="/ItemQuantity.java" changelist="337343be-11e9-491f-bc2e-2b2155846884" time="1390277861913" ignored="false" />
+    <file path="$PROJECT_DIR$/../df-quasar/core/src/digitalfusion/studio/billing/Discount.java" changelist="337343be-11e9-491f-bc2e-2b2155846884" time="1390278350724" ignored="false" />
+    <file path="/Discount.java" changelist="337343be-11e9-491f-bc2e-2b2155846884" time="1390278231496" ignored="false" />
+    <file path="$PROJECT_DIR$/../df-quasar/core/src/digitalfusion/studio/billing/InvoiceItemRow.java" changelist="337343be-11e9-491f-bc2e-2b2155846884" time="1390279402139" ignored="false" />
+    <file path="$PROJECT_DIR$/../df-quasar/core/src/digitalfusion/studio/billing/InvoiceItem.java" changelist="337343be-11e9-491f-bc2e-2b2155846884" time="1390279420613" ignored="false" />
     <option name="TRACKING_ENABLED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -170,7 +192,38 @@
         <option name="LOG_MESSAGE" value="" />
       </breakpoint>
     </breakpoint_any>
-    <line_breakpoints default_suspend_policy="SuspendAll" default_condition_enabled="true" />
+    <line_breakpoints default_suspend_policy="SuspendAll" default_condition_enabled="true">
+      <breakpoint url="file://$PROJECT_DIR$/src/test/java/com/thebuzzmedia/exiftool/TestExifTool.java" line="25" class="com.thebuzzmedia.exiftool.TestExifTool" package="com.thebuzzmedia.exiftool">
+        <option name="ENABLED" value="true" />
+        <option name="LOG_ENABLED" value="false" />
+        <option name="LOG_EXPRESSION_ENABLED" value="false" />
+        <option name="REMOVE_AFTER_HIT" value="false" />
+        <option name="SUSPEND_POLICY" value="SuspendAll" />
+        <option name="SUSPEND" value="true" />
+        <option name="COUNT_FILTER_ENABLED" value="false" />
+        <option name="COUNT_FILTER" value="0" />
+        <option name="CONDITION_ENABLED" value="true" />
+        <option name="CLASS_FILTERS_ENABLED" value="false" />
+        <option name="INSTANCE_FILTERS_ENABLED" value="false" />
+        <option name="CONDITION" value="" />
+        <option name="LOG_MESSAGE" value="" />
+      </breakpoint>
+      <breakpoint url="file://$PROJECT_DIR$/src/main/java/com/thebuzzmedia/exiftool/ExifTool.java" line="702" class="com.thebuzzmedia.exiftool.ExifTool.ExifProcess" package="com.thebuzzmedia.exiftool">
+        <option name="ENABLED" value="true" />
+        <option name="LOG_ENABLED" value="false" />
+        <option name="LOG_EXPRESSION_ENABLED" value="false" />
+        <option name="REMOVE_AFTER_HIT" value="false" />
+        <option name="SUSPEND_POLICY" value="SuspendAll" />
+        <option name="SUSPEND" value="true" />
+        <option name="COUNT_FILTER_ENABLED" value="false" />
+        <option name="COUNT_FILTER" value="0" />
+        <option name="CONDITION_ENABLED" value="true" />
+        <option name="CLASS_FILTERS_ENABLED" value="false" />
+        <option name="INSTANCE_FILTERS_ENABLED" value="false" />
+        <option name="CONDITION" value="" />
+        <option name="LOG_MESSAGE" value="" />
+      </breakpoint>
+    </line_breakpoints>
     <ui_properties default_suspend_policy="SuspendAll" default_condition_enabled="true" />
     <breakpoint_rules />
     <ui_properties />
@@ -184,7 +237,7 @@
       <file leaf-file-name="TestExifTool.java" pinned="false" current="true" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/src/test/java/com/thebuzzmedia/exiftool/TestExifTool.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="18" column="17" selection-start="377" selection-end="377" vertical-scroll-proportion="0.13363029">
+            <state line="46" column="4" selection-start="1040" selection-end="1040" vertical-scroll-proportion="0.5924276">
               <folding />
             </state>
           </provider>
@@ -313,6 +366,8 @@
     <property name="GoToFile.includeJavaFiles" value="false" />
     <property name="OverrideImplement.combined" value="true" />
     <property name="project.structure.proportion" value="0.15" />
+    <property name="options.splitter.main.proportions" value="0.3" />
+    <property name="options.lastSelected" value="preferences.pluginManager" />
     <property name="recentsLimit" value="5" />
     <property name="MemberChooser.sorted" value="false" />
     <property name="last_opened_file_path" value="$PROJECT_DIR$" />
@@ -324,6 +379,8 @@
     <property name="FullScreen" value="false" />
     <property name="MemberChooser.showClasses" value="true" />
     <property name="GoToClass.includeLibraries" value="false" />
+    <property name="options.searchVisible" value="true" />
+    <property name="options.splitter.details.proportions" value="0.2" />
     <property name="dynamic.classpath" value="false" />
   </component>
   <component name="RecentsManager">
@@ -645,7 +702,7 @@
       <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.24954017" sideWeight="0.59621805" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Application Servers" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
       <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.19374616" sideWeight="0.6727689" order="0" side_tool="false" content_ui="combo" />
-      <window_info id="Run" active="true" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.4598406" sideWeight="0.59621805" order="11" side_tool="false" content_ui="tabs" />
+      <window_info id="Run" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.5671367" sideWeight="0.59621805" order="11" side_tool="false" content_ui="tabs" />
       <window_info id="Cvs" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Message" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
       <window_info id="Commander" active="false" anchor="right" auto_hide="false" internal_type="SLIDING" type="SLIDING" visible="false" weight="0.4" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
@@ -815,14 +872,23 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/src/main/java/com/thebuzzmedia/exiftool/ExifTool.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="948" column="25" selection-start="37274" selection-end="37274" vertical-scroll-proportion="0.6237288">
-          <folding />
+        <state line="421" column="46" selection-start="19361" selection-end="19361" vertical-scroll-proportion="0.33333334">
+          <folding>
+            <element signature="e#14567#14585#0" expanded="true" />
+            <element signature="e#19613#19785#0" expanded="true" />
+            <element signature="e#19774#19775#0" expanded="true" />
+            <element signature="e#24212#24220#0" expanded="true" />
+            <element signature="e#26756#26954#0" expanded="true" />
+            <element signature="e#26941#26942#0" expanded="true" />
+            <element signature="e#27861#27874#0" expanded="true" />
+            <element signature="e#29069#29077#0" expanded="true" />
+          </folding>
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/src/test/java/com/thebuzzmedia/exiftool/TestExifTool.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="18" column="17" selection-start="377" selection-end="377" vertical-scroll-proportion="0.13363029">
+        <state line="46" column="4" selection-start="1040" selection-end="1040" vertical-scroll-proportion="0.5924276">
           <folding />
         </state>
       </provider>
