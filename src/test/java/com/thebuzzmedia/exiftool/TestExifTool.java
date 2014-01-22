@@ -24,12 +24,27 @@ public class TestExifTool extends TestCase {
 
   public void testSingleTool() throws Exception {
     ExifTool tool = new ExifTool();
-    runTests(tool, "");
-    tool.shutdown();
+    try {
+      assertTrue(runTests(tool, ""));
+    } finally {
+      tool.shutdown();
+    }
+
 
     tool = new ExifTool(ExifTool.Feature.STAY_OPEN);
-    runTests(tool, "");
-    tool.shutdown();
+    try {
+      assertTrue(runTests(tool, ""));
+    } finally {
+      tool.shutdown();
+    }
+
+    tool = new ExifTool(ExifTool.Feature.STAY_OPEN);
+    try {
+      tool.startup();
+      assertTrue(runTests(tool, ""));
+    } finally {
+      tool.shutdown();
+    }
   }
 
   public void testConcurrent() throws Exception {
@@ -45,13 +60,15 @@ public class TestExifTool extends TestCase {
           log.info(getName() + ": starting");
           ExifTool tool = new ExifTool(ExifTool.Feature.STAY_OPEN);
           try {
-            runTests(tool, getName());
+            runTests(tool,getName());
+            log.info(getName() + ": finished");
           } catch (IOException e) {
             log.error(e,e);
             fail(e.getMessage());
+          } finally {
+            tool.shutdown();
           }
           log.info(getName() + ": finished");
-          tool.shutdown();
         }
       };
       t.start();
@@ -63,8 +80,50 @@ public class TestExifTool extends TestCase {
     }
   }
 
+  public void testManyThreadsOneTool() throws Exception {
+    final ExifTool tool = new ExifTool(ExifTool.Feature.STAY_OPEN);
+    try {
+      Thread[] threads = new Thread[20];
+      for(int i=0; i < threads.length; i++) {
+        final String label = "run "+i;
+        threads[i] = new Thread(new Runnable() {
+                                  @Override
+                                  public void run() {
+            try {
+              for(int j=0; j<5; j++) {
+                runTests(tool,label);
+              }
+              log.info("DONE: "+label+" success!");
+            } catch (IOException ex) {
+              fail(label);
+            }
+        }
+        },label);
+      }
+      for(Thread thread : threads) {
+        thread.start();
+      }
+      for(Thread thread : threads) {
+        thread.join();
+      }
+    } finally {
+      tool.shutdown();
+    }
+  }
+  public void testProcessTimeout() throws Exception {
+    final ExifTool tool = new ExifTool(ExifTool.Feature.STAY_OPEN);
+    try {
+      tool.setRunTimeout(1);
+      runTests(tool,"will fail");
+      fail("should have failed");
+    } catch (IOException ex) {
+      ;
+    } finally {
+      tool.shutdown();
+    }
+  }
 
-  public void runTests(ExifTool tool, String runId) throws IOException {
+  public boolean runTests(ExifTool tool, String runId) throws IOException {
 
     Map<ExifTool.Tag,String> metadata;
     File imageFile;
@@ -111,20 +170,25 @@ public class TestExifTool extends TestCase {
     assertEquals("1/64", metadata.get(tag));
     assertEquals(0.015625, tag.parseValue(metadata.get(tag)));
     log.info(runId + ": finished image 2");
+    return true;
   }
 
   public void testGroupTags() throws Exception {
     ExifTool tool = new ExifTool(ExifTool.Feature.STAY_OPEN);
-    Map<String,String> metadata;
-    File f = new File(TEST_FILES_PATH + "/iptc_test-photoshop.jpg");
-    metadata = tool.getImageMeta(f, ExifTool.Format.HUMAN_READABLE, ExifTool.TagGroup.IPTC);
-    assertEquals(17, metadata.size());
-    assertEquals("IPTC Content: Keywords", metadata.get("Keywords"));
-    assertEquals("IPTC Status: Copyright Notice", metadata.get("CopyrightNotice"));
-    assertEquals("IPTC Content: Description Writer", metadata.get("Writer-Editor"));
-    //for (String key : metadata.keySet()){
-    //  log.info(String.format("\t\t%s: %s", key, metadata.get(key)));
-    //}
+    try {
+      Map<String,String> metadata;
+      File f = new File(TEST_FILES_PATH + "/iptc_test-photoshop.jpg");
+      metadata = tool.getImageMeta(f, ExifTool.Format.HUMAN_READABLE, ExifTool.TagGroup.IPTC);
+      assertEquals(17, metadata.size());
+      assertEquals("IPTC Content: Keywords", metadata.get("Keywords"));
+      assertEquals("IPTC Status: Copyright Notice", metadata.get("CopyrightNotice"));
+      assertEquals("IPTC Content: Description Writer", metadata.get("Writer-Editor"));
+      //for (String key : metadata.keySet()){
+      //  log.info(String.format("\t\t%s: %s", key, metadata.get(key)));
+      //}
+    } finally {
+      tool.shutdown();
+    }
   }
 
   public void testTag(){
