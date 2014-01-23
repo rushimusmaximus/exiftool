@@ -1051,16 +1051,13 @@ public class ExifTool {
 		return featureSet.contains(feature);
 	}
 
-    public void addImageMetadata(File image, Tag tag, Object value) throws IOException {
+    public void addImageMetadata(File image, Map<Tag, Object> values) throws IOException {
 
         if (image == null){
             throw new IllegalArgumentException("image cannot be null and must be a valid stream of image data.");
         }
-        if (tag == null){
-            throw new IllegalArgumentException("tag cannot be null");
-        }
-        if (value == null){
-            throw new IllegalArgumentException("value cannot be null and must contain 1 or characters");
+        if (values == null || values.isEmpty()){
+            throw new IllegalArgumentException("values cannot be null and must contain 1 or more tag to value mappings");
         }
 
         if (!image.canWrite()){
@@ -1068,57 +1065,73 @@ public class ExifTool {
                     + "], ensure that the image exists at the given path and that the executing Java process has permissions to write to it.");
         }
 
-        log.info("Adding Tag [name={}, value={}] to {}", tag, value, image.getAbsolutePath());
+        log.info("Adding Tags {} to {}", values, image.getAbsolutePath());
 
         if(featureSet.contains(Feature.STAY_OPEN)) {
-            execute(createCommand(tag, value, image.getAbsolutePath()));
+            execute(createCommand(image.getAbsolutePath(), values));
         } else {
-            execute(createCommandList(tag, value, image.getAbsolutePath()));
+            execute(createCommandList(image.getAbsolutePath(), values));
         }
     }
 
-    private String createCommand(Tag tag, Object value, String filename) {
+    private String createCommand(String filename, Map<Tag, Object> values) {
         StringBuilder commandBuf = new StringBuilder();
 
-        if(value instanceof Number) {
-            commandBuf.append("-n\n");
-        }
-        commandBuf.append("-");
-        commandBuf.append(tag.getName());
-        commandBuf.append("=");
-        if(value != null) {
-            if(value instanceof String) {
-                commandBuf.append("\"").append(value.toString()).append("\"");
-            } else {
-                commandBuf.append(value.toString());
-            }
-        }
-        commandBuf.append("\n");
+        for(Map.Entry<Tag, Object> entry : values.entrySet()) {
+            Tag tag = entry.getKey();
+            Object value = entry.getValue();
 
+            if(value instanceof Number) {
+                commandBuf.append("-n\n");
+            }
+            commandBuf.append("-");
+            commandBuf.append(tag.getName());
+
+            if(value instanceof Number) {
+                commandBuf.append("#");
+            }
+            commandBuf.append("=");
+            if(value != null) {
+                if(value instanceof String) {
+                    commandBuf.append(value.toString());
+                } else {
+                    commandBuf.append(value.toString());
+                }
+            }
+            commandBuf.append("\n");
+
+        }
         commandBuf.append(filename);
         commandBuf.append("\n");
 
         return commandBuf.toString();
     }
 
-    private List<String> createCommandList(Tag tag, Object value, String filename) {
+    private List<String> createCommandList(String filename, Map<Tag, Object> values) {
 
         List<String> args = new ArrayList<String>(64);
 
-        if (value instanceof Number){
-            args.add("-n"); // numeric output
+        for(Map.Entry<Tag, Object> entry : values.entrySet()) {
+            Tag tag = entry.getKey();
+            Object value = entry.getValue();
+
+            StringBuilder arg = new StringBuilder();
+            arg.append("-").append(tag.getName());
+            if (value instanceof Number){
+                arg.append("#");
+            }
+            arg.append("=");
+            if(value != null) {
+                if(value instanceof String) {
+                    arg.append("\"").append(value.toString()).append("\"");
+                } else {
+                    arg.append(value.toString());
+                }
+            }
+            args.add(arg.toString());
+
         }
 
-        StringBuilder arg = new StringBuilder();
-        arg.append("-").append(tag.getName()).append("=");
-        if(value != null) {
-            if(value instanceof String) {
-                arg.append("\"").append(value.toString()).append("\"");
-            } else {
-                arg.append(value.toString());
-            }
-        }
-        args.add(arg.toString());
         args.add(filename);
         return args;
 
