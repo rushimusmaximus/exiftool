@@ -11,13 +11,14 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
- * limitations under the License.
+ * limitations under the License. 
  */
 
 package com.thebuzzmedia.exiftool;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
@@ -35,6 +36,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.regex.Pattern;
 
+import org.apache.commons.io.FilenameUtils;
 import org.apache.log4j.Logger;
 
 
@@ -262,9 +264,9 @@ public class ExifTool
 	}
 
 	/**
-	 * In this constructor, exifToolPath and processCleanupDelay are gotten from system properties
-	 * exiftool.path and exiftool.processCleanupDelay. processCleanupDelay is optional. If not found,
-	 * the default is used.
+	 * In this constructor, exifToolPath and processCleanupDelay are gotten from
+	 * system properties exiftool.path and exiftool.processCleanupDelay.
+	 * processCleanupDelay is optional. If not found, the default is used.
 	 */
 	public ExifTool(Feature... features)
 	{
@@ -312,7 +314,8 @@ public class ExifTool
 	}
 
 	/**
-	 * Limits the amount of time (in mills) an exif operation can take. Setting value to greater than 0 to enable.
+	 * Limits the amount of time (in mills) an exif operation can take. Setting
+	 * value to greater than 0 to enable.
 	 */
 	public ExifTool setRunTimeout(int mills)
 	{
@@ -367,7 +370,8 @@ public class ExifTool
 	/**
 	 * Used to startup the external ExifTool process and open the read/write
 	 * streams used to communicate with it when {@link Feature#STAY_OPEN} is
-	 * enabled. This method has no effect if the stay open feature is not enabled.
+	 * enabled. This method has no effect if the stay open feature is not
+	 * enabled.
 	 */
 	public void startup()
 	{
@@ -592,8 +596,106 @@ public class ExifTool
 	}
 
 	/**
-	 * Will attempt 3 times to use the running exif process, and if unable to complete successfully will throw
-	 * IOException
+	 * extract image metadata to exiftool's internal xml format.
+	 * 
+	 * @param input
+	 *        the input file
+	 * @return command output as xml string
+	 * @throws IOException
+	 *         Signals that an I/O exception has occurred.
+	 */
+	public String getImageMetadataXml(File input, boolean includeBinary) throws IOException
+	{
+		List<String> args = new ArrayList<String>();
+		args.add( "-X");
+		if( includeBinary)
+			args.add( "-b");
+		args.add( input.getAbsolutePath());
+
+		return ExifProcess.executeToString( exifCmd, args);
+	}
+
+	/**
+	 * extract image metadata to exiftool's internal xml format.
+	 * 
+	 * @param input
+	 *        the input file
+	 * @param output
+	 *        the output file
+	 * @throws IOException
+	 *         Signals that an I/O exception has occurred.
+	 */
+	public void getImageMetadataXml(File input, File output, boolean includeBinary) throws IOException
+	{
+
+		String result = getImageMetadataXml( input, includeBinary);
+
+		try (FileWriter w = new FileWriter( output))
+		{
+			w.write( result);
+		}
+	}
+
+	/**
+	 * output icc profile from input to output.
+	 * 
+	 * @param input
+	 *        the input file
+	 * @param output
+	 *        the output file for icc data
+	 * @return the command result from standard output e.g.
+	 *         "1 output files created"
+	 * @throws IOException
+	 *         Signals that an I/O exception has occurred.
+	 */
+	public String extractImageIccProfile(File input, File output) throws IOException
+	{
+
+		List<String> args = new ArrayList<String>();
+		args.add( "-icc_profile");
+		args.add( input.getAbsolutePath());
+
+		args.add( "-o");
+		args.add( output.getAbsolutePath());
+
+		return ExifProcess.executeToString( exifCmd, args);
+	}
+
+	/**
+	 * Extract thumbnail from the given tag.
+	 * 
+	 * @param input
+	 *        the input file
+	 * @param tag
+	 *        the tag containing binary data PhotoshopThumbnail or ThumbnailImage
+	 * @return the thumbnail file created. it is in the same folder as the input
+	 *         file because of the syntax of exiftool and has the suffix
+	 *         ".thumb.jpg"
+	 * @throws IOException
+	 *         Signals that an I/O exception has occurred.
+	 */
+	public File extractThumbnail(File input, Tag tag) throws IOException
+	{
+
+		List<String> args = new ArrayList<String>();
+		String suffix = ".thumb.jpg";
+		String thumbname = FilenameUtils.getBaseName( input.getName()) + suffix;
+
+		args.add( "-" + tag.getName());
+		args.add( input.getAbsolutePath());
+		args.add( "-b");
+		args.add( "-w");
+		args.add( suffix);
+		String result = ExifProcess.executeToString( exifCmd, args);
+		File thumbnail = new File( input.getParent() + File.separator + thumbname);
+		if( !thumbnail.exists())
+			throw new IOException( "could not create thumbnail: " + result);
+		return thumbnail;
+	}
+
+	/**
+	 * Will attempt 3 times to use the running exif process, and if unable to
+	 * complete successfully will throw IOException
 	 */
 	private Map<String, String> processStayOpen(List<String> args) throws IOException
 	{
@@ -626,7 +728,8 @@ public class ExifTool
 			{
 				if( STREAM_CLOSED_MESSAGE.equals( ex.getMessage()) && !shuttingDown.get())
 				{
-					// only catch "Stream Closed" error (happens when process has died)
+					// only catch "Stream Closed" error (happens when process
+					// has died)
 					log.warn( String.format( "Caught IOException(\"%s\"), will restart daemon", STREAM_CLOSED_MESSAGE));
 					process.close();
 				}
@@ -697,6 +800,22 @@ public class ExifTool
 			try
 			{
 				return process.readResponse();
+			}
+			finally
+			{
+				process.close();
+			}
+		}
+
+		public static String executeToString(String exifCmd, List<String> args) throws IOException
+		{
+			List<String> newArgs = new ArrayList<String>( args.size() + 1);
+			newArgs.add( exifCmd);
+			newArgs.addAll( args);
+			ExifProcess process = _execute( false, newArgs);
+			try
+			{
+				return process.readResponseString();
 			}
 			finally
 			{
@@ -787,10 +906,10 @@ public class ExifTool
 
 				/*
 				 * When using a persistent ExifTool process, it terminates its
-				 * output to us with a "{ready}" clause on a new line, we need to
-				 * look for it and break from this loop when we see it otherwise
-				 * this process will hang indefinitely blocking on the input stream
-				 * with no data to read.
+				 * output to us with a "{ready}" clause on a new line, we need
+				 * to look for it and break from this loop when we see it
+				 * otherwise this process will hang indefinitely blocking on the
+				 * input stream with no data to read.
 				 */
 				if( keepAlive && line.equals( "{ready}"))
 				{
@@ -798,6 +917,35 @@ public class ExifTool
 				}
 			}
 			return resultMap;
+		}
+
+		public synchronized String readResponseString() throws IOException
+		{
+			if( closed)
+				throw new IOException( STREAM_CLOSED_MESSAGE);
+			log.debug( "Reading response back from ExifTool...");
+			String line;
+			StringBuilder result = new StringBuilder();
+			while( (line = reader.readLine()) != null)
+			{
+				if( closed)
+					throw new IOException( STREAM_CLOSED_MESSAGE);
+
+				/*
+				 * When using a persistent ExifTool process, it terminates its
+				 * output to us with a "{ready}" clause on a new line, we need
+				 * to look for it and break from this loop when we see it
+				 * otherwise this process will hang indefinitely blocking on the
+				 * input stream with no data to read.
+				 */
+				if( keepAlive && line.equals( "{ready}"))
+				{
+					break;
+				}
+				else
+					result.append( line);
+			}
+			return result.toString();
 		}
 
 		public boolean isClosed()
@@ -951,7 +1099,8 @@ public class ExifTool
 				}
 				else if( this.numbers[i] < other.numbers[i]) { return true; }
 			}
-			// assume missing number as zero, so if the current process number is more digits it is a higher version
+			// assume missing number as zero, so if the current process number
+			// is more digits it is a higher version
 			return this.numbers.length <= other.numbers.length;
 		}
 
@@ -1095,7 +1244,14 @@ public class ExifTool
 		TITLE( "XPTitle", String.class),
 		WHITE_BALANCE( "WhiteBalance", Integer.class),
 		X_RESOLUTION( "XResolution", Double.class),
-		Y_RESOLUTION( "YResolution", Double.class), ;
+		Y_RESOLUTION( "YResolution", Double.class),
+		// select ICC metadata
+		ICC_DESCRIPTION( "ProfileDescription", String.class),
+		ICC_COLORSPACEDATA( "ColorSpaceData", String.class),
+		// actually binary data, but what are we doing to do here??? Just use to
+		// save to file...
+		THUMBNAIL_IMAGE( "ThumbnailImage", String.class),
+		THUMBNAIL_PHOTOSHOP( "PhotoshopThumbnail", String.class);
 
 		/**
 		 * Used to get the {@link Tag} identified by the given, case-sensitive,
@@ -1240,7 +1396,8 @@ public class ExifTool
 	// ================================================================================
 	public enum TagGroup
 	{
-		EXIF( "EXIF", "exif:all"), IPTC( "IPTC", "iptc:all"), XMP( "XMP", "xmp:all"), ALL( "ALL", "all");
+		EXIF( "EXIF", "exif:all"), IPTC( "IPTC", "iptc:all"), XMP( "XMP", "xmp:all"), ALL( "ALL", "all"), FILE( "FILE", "file:all"), ICC(
+			"ICC", "icc_profile:all");
 
 		private final String	name;
 		private final String	value;
