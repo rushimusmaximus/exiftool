@@ -4,6 +4,10 @@ import org.junit.Test;
 
 import java.io.File;
 import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.Map;
 import java.util.Set;
 
@@ -91,4 +95,131 @@ public class TestExifTool {
     assertEquals("double value, from fraction", .25, ExifTool.Tag.SHUTTER_SPEED.parseValue("1/4"));
     assertEquals("double value, from decimal", .25, ExifTool.Tag.SHUTTER_SPEED.parseValue(".25"));
   }
+
+
+    @Test
+    public void testWriteTagStringNonDaemon() throws Exception{
+        ExifTool tool = new ExifTool();
+        URL url = getClass().getResource("/nexus-s-electric-cars.jpg");
+        Path imageFile = Paths.get(url.toURI());
+
+        // Check the value is correct at the start
+        Map<ExifTool.Tag,String> metadata = tool.getImageMeta(imageFile.toFile(), ExifTool.Format.HUMAN_READABLE, ExifTool.Tag.DATE_TIME_ORIGINAL);
+        assertEquals("Wrong starting value", "2010:12:10 17:07:05", metadata.get(ExifTool.Tag.DATE_TIME_ORIGINAL));
+
+        // Now change it
+        String newDate = "2014:01:23 10:07:05";
+        tool.addImageMetadata(imageFile.toFile(), ExifTool.Tag.DATE_TIME_ORIGINAL, newDate);
+
+        // Finally check that it's updated
+        metadata = tool.getImageMeta(imageFile.toFile(), ExifTool.Format.HUMAN_READABLE, ExifTool.Tag.DATE_TIME_ORIGINAL);
+        assertEquals("DateTimeOriginal tag is wrong", newDate, metadata.get(ExifTool.Tag.DATE_TIME_ORIGINAL));
+
+        // Finally copy the source file back over so the next test run is not affected by the change
+        URL backup_url = getClass().getResource("/nexus-s-electric-cars.jpg_original");
+        Path backupFile = Paths.get(backup_url.toURI());
+
+        Files.copy(backupFile, imageFile, StandardCopyOption.REPLACE_EXISTING);
+
+    }
+
+    @Test
+    public void testWriteTagString() throws Exception{
+        ExifTool tool = new ExifTool(ExifTool.Feature.STAY_OPEN);
+        URL url = getClass().getResource("/nexus-s-electric-cars.jpg");
+        Path imageFile = Paths.get(url.toURI());
+
+        // Check the value is correct at the start
+        Map<ExifTool.Tag,String> metadata = tool.getImageMeta(imageFile.toFile(), ExifTool.Format.HUMAN_READABLE, ExifTool.Tag.DATE_TIME_ORIGINAL);
+        assertEquals("Wrong starting value", "2010:12:10 17:07:05", metadata.get(ExifTool.Tag.DATE_TIME_ORIGINAL));
+
+        // Now change it
+        String newDate = "2014:01:23 10:07:05";
+        tool.addImageMetadata(imageFile.toFile(), ExifTool.Tag.DATE_TIME_ORIGINAL, newDate);
+
+        // Finally check that it's updated
+        metadata = tool.getImageMeta(imageFile.toFile(), ExifTool.Format.HUMAN_READABLE, ExifTool.Tag.DATE_TIME_ORIGINAL);
+        assertEquals("DateTimeOriginal tag is wrong", newDate, metadata.get(ExifTool.Tag.DATE_TIME_ORIGINAL));
+
+        // Finally copy the source file back over so the next test run is not affected by the change
+        URL backup_url = getClass().getResource("/nexus-s-electric-cars.jpg_original");
+        Path backupFile = Paths.get(backup_url.toURI());
+
+        Files.copy(backupFile, imageFile, StandardCopyOption.REPLACE_EXISTING);
+    }
+
+    @Test
+    public void testWriteTagStringInvalidformat() throws Exception{
+        ExifTool tool = new ExifTool(ExifTool.Feature.STAY_OPEN);
+        URL url = getClass().getResource("/nexus-s-electric-cars.jpg");
+        Path imageFile = Paths.get(url.toURI());
+
+        // Check the value is correct at the start
+        Map<ExifTool.Tag,String> metadata = tool.getImageMeta(imageFile.toFile(), ExifTool.Format.HUMAN_READABLE, ExifTool.Tag.DATE_TIME_ORIGINAL);
+        assertEquals("Wrong starting value", "2010:12:10 17:07:05", metadata.get(ExifTool.Tag.DATE_TIME_ORIGINAL));
+
+        // Now change it  to an invalid value which should fail
+        String newDate = "2egek opkpgrpok";
+        tool.addImageMetadata(imageFile.toFile(), ExifTool.Tag.DATE_TIME_ORIGINAL, newDate);
+
+        // Finally check that it's updated
+        metadata = tool.getImageMeta(imageFile.toFile(), ExifTool.Format.HUMAN_READABLE, ExifTool.Tag.DATE_TIME_ORIGINAL);
+        assertEquals("DateTimeOriginal tag is wrong", "2010:12:10 17:07:05", metadata.get(ExifTool.Tag.DATE_TIME_ORIGINAL));
+
+        // Finally copy the source file back over so the next test run is not affected by the change
+        URL backup_url = getClass().getResource("/nexus-s-electric-cars.jpg_original");
+        Path backupFile = Paths.get(backup_url.toURI());
+
+        Files.copy(backupFile, imageFile, StandardCopyOption.REPLACE_EXISTING);
+    }
+
+    @Test
+    public void testWriteTagNumberNonDaemon() throws Exception{
+        ExifTool tool = new ExifTool();
+        URL url = getClass().getResource("/nexus-s-electric-cars.jpg");
+        Path imageFile = Paths.get(url.toURI());
+
+        // Test what orientation value is at the start
+        Map<ExifTool.Tag,String> metadata = tool.getImageMeta(imageFile.toFile(), ExifTool.Format.HUMAN_READABLE, ExifTool.Tag.ORIENTATION);
+        assertEquals("Orientation tag starting value is wrong", "Horizontal (normal)", metadata.get(ExifTool.Tag.ORIENTATION));
+
+        // Now change it
+        tool.addImageMetadata(imageFile.toFile(), ExifTool.Tag.ORIENTATION, 3);
+
+        // Finally check the updated value
+        metadata = tool.getImageMeta(imageFile.toFile(), ExifTool.Format.HUMAN_READABLE, ExifTool.Tag.ORIENTATION);
+        assertEquals("Orientation tag updated value is wrong", "Rotate 180", metadata.get(ExifTool.Tag.ORIENTATION));
+
+        // Finally copy the source file back over so the next test run is not affected by the change
+        URL backup_url = getClass().getResource("/nexus-s-electric-cars.jpg_original");
+        Path backupFile = Paths.get(backup_url.toURI());
+
+        Files.copy(backupFile, imageFile, StandardCopyOption.REPLACE_EXISTING);
+
+    }
+
+    @Test
+    public void testWriteTagNumber() throws Exception{
+        ExifTool tool = new ExifTool(ExifTool.Feature.STAY_OPEN);
+        URL url = getClass().getResource("/nexus-s-electric-cars.jpg");
+        Path imageFile = Paths.get(url.toURI());
+
+        // Test what orientation value is at the start
+        Map<ExifTool.Tag,String> metadata = tool.getImageMeta(imageFile.toFile(), ExifTool.Format.HUMAN_READABLE, ExifTool.Tag.ORIENTATION);
+        assertEquals("Orientation tag starting value is wrong", "Horizontal (normal)", metadata.get(ExifTool.Tag.ORIENTATION));
+
+        // Now change it
+        tool.addImageMetadata(imageFile.toFile(), ExifTool.Tag.ORIENTATION, 3);
+
+        // Finally check the updated value
+        metadata = tool.getImageMeta(imageFile.toFile(), ExifTool.Format.HUMAN_READABLE, ExifTool.Tag.ORIENTATION);
+        assertEquals("Orientation tag updated value is wrong", "Rotate 180", metadata.get(ExifTool.Tag.ORIENTATION));
+
+        // Finally copy the source file back over so the next test run is not affected by the change
+        URL backup_url = getClass().getResource("/nexus-s-electric-cars.jpg_original");
+        Path backupFile = Paths.get(backup_url.toURI());
+
+        Files.copy(backupFile, imageFile, StandardCopyOption.REPLACE_EXISTING);
+
+    }
 }

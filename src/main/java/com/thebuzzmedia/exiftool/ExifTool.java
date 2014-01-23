@@ -1051,6 +1051,181 @@ public class ExifTool {
 		return featureSet.contains(feature);
 	}
 
+    public void addImageMetadata(File image, Tag tag, Object value) throws IOException {
+
+        if (image == null){
+            throw new IllegalArgumentException("image cannot be null and must be a valid stream of image data.");
+        }
+        if (tag == null){
+            throw new IllegalArgumentException("tag cannot be null");
+        }
+        if (value == null){
+            throw new IllegalArgumentException("value cannot be null and must contain 1 or characters");
+        }
+
+        if (!image.canWrite()){
+            throw new SecurityException("Unable to write the given image [" + image.getAbsolutePath()
+                    + "], ensure that the image exists at the given path and that the executing Java process has permissions to write to it.");
+        }
+
+        log.info("Adding Tag [name={}, value={}] to {}", tag, value, image.getAbsolutePath());
+
+        if(featureSet.contains(Feature.STAY_OPEN)) {
+            execute(createCommand(tag, value, image.getAbsolutePath()));
+        } else {
+            execute(createCommandList(tag, value, image.getAbsolutePath()));
+        }
+    }
+
+    private String createCommand(Tag tag, Object value, String filename) {
+        StringBuilder commandBuf = new StringBuilder();
+
+        if(value instanceof Number) {
+            commandBuf.append("-n\n");
+        }
+        commandBuf.append("-");
+        commandBuf.append(tag.getName());
+        commandBuf.append("=");
+        if(value != null) {
+            if(value instanceof String) {
+                commandBuf.append("\"").append(value.toString()).append("\"");
+            } else {
+                commandBuf.append(value.toString());
+            }
+        }
+        commandBuf.append("\n");
+
+        commandBuf.append(filename);
+        commandBuf.append("\n");
+
+        return commandBuf.toString();
+    }
+
+    private List<String> createCommandList(Tag tag, Object value, String filename) {
+
+        List<String> args = new ArrayList<String>(64);
+
+        if (value instanceof Number){
+            args.add("-n"); // numeric output
+        }
+
+        StringBuilder arg = new StringBuilder();
+        arg.append("-").append(tag.getName()).append("=");
+        if(value != null) {
+            if(value instanceof String) {
+                arg.append("\"").append(value.toString()).append("\"");
+            } else {
+                arg.append(value.toString());
+            }
+        }
+        args.add(arg.toString());
+        args.add(filename);
+        return args;
+
+    }
+
+    /**
+     * Internal method to execute a command in standalone mode
+     */
+    private void execute(final List<String> args) throws IOException {
+        long startTime = System.currentTimeMillis();
+        long exifToolCallStartTime;
+
+        log.debug("Executing $ exiftool {}", args);
+        log.debug("Using ExifTool in non-daemon mode (-stay_open False)...");
+
+        Map<String, String> resultMap;
+
+        /*
+         * Since we are not using a stayOpen process, we need to setup the
+         * execution arguments completely each time.
+         */
+        List<String> commandArg = new ArrayList<String>(64);
+        commandArg.add(EXIF_TOOL_PATH);
+        commandArg.addAll(args);
+
+        // Run the ExifTool with our args.
+        try {
+            stream = startExifToolProcess(commandArg);
+
+            // Begin tracking the duration ExifTool takes to respond.
+            exifToolCallStartTime = System.currentTimeMillis();
+            resultMap = readResponse(stream, false);
+            log.debug("results = {} ", resultMap);
+
+            long exifToolElapsedTime = System.currentTimeMillis()-exifToolCallStartTime;
+
+            // Print out how long the call to external ExifTool process took.
+            if (log.isDebugEnabled()){
+                log.debug(String.format("Finished reading ExifTool response in %d ms.", exifToolElapsedTime));
+            }
+        } finally {
+            /*
+             * If we are not using a persistent ExifTool process, then after running
+             * the command above, the process exited in which case we need to clean
+             * our streams up since it no longer exists.
+             */
+            stream.close();
+        }
+
+        log.debug("Image Meta Processed in {} ms",(System.currentTimeMillis() - startTime));
+    }
+
+    private void execute(final String command) throws IOException {
+        long exifToolCallStartTime;
+        Map<String, String> resultMap;
+
+        log.debug("Executing $ exiftool {}", command);
+        log.debug("Using ExifTool in daemon mode (-stay_open True)...");
+
+        // Always reset the cleanup task.
+        resetCleanupTask();
+        if (!isRunning()){
+            startup();
+        }
+
+        log.debug("Streaming arguments to ExifTool process...");
+
+        synchronized (this){
+            boolean success = false;
+            int attempts = 0;
+            exifToolCallStartTime = System.currentTimeMillis();
+            while (!success && attempts <= 2){
+                attempts++;
+
+                stream.writer.write(command);
+
+                log.debug("Executing ExifTool...");
+
+                // Begin tracking the duration ExifTool takes to respond.
+                exifToolCallStartTime = System.currentTimeMillis();
+
+                // Run ExifTool on our file with all the given arguments.
+                stream.writer.write("-execute\n");
+                try {
+                    stream.writer.flush();
+                    success = true;
+                } catch (IOException e){
+                    success = false;
+                    //only catch "Stream Closed" error (happens when process has died
+                    if (!e.getMessage().equals("Stream closed")){
+                        throw e; //
+                    }
+                    log.warn("Caught IOException / Stream closed, trying to restart daemon");
+                    stream = null;
+                    startup();
+                }
+            }
+            resultMap = readResponse(stream, true);
+            log.debug("results = {} ", resultMap);
+        }
+
+        long exifToolElapsedTime = System.currentTimeMillis()-exifToolCallStartTime;
+        // Print out how long the call to external ExifTool process took.
+
+        log.debug("Finished reading ExifTool response in {} ms.", exifToolElapsedTime);
+    }
+
   public Map<Tag, String> getImageMeta(File image, Tag... tags)
           throws IllegalArgumentException, SecurityException, IOException {
 
@@ -1242,6 +1417,13 @@ public class ExifTool {
       if (pair.length == 2) {
         resultMap.put(pair[0], pair[1]);
         log.debug(String.format("\tRead Tag [name=%s, value=%s]", pair[0], pair[1]));
+      } else {
+          // Check for possible error messages when doing updates
+          if(line.startsWith("Warning:")) {
+              log.warn("ExifTool failed. {}", line);
+              // Throw an exception since if logging is off the problem could silently fail
+              throw new IOException("ExifTool failed. " + line);
+          }
       }
 
       /*
