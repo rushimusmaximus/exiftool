@@ -8,7 +8,7 @@
     <groupId>com.thebuzzmedia.exiftool</groupId>
     <artifactId>exiftool-lib</artifactId>
     <packaging>jar</packaging>
-    <version>2.1.2</version>
+    <version>2.1.3</version>
     <url>https://github.com/thebuzzmedia/exiftool</url>
 
     <developers>
