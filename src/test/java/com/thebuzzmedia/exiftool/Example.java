@@ -6,11 +6,12 @@ import java.util.Map;
 
 import com.thebuzzmedia.exiftool.ExifTool.Feature;
 import com.thebuzzmedia.exiftool.ExifTool.Format;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class Example {
 
-  private static Logger log = Logger.getLogger(Example.class);
+  private static Logger log = LoggerFactory.getLogger(Example.class);
   private static final String TEST_FILES_PATH = "src/test/resources";
 
 	public static void main(String[] args) throws IOException, InterruptedException {
@@ -22,7 +23,7 @@ public class Example {
 
     //list all first-class tags
     for (File f : images) {
-      log.info("\n[" + f.getName() + "]");
+        log.info("\n[{}]", f.getName());
       Map<ExifTool.Tag,String> metadata = tool.getImageMeta(f, Format.HUMAN_READABLE, ExifTool.Tag.values());
       for (ExifTool.Tag key : metadata.keySet()){
         log.info(String.format("\t\t%s: %s", key.getName(), metadata.get(key)));
