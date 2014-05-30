@@ -5,3 +5,4 @@ bin
 workspace.xml
 *.iml
 .idea
+out

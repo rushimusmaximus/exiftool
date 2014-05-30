@@ -15,13 +15,29 @@
  */
 package com.thebuzzmedia.exiftool;
 
-import java.io.*;
-import java.util.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.StringTokenizer;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.regex.Pattern;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Class used to provide a Java-like interface to Phil Harvey's excellent,
@@ -606,7 +622,16 @@ public class ExifTool {
     return resultMap;
   }
 
-  public void addImageMetadata(File image, Map<Tag, Object> values) throws IOException {
+  public <T extends Object> void addImageMetadata(File image, Map<T, Object> values) throws IOException {
+    addImageMetadata(image,values,false);
+  }
+  /**
+   * Takes a map of tags (either (@link Tag) or Strings for keys) and replaces/appends them to the metadata.
+   * @param image file to update
+   * @param values Map of (@link Tag) or Strings to values
+   * @throws IOException
+   */
+  public <T extends Object> void addImageMetadata(File image, Map<T, Object> values, boolean deleteBackupFile) throws IOException {
 
     final boolean stayOpen = featureSet.contains(Feature.STAY_OPEN);
 
@@ -624,52 +649,69 @@ public class ExifTool {
 
     log.info("Adding Tags {} to {}", values, image.getAbsolutePath());
 
-    Map<String, String> resultMap;
-    if (stayOpen) {
-      log.debug("Using ExifTool in daemon mode (-stay_open True)...");
-      resultMap = processStayOpen(createCommandList(image.getAbsolutePath(), values));
-    } else {
-      log.debug("Using ExifTool in non-daemon mode (-stay_open False)...");
-      resultMap = ExifProcess.executeToResults(exifCmd, createCommandList(image.getAbsolutePath(), values));
+    List<String> args = new ArrayList<String>(values.size()+1);
+    for(Map.Entry<T, Object> entry : values.entrySet()) {
+      Object key = entry.getKey();
+      Object value = entry.getValue();
+      final String tagName;
+      if ( key instanceof Tag ) {
+        tagName = ((Tag) key).getName();
+      } else {
+        tagName = key.toString();
+      }
+
+      String arg;
+      if (value == null ) {
+        arg = String.format("-%s=",tagName);
+      } else if ( value instanceof Number ) {
+        arg = String.format("-%s#=%s",tagName,value);
+      } else if(value instanceof Date) {
+        SimpleDateFormat formatter = new SimpleDateFormat("yyyy:MM:dd HH:mm:ss");
+        arg = String.format("-%s=%s",tagName,formatter.format((Date)value));
+      } else if (value instanceof Iterable) {
+        Iterable it = (Iterable) value;
+        args.add("-sep");
+        args.add(",");
+        StringBuilder itemList = new StringBuilder();
+        for(Object item : it) {
+          if ( itemList.length() > 0 ) {
+            itemList.append(",");
+          }
+          itemList.append(item);
+        }
+        arg = String.format("-%s=%s",tagName, itemList);
+      } else {
+        arg = String.format("-%s=%s",tagName,value);
+      }
+      args.add(arg);
+
     }
+    args.add(image.getAbsolutePath());
 
     //start process
     long startTime = System.currentTimeMillis();
+
+    try {
+      if (stayOpen) {
+        log.debug("Using ExifTool in daemon mode (-stay_open True)...");
+        processStayOpen(args);
+      } else {
+        log.debug("Using ExifTool in non-daemon mode (-stay_open False)...");
+        ExifProcess.executeToResults(exifCmd, args);
+      }
+    } finally {
+      if ( deleteBackupFile ) {
+        File origBackup = new File(image.getAbsolutePath()+"_original");
+        if ( origBackup.exists() ) origBackup.delete();
+      }
+    }
+
 
     // Print out how long the call to external ExifTool process took.
     if (log.isDebugEnabled()){
       log.debug(String.format("Image Meta Processed in %d ms [added %d tags]",
         (System.currentTimeMillis() - startTime), values.size()));
     }
-  }
-
-  private List<String> createCommandList(String filename, Map<Tag, Object> values) {
-
-    List<String> args = new ArrayList<String>(64);
-
-    for(Map.Entry<Tag, Object> entry : values.entrySet()) {
-      Tag tag = entry.getKey();
-      Object value = entry.getValue();
-
-      StringBuilder arg = new StringBuilder();
-      arg.append("-").append(tag.getName());
-      if (value instanceof Number){
-        arg.append("#");
-      }
-      arg.append("=");
-      if(value != null) {
-        if(value instanceof String) {
-          arg.append("\"").append(value.toString()).append("\"");
-        } else {
-          arg.append(value.toString());
-        }
-      }
-      args.add(arg.toString());
-
-    }
-
-    args.add(filename);
-    return args;
   }
 
   /**
@@ -759,7 +801,7 @@ public class ExifTool {
     }
 
     public static ExifProcess startup(String exifCmd) {
-      List<String> args = Arrays.asList(exifCmd,"-stay_open", "True", "-@", "-");
+      List<String> args = Arrays.asList(exifCmd,"-stay_open", "True","?use","MWG","-@", "-");
       return _execute(true, args);
     }
 
