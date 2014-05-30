@@ -27,6 +27,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.EnumMap;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
@@ -61,7 +62,7 @@ import java.util.regex.Pattern;
  * application by utilizing this class.
  * <h3>Usage</h3>
  * Assuming ExifTool is installed on the host system correctly and either in the
- * system path or pointed to by {@link #exifCmd}, using this class to
+ * system path or pointed to by {@link #ENV_EXIF_TOOL_PATH}, using this class to
  * communicate with ExifTool is as simple as creating an instance (
  * <code>ExifTool tool = new ExifTool()</code>) and then making calls to
  * {@link #getImageMeta(File, Tag...)} or
@@ -114,7 +115,7 @@ import java.util.regex.Pattern;
  * <p/>
  * Because this feature requires ExifTool 8.36 or later, this class will
  * actually verify support for the feature in the version of ExifTool pointed at
- * by {@link #exifCmd} before successfully instantiating the class and
+ * by {@link #ENV_EXIF_TOOL_PATH} before successfully instantiating the class and
  * will notify you via an {@link UnsupportedFeatureException} if the native
  * ExifTool doesn't support the requested feature.
  * <p/>
@@ -130,7 +131,7 @@ import java.util.regex.Pattern;
  * of inactivity to clean up those stray resources.
  * <p/>
  * The inactivity period can be controlled by modifying the
- * {@link #processCleanupDelay} system variable. A value of <code>0</code> or
+ * {@link #ENV_EXIF_TOOL_PROCESSCLEANUPDELAY} system variable. A value of <code>0</code> or
  * less disabled the automatic cleanup process and requires you to cleanup
  * ExifTool instances on your own by calling {@link #close()} manually.
  * <p/>
@@ -215,37 +216,9 @@ import java.util.regex.Pattern;
  */
 public class ExifTool {
 
-  public static final String ENV_EXIF_TOOL_PATH = "exiftool.path";
-  public static final String ENV_EXIF_TOOL_PROCESSCLEANUPDELAY = "exiftool.processCleanupDelay";
-  public static final long DEFAULT_PROCESS_CLEANUP_DELAY = 0;
-
   /**
-   * Name used to identify the (optional) cleanup {@link Thread}.
-   * <p/>
-   * This is only provided to make debugging and profiling easier for
-   * implementers making use of this class such that the resources this class
-   * creates and uses (i.e. Threads) are readily identifiable in a running VM.
-   * <p/>
-   * Default value is "<code>ExifTool Cleanup Thread</code>".
-   */
-  private static final String CLEANUP_THREAD_NAME = "ExifTool Cleanup Thread";
-
-  /**
-   * Compiled {@link Pattern} of ": " used to split compact output from
-   * ExifTool evenly into name/value pairs.
-   */
-  private static final Pattern TAG_VALUE_PATTERN = Pattern.compile("\\s*:\\s*");
-  private static final String STREAM_CLOSED_MESSAGE = "Stream closed";
-
-  private static Logger log = LoggerFactory.getLogger(ExifTool.class);
-
-  /**
-   * The absolute path to the ExifTool executable on the host system running
-   * this class as defined by the "<code>exiftool.path</code>" system
-   * property.
-   * <p/>
    * If ExifTool is on your system path and running the command "exiftool"
-   * successfully executes it, leaving this value unchanged will work fine on
+   * successfully executes it, the default value unchanged will work fine on
    * any platform. If the ExifTool executable is named something else or not
    * in the system path, then this property will need to be set to point at it
    * before using this class.
@@ -268,8 +241,7 @@ public class ExifTool {
    * the directory that <code>new File(".").getAbsolutePath()</code> points at
    * during runtime.
    */
-  private final String exifCmd;
-
+  public static final String ENV_EXIF_TOOL_PATH = "exiftool.path";
   /**
    * Interval (in milliseconds) of inactivity before the cleanup thread wakes
    * up and cleans up the daemon ExifTool process and the read/write streams
@@ -295,25 +267,42 @@ public class ExifTool {
    * and the caller will need to manually cleanup the external ExifTool
    * process and read/write streams by calling {@link #close()}.
    * <p/>
-   * Default value is <code>600,000</code> (10 minutes).
+   * Default value is zero, no inactivity timeout.
    */
-  private final long processCleanupDelay;
+  public static final String ENV_EXIF_TOOL_PROCESSCLEANUPDELAY = "exiftool.processCleanupDelay";
+  public static final long DEFAULT_PROCESS_CLEANUP_DELAY = 0;
+
+  /**
+   * Name used to identify the (optional) cleanup {@link Thread}.
+   * <p/>
+   * This is only provided to make debugging and profiling easier for
+   * implementers making use of this class such that the resources this class
+   * creates and uses (i.e. Threads) are readily identifiable in a running VM.
+   * <p/>
+   * Default value is "<code>ExifTool Cleanup Thread</code>".
+   */
+  private static final String CLEANUP_THREAD_NAME = "ExifTool Cleanup Thread";
+
+  /**
+   * Compiled {@link Pattern} of ": " used to split compact output from
+   * ExifTool evenly into name/value pairs.
+   */
+  private static final Pattern TAG_VALUE_PATTERN = Pattern.compile("\\s*:\\s*");
+  private static final String STREAM_CLOSED_MESSAGE = "Stream closed";
+
+  private static Logger log = LoggerFactory.getLogger(ExifTool.class);
 
   private final Map<Feature, Boolean> featureSupportedMap = new HashMap<Feature, Boolean>();
-  private final Set<Feature> featureSet = EnumSet.noneOf(Feature.class);
+  private final Set<Feature> featureEnabledSet = EnumSet.noneOf(Feature.class);
   private final VersionNumber exifVersion;
-  private final Timer cleanupTimer;
-  private TimerTask currentCleanupTask = null;
-  private AtomicBoolean shuttingDown = new AtomicBoolean(false);
-  private volatile ExifProcess process;
-  private int timeoutWhenKeepAlive = 0;
+  private final ExifProxy exifProxy;
 
   public ExifTool(){
     this((Feature[]) null);
   }
 
   /**
-   * In this constructor, exifToolPath and processCleanupDelay are gotten from system properties
+   * In this constructor, exifToolPath and processCleanupDelay are read from system properties
    * exiftool.path and exiftool.processCleanupDelay. processCleanupDelay is optional. If not found,
    * the default is used.
    */
@@ -325,6 +314,9 @@ public class ExifTool {
     );
   }
 
+  /**
+   * Pass in the absolute path to the ExifTool executable on the host system.
+   */
   public ExifTool(String exifToolPath) {
     this(exifToolPath, DEFAULT_PROCESS_CLEANUP_DELAY, (Feature[]) null);
   }
@@ -334,27 +326,27 @@ public class ExifTool {
   }
 
   public ExifTool(String exifCmd, long processCleanupDelay, Feature ... features) {
-    this.exifCmd = exifCmd;
-    this.processCleanupDelay = processCleanupDelay;
     this.exifVersion = ExifProcess.readVersion(exifCmd);
     if (features != null && features.length > 0) {
       for (Feature feature : features) {
         if ( ! feature.isSupported(exifVersion) ) {
           throw new UnsupportedFeatureException(feature);
         }
-        this.featureSet.add(feature);
+        this.featureEnabledSet.add(feature);
         this.featureSupportedMap.put(feature,true);
       }
     }
 
-    /*
-    * Now that initialization is done, init the cleanup timer if we are
-    * using STAY_OPEN and the delay time set is non-zero.
-    */
-    if (isFeatureEnabled(Feature.STAY_OPEN) ) {
-      cleanupTimer = new Timer(CLEANUP_THREAD_NAME, true);
+    List<String> baseArgs = new ArrayList<String>(3);
+    if (featureEnabledSet.contains(Feature.MWG_MODULE) )  {
+      baseArgs.addAll(Arrays.asList("-use","MWG"));
+    }
+    if (featureEnabledSet.contains(Feature.STAY_OPEN) ) {
+      KeepAliveExifProxy proxy = new KeepAliveExifProxy(exifCmd,baseArgs);
+      proxy.setInactiveTimeout(processCleanupDelay);
+      exifProxy = proxy;
     } else {
-      cleanupTimer = null;
+      exifProxy = new SingleUseExifProxy(exifCmd,baseArgs);
     }
   }
 
@@ -362,14 +354,18 @@ public class ExifTool {
    * Limits the amount of time (in mills) an exif operation can take. Setting value to greater than 0 to enable.
    */
   public ExifTool setRunTimeout(int mills) {
-    timeoutWhenKeepAlive = mills;
+    if ( exifProxy instanceof KeepAliveExifProxy ) {
+      ((KeepAliveExifProxy) exifProxy).setRunTimeout(mills);
+    } else {
+      log.warn("Unable to set runTimeout, not a keep alive process");
+    }
     return this;
   }
 
   /**
    * Used to determine if the given {@link Feature} is supported by the
    * underlying native install of ExifTool pointed at by
-   * {@link #exifCmd}.
+   * {@link #ENV_EXIF_TOOL_PATH}.
    * <p/>
    * If support for the given feature has not been checked for yet, this
    * method will automatically call out to ExifTool and ensure the requested
@@ -415,100 +411,6 @@ public class ExifTool {
   }
 
   /**
-   * Used to startup the external ExifTool process and open the read/write
-   * streams used to communicate with it when {@link Feature#STAY_OPEN} is
-   * enabled. This method has no effect if the stay open feature is not enabled.
-   */
-  public void startup(){
-    if (featureSet.contains(Feature.STAY_OPEN)){
-      shuttingDown.set(false);
-      ensureProcessRunning();
-    }
-  }
-  private void ensureProcessRunning(){
-    if (process ==null || process.isClosed()) {
-      synchronized (this){
-        if (process ==null || process.isClosed() ){
-          log.debug("Starting daemon ExifTool process and creating read/write streams (this only happens once)...");
-          process = ExifProcess.startup(exifCmd);
-        }
-      }
-    }
-    if ( processCleanupDelay > 0 ) {
-      synchronized (this) {
-        if ( currentCleanupTask != null ) {
-          currentCleanupTask.cancel();
-          currentCleanupTask = null;
-        }
-        currentCleanupTask = new TimerTask() {
-          @Override
-          public void run() {
-            log.info("Auto cleanup task running...");
-            process.close();
-          }
-        };
-        cleanupTimer.schedule(currentCleanupTask, processCleanupDelay);
-      }
-    }
-  }
-
-  /**
-   * This is same as {@link #close()}, added for consistency with {@link #startup()}
-   */
-  public void shutdown(){
-    close();
-  }
-
-  /**
-   * Used to shutdown the external ExifTool process and close the read/write
-   * streams used to communicate with it when {@link Feature#STAY_OPEN} is
-   * enabled.
-   * <p/>
-   * <strong>NOTE</strong>: Calling this method does not preclude this
-   * instance of {@link ExifTool} from being re-used, it merely disposes of
-   * the native and internal resources until the next call to
-   * <code>getImageMeta</code> causes them to be re-instantiated.
-   * <p/>
-   * The cleanup thread will automatically call this after an interval of
-   * inactivity defined by {@link #processCleanupDelay}.
-   * <p/>
-   * Calling this method on an instance of this class without
-   * {@link Feature#STAY_OPEN} support enabled has no effect.
-   */
-  public synchronized void close() {
-    shuttingDown.set(true);
-    if ( process != null ) {
-      process.close();
-    }
-    if(currentCleanupTask != null) {
-      currentCleanupTask.cancel();
-      currentCleanupTask = null;
-    }
-  }
-
-  public boolean isStayOpen() {
-    return featureSet.contains(Feature.STAY_OPEN);
-  }
-
-  /**
-   * For {@link ExifTool} instances with {@link Feature#STAY_OPEN} support
-   * enabled, this method is used to determine if there is currently a running
-   * ExifTool process associated with this class.
-   * <p/>
-   * Any dependent processes and streams can be shutdown using
-   * {@link #close()} and this class will automatically re-create them on the
-   * next call to <code>getImageMeta</code> if necessary.
-   *
-   * @return <code>true</code> if there is an external ExifTool process in
-   *         daemon mode associated with this class utilizing the
-   *         {@link Feature#STAY_OPEN} feature, otherwise returns
-   *         <code>false</code>.
-   */
-  public boolean isRunning() {
-    return process != null && ! process.isClosed();
-  }
-
-  /**
    * Used to determine if the given {@link Feature} has been enabled for this
    * particular instance of {@link ExifTool}.
    * <p/>
@@ -532,8 +434,64 @@ public class ExifTool {
     if (feature == null){
       throw new IllegalArgumentException("feature cannot be null");
     }
-    return featureSet.contains(feature);
+    return featureEnabledSet.contains(feature);
   }
+
+  /**
+   * Used to startup the external ExifTool process and open the read/write
+   * streams used to communicate with it when {@link Feature#STAY_OPEN} is
+   * enabled. This method has no effect if the stay open feature is not enabled.
+   */
+  public void startup(){
+    exifProxy.startup();
+  }
+
+  /**
+   * This is same as {@link #close()}, added for consistency with {@link #startup()}
+   */
+  public void shutdown(){
+    close();
+  }
+
+  /**
+   * Used to shutdown the external ExifTool process and close the read/write
+   * streams used to communicate with it when {@link Feature#STAY_OPEN} is
+   * enabled.
+   * <p/>
+   * <strong>NOTE</strong>: Calling this method does not preclude this
+   * instance of {@link ExifTool} from being re-used, it merely disposes of
+   * the native and internal resources until the next call to
+   * <code>getImageMeta</code> causes them to be re-instantiated.
+   * <p/>
+   * Calling this method on an instance of this class without
+   * {@link Feature#STAY_OPEN} support enabled has no effect.
+   */
+  public void close() {
+    exifProxy.shutdown();
+  }
+
+  public boolean isStayOpen() {
+    return featureEnabledSet.contains(Feature.STAY_OPEN);
+  }
+
+  /**
+   * For {@link ExifTool} instances with {@link Feature#STAY_OPEN} support
+   * enabled, this method is used to determine if there is currently a running
+   * ExifTool process associated with this class.
+   * <p/>
+   * Any dependent processes and streams can be shutdown using
+   * {@link #close()} and this class will automatically re-create them on the
+   * next call to <code>getImageMeta</code> if necessary.
+   *
+   * @return <code>true</code> if there is an external ExifTool process in
+   *         daemon mode associated with this class utilizing the
+   *         {@link Feature#STAY_OPEN} feature, otherwise returns
+   *         <code>false</code>.
+   */
+  public boolean isRunning() {
+    return exifProxy != null && ! exifProxy.isRunning();
+  }
+
 
   public Map<Tag, String> getImageMeta(File image, Tag... tags)
     throws IllegalArgumentException, SecurityException, IOException {
@@ -550,7 +508,7 @@ public class ExifTool {
       stringTags[i++] = tag.getName();
     }
     Map<String,String> result = getImageMeta(image, format, true, stringTags);
-    return mapByTag(result);
+    return Tag.toTagMap(result);
   }
 
   public Map<String, String> getImageMeta(File image, Format format, TagGroup... tags)
@@ -567,7 +525,6 @@ public class ExifTool {
     throws IllegalArgumentException, SecurityException, IOException {
 
     //Validate input and create Arg Array
-    final boolean stayOpen = featureSet.contains(Feature.STAY_OPEN);
     List<String> args = new ArrayList<String>(tags.length+4);
     if (format == null){
       throw new IllegalArgumentException("format cannot be null");
@@ -579,7 +536,7 @@ public class ExifTool {
     }
     args.add("-S"); // compact output
 
-    if (tags == null || tags.length == 0){
+    if (tags.length == 0){
       throw new IllegalArgumentException("tags cannot be null and must contain 1 or more Tag to query the image for.");
     }
     for (String tag : tags) {
@@ -594,23 +551,10 @@ public class ExifTool {
     }
     args.add(image.getAbsolutePath());
 
-    //start process
+    //do process
     long startTime = System.currentTimeMillis();
     log.debug(String.format("Querying %d tags from image: %s", tags.length, image.getAbsolutePath()));
-		/*
-		 * Using ExifTool in daemon mode (-stay_open True) executes different
-		 * code paths below. So establish the flag for this once and it is
-		 * reused a multitude of times later in this method to figure out where
-		 * to branch to.
-		 */
-    Map<String, String> resultMap;
-    if (stayOpen) {
-      log.debug("Using ExifTool in daemon mode (-stay_open True)...");
-      resultMap = processStayOpen(args);
-    } else {
-      log.debug("Using ExifTool in non-daemon mode (-stay_open False)...");
-      resultMap = ExifProcess.executeToResults(exifCmd,args);
-    }
+    Map<String, String> resultMap = exifProxy.execute(args);
 
     // Print out how long the call to external ExifTool process took.
     if (log.isDebugEnabled()){
@@ -622,7 +566,7 @@ public class ExifTool {
     return resultMap;
   }
 
-  public <T extends Object> void addImageMetadata(File image, Map<T, Object> values) throws IOException {
+  public <T> void addImageMetadata(File image, Map<T, Object> values) throws IOException {
     addImageMetadata(image,values,false);
   }
   /**
@@ -631,9 +575,8 @@ public class ExifTool {
    * @param values Map of (@link Tag) or Strings to values
    * @throws IOException
    */
-  public <T extends Object> void addImageMetadata(File image, Map<T, Object> values, boolean deleteBackupFile) throws IOException {
+  public <T> void addImageMetadata(File image, Map<T, Object> values, boolean deleteBackupFile) throws IOException {
 
-    final boolean stayOpen = featureSet.contains(Feature.STAY_OPEN);
 
     if (image == null){
       throw new IllegalArgumentException("image cannot be null and must be a valid stream of image data.");
@@ -690,22 +633,14 @@ public class ExifTool {
 
     //start process
     long startTime = System.currentTimeMillis();
-
     try {
-      if (stayOpen) {
-        log.debug("Using ExifTool in daemon mode (-stay_open True)...");
-        processStayOpen(args);
-      } else {
-        log.debug("Using ExifTool in non-daemon mode (-stay_open False)...");
-        ExifProcess.executeToResults(exifCmd, args);
-      }
+      exifProxy.execute(args);
     } finally {
       if ( deleteBackupFile ) {
         File origBackup = new File(image.getAbsolutePath()+"_original");
         if ( origBackup.exists() ) origBackup.delete();
       }
     }
-
 
     // Print out how long the call to external ExifTool process took.
     if (log.isDebugEnabled()){
@@ -714,62 +649,23 @@ public class ExifTool {
     }
   }
 
-  /**
-   * Will attempt 3 times to use the running exif process, and if unable to complete successfully will throw IOException
-   */
-  private Map<String, String> processStayOpen(List<String> args) throws IOException {
-    int attempts = 0;
-    while (attempts < 3 && ! shuttingDown.get()){
-      attempts++;
-      //make sure process is started
-      ensureProcessRunning();
-      TimerTask attemptTimer = null;
-      try {
-        if ( timeoutWhenKeepAlive > 0 ) {
-          attemptTimer = new TimerTask() {
-            public void run() {
-              log.warn("Process ran too long closing, max "+timeoutWhenKeepAlive+" mills");
-              process.close();
-            }
-          };
-          cleanupTimer.schedule(attemptTimer, timeoutWhenKeepAlive);
-        }
-        log.debug("Streaming arguments to ExifTool process...");
-        return process.sendArgs(args);
-      } catch (IOException ex){
-        if ( STREAM_CLOSED_MESSAGE.equals(ex.getMessage()) && ! shuttingDown.get() ){
-          //only catch "Stream Closed" error (happens when process has died)
-          log.warn(String.format("Caught IOException(\"%s\"), will restart daemon",STREAM_CLOSED_MESSAGE));
-          process.close();
-        } else {
-          throw ex;
-        }
-      } finally {
-        if ( attemptTimer != null ) attemptTimer.cancel();
-      }
-    }
-    if ( shuttingDown.get() ) {
-      throw new IOException("Shutting Down");
-    }
-    throw new IOException("Ran out of attempts");
-  }
-
-  private static Map<Tag, String> mapByTag(Map<String,String> stringMap){
-    Map<Tag, String> tagMap = new HashMap<Tag, String>(Tag.values().length);
-    for (Tag tag : Tag.values()){
-      if (stringMap.containsKey(tag.getName())){
-        tagMap.put(tag, stringMap.get(tag.getName()));
-      }
-    }
-    return tagMap;
-  }
-
-
   //================================================================================
   /**
-   * Represents an Exif Process.
+   * Represents an external exif process.  Works for both single use and keep alive modes.
+   *
    */
-  public static class ExifProcess {
+  public static final class ExifProcess {
+    public static VersionNumber readVersion(String exifCmd) {
+      ExifProcess process = new ExifProcess(false, Arrays.asList(exifCmd, "-ver"));
+      try {
+        return new VersionNumber(process.readLine());
+      } catch (IOException ex) {
+        throw new RuntimeException(String.format("Unable to check version number of ExifTool: %s", exifCmd));
+      } finally {
+        process.close();
+      }
+    }
+
     private final ReentrantLock closeLock = new ReentrantLock(false);
     private final boolean keepAlive;
     private final Process process;
@@ -777,40 +673,14 @@ public class ExifTool {
     private final OutputStreamWriter writer;
     private volatile boolean closed = false;
 
-    public static VersionNumber readVersion(String exifCmd) {
-      ExifProcess process =_execute(false, Arrays.asList(exifCmd,"-ver"));
+    public ExifProcess(boolean keepAlive, List<String> args) {
+      this.keepAlive = keepAlive;
+      log.debug(String.format("Attempting to start ExifTool process using args: %s", args));
       try {
-        return new VersionNumber(process.readLine());
-      } catch (IOException ex) {
-        throw new RuntimeException(String.format("Unable to check version number of ExifTool: %s",exifCmd));
-      } finally {
-        process.close();
-      }
-    }
-
-    public static Map<String,String> executeToResults(String exifCmd, List<String> args) throws IOException {
-      List<String> newArgs = new ArrayList<String>(args.size()+1);
-      newArgs.add(exifCmd);
-      newArgs.addAll(args);
-      ExifProcess process = _execute(false, newArgs);
-      try {
-        return process.readResponse();
-      } finally {
-        process.close();
-      }
-    }
-
-    public static ExifProcess startup(String exifCmd) {
-      List<String> args = Arrays.asList(exifCmd,"-stay_open", "True","?use","MWG","-@", "-");
-      return _execute(true, args);
-    }
-
-    public static ExifProcess _execute(boolean keepAlive, List<String> args) {
-      log.debug(String.format("Attempting to start external ExifTool process using args: %s", args));
-      try {
-        Process process = new ProcessBuilder(args).start();
+        this.process = new ProcessBuilder(args).start();
+        this.reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+        this.writer = new OutputStreamWriter(process.getOutputStream());
         log.debug("\tSuccessful");
-        return new ExifProcess(keepAlive,process);
       } catch (Exception e) {
         String message = "Unable to start external ExifTool process using the execution arguments: "
           + args
@@ -823,16 +693,12 @@ public class ExifTool {
       }
     }
 
-    public ExifProcess(boolean keepAlive,Process process) {
-      this.keepAlive = keepAlive;
-      this.process = process;
-      this.reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
-      this.writer = new OutputStreamWriter(process.getOutputStream());
-    }
-
-    public synchronized Map<String,String> sendArgs(List<String> args) throws IOException {
+    public synchronized Map<String, String> sendArgs(List<String> args) throws IOException {
+      if (!keepAlive) {
+        throw new IOException("Not KeepAlive Process");
+      }
       StringBuilder builder = new StringBuilder();
-      for(String arg : args) {
+      for (String arg : args) {
         builder.append(arg).append("\n");
       }
       builder.append("-execute\n");
@@ -840,26 +706,25 @@ public class ExifTool {
       return readResponse();
     }
 
-
     public synchronized void writeFlush(String message) throws IOException {
-      if ( closed )  throw new IOException(STREAM_CLOSED_MESSAGE);
+      if (closed) throw new IOException(STREAM_CLOSED_MESSAGE);
       writer.write(message);
       writer.flush();
     }
 
     public synchronized String readLine() throws IOException {
-      if ( closed )  throw new IOException(STREAM_CLOSED_MESSAGE);
+      if (closed) throw new IOException(STREAM_CLOSED_MESSAGE);
       return reader.readLine();
     }
 
-    public synchronized Map<String,String> readResponse() throws IOException {
-      if ( closed )  throw new IOException(STREAM_CLOSED_MESSAGE);
+    public synchronized Map<String, String> readResponse() throws IOException {
+      if (closed) throw new IOException(STREAM_CLOSED_MESSAGE);
       log.debug("Reading response back from ExifTool...");
       Map<String, String> resultMap = new HashMap<String, String>(500);
       String line;
 
       while ((line = reader.readLine()) != null) {
-        if ( closed )  throw new IOException(STREAM_CLOSED_MESSAGE);
+        if (closed) throw new IOException(STREAM_CLOSED_MESSAGE);
         String[] pair = TAG_VALUE_PATTERN.split(line, 2);
 
         if (pair.length == 2) {
@@ -874,7 +739,7 @@ public class ExifTool {
        * this process will hang indefinitely blocking on the input stream
        * with no data to read.
        */
-        if (keepAlive && line.equals("{ready}")){
+        if (keepAlive && line.equals("{ready}")) {
           break;
         }
       }
@@ -886,10 +751,10 @@ public class ExifTool {
     }
 
     public void close() {
-      if ( ! closed ) {
+      if (!closed) {
         closeLock.lock();
         try {
-          if ( ! closed ) {
+          if (!closed) {
             closed = true;
             log.debug("Attempting to close ExifTool daemon process, issuing '-stay_open\\nFalse\\n' command...");
             try {
@@ -931,6 +796,163 @@ public class ExifTool {
     }
   }
 
+  /**
+   * A Proxy to an Exif Process, will restart if backing exif process died, or run new one on every call.
+   * @author Matt Gile, msgile
+   */
+  public interface ExifProxy {
+    public void startup();
+    public Map<String, String> execute(List<String> args) throws IOException;
+    public boolean isRunning();
+    public void shutdown();
+  }
+
+  /**
+   * Manages an external exif process in keep alive mode.
+   */
+  public static class KeepAliveExifProxy implements ExifProxy {
+    private final List<String> startupArgs;
+    private final AtomicBoolean shuttingDown = new AtomicBoolean(false);
+    private final Timer cleanupTimer = new Timer(CLEANUP_THREAD_NAME, true);
+    private long inactivityTimeout = 0;
+    private long runTimeout = 0;
+    private volatile long lastRunStart = 0;
+    private volatile ExifProcess process;
+
+    public KeepAliveExifProxy(String exifCmd, List<String> baseArgs) {
+      inactivityTimeout = Long.getLong(ENV_EXIF_TOOL_PROCESSCLEANUPDELAY, DEFAULT_PROCESS_CLEANUP_DELAY);
+      startupArgs = new ArrayList<String>(baseArgs.size()+5);
+      startupArgs.add(exifCmd);
+      startupArgs.addAll(Arrays.asList("-stay_open", "True"));
+      startupArgs.addAll(baseArgs);
+      startupArgs.addAll(Arrays.asList("-@", "-"));
+      //runs every minute to check if process has been inactive too long
+      cleanupTimer.schedule(new TimerTask() {
+        @Override
+        public void run() {
+          if ( process != null && lastRunStart > 0 && inactivityTimeout > 0 ) {
+            if ( (System.currentTimeMillis()-lastRunStart) > inactivityTimeout) {
+              synchronized (this) {
+                if ( process != null ) {
+                  process.close();
+                }
+              }
+            }
+          }
+        }
+      },60*1000); //every minute
+    }
+
+    public void setInactiveTimeout(long mills) {
+      this.inactivityTimeout = mills;
+    }
+
+    public void setRunTimeout(long mills) {
+      this.runTimeout = mills;
+
+    }
+
+    public void startup() {
+      shuttingDown.set(false);
+      if (process ==null || process.isClosed()) {
+        synchronized (this){
+          if (process ==null || process.isClosed() ){
+            log.debug("Starting daemon ExifTool process and creating read/write streams (this only happens once)...");
+            process = new ExifProcess(true, startupArgs);
+          }
+        }
+      }
+    }
+
+    public Map<String,String> execute(List<String> args) throws IOException {
+      lastRunStart = System.currentTimeMillis();
+      int attempts = 0;
+      while (attempts < 3 && ! shuttingDown.get()){
+        attempts++;
+        if (process ==null || process.isClosed()) {
+          synchronized (this){
+            if (process ==null || process.isClosed() ){
+              log.debug("Starting daemon ExifTool process and creating read/write streams (this only happens once)...");
+              process = new ExifProcess(true, startupArgs);
+            }
+          }
+        }
+        TimerTask attemptTimer = null;
+        try {
+          if ( runTimeout > 0 ) {
+            attemptTimer = new TimerTask() {
+              public void run() {
+                if (process != null) {
+                  log.warn("Process ran too long closing, max " + runTimeout + " mills");
+                  process.close();
+                }
+              }
+            };
+            cleanupTimer.schedule(attemptTimer, runTimeout);
+          }
+          log.debug("Streaming arguments to ExifTool process...");
+          return process.sendArgs(args);
+        } catch (IOException ex){
+          if ( STREAM_CLOSED_MESSAGE.equals(ex.getMessage()) && ! shuttingDown.get() ){
+            //only catch "Stream Closed" error (happens when process has died)
+            log.warn(String.format("Caught IOException(\"%s\"), will restart daemon",STREAM_CLOSED_MESSAGE));
+            process.close();
+          } else {
+            throw ex;
+          }
+        } finally {
+          if ( attemptTimer != null ) attemptTimer.cancel();
+        }
+      }
+      if ( shuttingDown.get() ) {
+        throw new IOException("Shutting Down");
+      }
+      throw new IOException("Ran out of attempts");
+    }
+
+    public boolean isRunning() {
+      return process != null && ! process.isClosed();
+    }
+
+    public void shutdown() {
+      shuttingDown.set(true);
+    }
+  }
+
+  public static class SingleUseExifProxy implements ExifProxy {
+    private final List<String> baseArgs;
+
+    public SingleUseExifProxy(String exifCmd, List<String> defaultArgs) {
+      this.baseArgs = new ArrayList<String>(defaultArgs.size()+1);
+      this.baseArgs.add(exifCmd);
+      this.baseArgs.addAll(defaultArgs);
+    }
+
+    public Map<String, String> execute(List<String> args) throws IOException {
+      List<String> newArgs = new ArrayList<String>(baseArgs.size()+args.size());
+      newArgs.addAll(baseArgs);
+      newArgs.addAll(args);
+      ExifProcess process = new ExifProcess(false, newArgs);
+      try {
+        return process.readResponse();
+      } finally {
+        process.close();
+      }
+    }
+
+    public void startup() {
+      ;
+    }
+
+    public boolean isRunning() {
+      return false;
+    }
+
+    public void shutdown() {
+      ;
+    }
+  }
+
   //================================================================================
   /**
    * Enum used to define the different kinds of features in the native
@@ -952,7 +974,20 @@ public class ExifTool {
      * <p/>
      * Required ExifTool version is <code>8.36</code> or higher.
      */
-    STAY_OPEN(8,36);
+    STAY_OPEN(8,36),
+    /**
+     * Acitves the MWG modules. The Metadata Working Group (MWG) recommends
+     * techniques to allow certain overlapping EXIF, IPTC and XMP tags to be
+     * reconciled when reading, and synchronized when writing. The MWG Composite tags
+     * below are designed to aid in the implementation of these recommendations.
+     * Will add the args " -use MWG"
+     *
+     *
+     * @see <a href="http://www.sno.phy.queensu.ca/~phil/exiftool/TagNames/MWG.html">ExifTool MWG Docs</a>
+     * !! Note these version numbers are not correct
+     */
+    MWG_MODULE(8,36),
+    ;
 
 
     private VersionNumber requireVersion;
@@ -978,6 +1013,7 @@ public class ExifTool {
   //================================================================================
   /**
    * Version Number used to determine if one version is after another.
+   * @author Matt Gile, msgile
    */
   static class VersionNumber {
     private final int[] numbers;
@@ -1182,6 +1218,17 @@ public class ExifTool {
         }
       }
       return null;
+    }
+
+    public static Map<Tag,String> toTagMap(Map<String,String> values) {
+      Map<Tag, String> tagMap = new EnumMap<Tag, String>(Tag.class);
+      for (Tag tag : Tag.values()){
+        if (values.containsKey(tag.getName())){
+          tagMap.put(tag, values.get(tag.getName()));
+        }
+      }
+      return tagMap;
+
     }
 
     /**
