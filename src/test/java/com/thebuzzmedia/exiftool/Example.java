@@ -1,13 +1,13 @@
 package com.thebuzzmedia.exiftool;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.Map;
-
 import com.thebuzzmedia.exiftool.ExifTool.Feature;
 import com.thebuzzmedia.exiftool.ExifTool.Format;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.Map;
 
 public class Example {
 
@@ -26,7 +26,7 @@ public class Example {
       log.info("\n[{}]", f.getName());
       Map<ExifTool.Tag,String> metadata = tool.getImageMeta(f, Format.HUMAN_READABLE, ExifTool.Tag.values());
       for (ExifTool.Tag key : metadata.keySet()){
-        log.info(String.format("\t\t%s: %s", key.getName(), metadata.get(key)));
+        log.info(String.format("\t\t%s: %s", key.getKey(), metadata.get(key)));
       }
     }
 
@@ -35,7 +35,7 @@ public class Example {
     File f = new File(TEST_FILES_PATH + "/kureckjones_jett_075_02-cropped.tif");
     for (ExifTool.TagGroup tagGroup : new ExifTool.TagGroup[] {ExifTool.TagGroup.EXIF, ExifTool.TagGroup.IPTC, ExifTool.TagGroup.XMP}){
       Map<String,String> metadata = tool.getImageMeta(f, Format.HUMAN_READABLE, tagGroup);
-      log.info(tagGroup.getName());
+      log.info(tagGroup.getKey());
       for (String key : metadata.keySet()){
         log.info(String.format("\t\t%s: %s", key, metadata.get(key)));
       }

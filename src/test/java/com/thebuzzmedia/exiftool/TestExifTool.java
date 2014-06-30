@@ -12,15 +12,15 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.*;
 
 /**
  * TestMetadata<p>
@@ -418,7 +418,7 @@ public class TestExifTool {
     newValues.put(ExifTool.Tag.DATE_TIME_ORIGINAL, newDate);
     newValues.put(ExifTool.Tag.ORIENTATION, 3);
 
-    tool.addImageMetadata(imageFile.toFile(), newValues);
+    tool.writeMetadata(imageFile.toFile(), newValues);
 
     // Finally check the updated value
     metadata = tool.getImageMeta(imageFile.toFile(), ExifTool.Format.HUMAN_READABLE, ExifTool.Tag.ORIENTATION, ExifTool.Tag.DATE_TIME_ORIGINAL);
@@ -430,6 +430,49 @@ public class TestExifTool {
     Path backupFile = Paths.get(backup_url.toURI());
 
     Files.move(backupFile, imageFile, StandardCopyOption.REPLACE_EXISTING);
+  }
+
+  @Test
+  public void testWritingWithImplicitTypes() throws Exception{
+    ExifTool tool = new ExifTool(ExifTool.Feature.MWG_MODULE);
+    tool.setReadOptions(tool.getReadOptions().withNumericOutput(true).withConvertTypes(true));
+    URL url = getClass().getResource("/nexus-s-electric-cars.jpg");
+    File imageFile = Paths.get(url.toURI()).toFile();
+    try {
+      // Test what orientation value is at the start
+      SimpleDateFormat formatter = new SimpleDateFormat("yyyy:MM:dd hh:mm:ss");
+
+      Map<Object, Object> metadata = tool.readMetadata(imageFile, ExifTool.Tag.ORIENTATION, ExifTool.MwgTag.DATE_TIME_ORIGINAL);
+      assertEquals("Orientation tag starting value is wrong", 1, metadata.get(ExifTool.Tag.ORIENTATION));
+      assertEquals("Wrong starting value", formatter.parse("2010:12:10 17:07:05"), metadata.get(ExifTool.MwgTag.DATE_TIME_ORIGINAL));
+
+      // Now change them
+      Map<Object, Object> data = new HashMap<Object, Object>();
+      Date dateTimeOrig = formatter.parse("2014:01:23 10:07:05");
+      data.put(ExifTool.MwgTag.DATE_TIME_ORIGINAL, dateTimeOrig);
+      data.put(ExifTool.Tag.ORIENTATION, 3);
+      Date createDate = formatter.parse("2013:02:21 10:07:05");
+      data.put(ExifTool.MwgTag.CREATE_DATE, createDate.getTime());
+      data.put(ExifTool.MwgTag.KEYWORDS, new String[]{"a", "b", "c"});
+      tool.writeMetadata(tool.getWriteOptions().withDeleteBackupFile(false),imageFile, data);
+
+      // Finally check the updated value
+      metadata = tool.readMetadata(imageFile, ExifTool.Tag.ORIENTATION, imageFile, ExifTool.MwgTag.DATE_TIME_ORIGINAL, ExifTool.MwgTag.CREATE_DATE, ExifTool.MwgTag.KEYWORDS);
+      assertEquals("Orientation tag updated value is wrong", 3, metadata.get(ExifTool.Tag.ORIENTATION));
+      assertEquals("DateTimeOriginal tag is wrong", dateTimeOrig, metadata.get(ExifTool.MwgTag.DATE_TIME_ORIGINAL));
+      assertEquals("CreateDate tag is wrong", createDate, metadata.get(ExifTool.MwgTag.CREATE_DATE));
+      assertEquals("Keywords tag is wrong", "a", ((String[]) metadata.get(ExifTool.MwgTag.KEYWORDS))[0]);
+
+      // Finally copy the source file back over so the next test run is not affected by the change
+
+    } finally {
+      URL backup_url = getClass().getResource("/nexus-s-electric-cars.jpg_original");
+      if ( backup_url != null ) {
+        Path backupFile = Paths.get(backup_url.toURI());
+        Files.move(backupFile, imageFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+      }
+
+    }
   }
 
   //todo TEST automatic daemon restart by killing perl process

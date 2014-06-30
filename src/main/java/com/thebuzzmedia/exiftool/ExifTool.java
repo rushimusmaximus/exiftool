@@ -23,6 +23,8 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
+import java.lang.reflect.Array;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -36,14 +38,16 @@ import java.util.Set;
 import java.util.StringTokenizer;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.regex.Pattern;
 
 /**
- * Class used to provide a Java-like interface to Phil Harvey's excellent,
- * Perl-based <a
- * href="http://www.sno.phy.queensu.ca/~phil/exiftool">ExifTool</a>.
+ * Provide a Java-like interface to Phil Harvey's excellent,
+ * Perl-based <a href="http://www.sno.phy.queensu.ca/~phil/exiftool">ExifTool</a>.
+ * <p/>
+ * Initial work done by "Riyad Kalla" software@thebuzzmedia.com.
  * <p/>
  * There are a number of other basic Java wrappers to ExifTool available online,
  * but most of them only abstract out the actual Java-external-process execution
@@ -65,30 +69,14 @@ import java.util.regex.Pattern;
  * system path or pointed to by {@link #ENV_EXIF_TOOL_PATH}, using this class to
  * communicate with ExifTool is as simple as creating an instance (
  * <code>ExifTool tool = new ExifTool()</code>) and then making calls to
- * {@link #getImageMeta(File, Tag...)} or
- * {@link #getImageMeta(File, Format, Tag...)} with a list of {@link Tag}s you
- * want to pull values for from the given image.
+ * {@link #readMetadata(ReadOptions,java.io.File, Object...)} (optionally supplying tags or
+ * {@link #writeMetadata(WriteOptions,java.io.File, java.util.Map)}
  * <p/>
- * In this default mode, calls to <code>getImageMeta</code> will automatically
+ * In this default mode methods will automatically
  * start an external ExifTool process to handle the request. After ExifTool has
  * parsed the tag values from the file, the external process exits and this
  * class parses the result before returning it to the caller.
  * <p/>
- * Results from calls to <code>getImageMeta</code> are returned in a {@link Map}
- * with the {@link Tag} values as the keys and {@link String} values for every
- * tag that had a value in the image file as the values. {@link Tag}s with no
- * value found in the image are omitted from the result map.
- * <p/>
- * While each {@link Tag} provides a hint at which format the resulting value
- * for that tag is returned as from ExifTool (see {@link Tag#getType()}), that
- * only applies to values returned with an output format of
- * {@link Format#NUMERIC} and it is ultimately up to the caller to decide how
- * best to parse or convert the returned values.
- * <p/>
- * The {@link Tag} Enum provides the {@link Tag#parseValue(String)}
- * convenience method for parsing given <code>String</code> values according to
- * the Tag hint automatically for you if that is what you plan on doing,
- * otherwise feel free to handle the return values anyway you want.
  * <h3>ExifTool -stay_open Support</h3>
  * ExifTool <a href=
  * "http://u88.n24.queensu.ca/exiftool/forum/index.php/topic,1402.msg12933.html#msg12933"
@@ -289,11 +277,14 @@ public class ExifTool {
    */
   private static final Pattern TAG_VALUE_PATTERN = Pattern.compile("\\s*:\\s*");
   private static final String STREAM_CLOSED_MESSAGE = "Stream closed";
+  private static final String EXIF_DATE_FORMAT = "yyyy:MM:dd HH:mm:ss";
 
   private static Logger log = LoggerFactory.getLogger(ExifTool.class);
 
   private final Map<Feature, Boolean> featureSupportedMap = new HashMap<Feature, Boolean>();
   private final Set<Feature> featureEnabledSet = EnumSet.noneOf(Feature.class);
+  private ReadOptions defReadOptions = new ReadOptions();
+  private WriteOptions defWriteOptions = new WriteOptions();
   private final VersionNumber exifVersion;
   private final ExifProxy exifProxy;
 
@@ -318,7 +309,7 @@ public class ExifTool {
    * Pass in the absolute path to the ExifTool executable on the host system.
    */
   public ExifTool(String exifToolPath) {
-    this(exifToolPath, DEFAULT_PROCESS_CLEANUP_DELAY, (Feature[]) null);
+    this(exifToolPath, DEFAULT_PROCESS_CLEANUP_DELAY);
   }
 
   public ExifTool(String exifToolPath, Feature ... features) {
@@ -353,12 +344,9 @@ public class ExifTool {
   /**
    * Limits the amount of time (in mills) an exif operation can take. Setting value to greater than 0 to enable.
    */
-  public ExifTool setRunTimeout(int mills) {
-    if ( exifProxy instanceof KeepAliveExifProxy ) {
-      ((KeepAliveExifProxy) exifProxy).setRunTimeout(mills);
-    } else {
-      log.warn("Unable to set runTimeout, not a keep alive process");
-    }
+  public ExifTool setRunTimeout(long mills) {
+    defReadOptions  = defReadOptions.withRunTimeoutMills(mills);
+    defWriteOptions = defWriteOptions.withRunTimeoutMills(mills);
     return this;
   }
 
@@ -493,9 +481,29 @@ public class ExifTool {
   }
 
 
+  public ReadOptions getReadOptions() {
+    return defReadOptions;
+  }
+
+  public ExifTool setReadOptions(ReadOptions options) {
+    defReadOptions = options;
+    return this;
+  }
+
+  public WriteOptions getWriteOptions() {
+    return defWriteOptions;
+  }
+
+  public ExifTool setWriteOptions(WriteOptions options) {
+    defWriteOptions = options;
+    return this;
+  }
+  //================================================================================
+  //OLD API
+  public static enum Format{NUMERIC, HUMAN_READABLE}
+
   public Map<Tag, String> getImageMeta(File image, Tag... tags)
     throws IllegalArgumentException, SecurityException, IOException {
-
     return getImageMeta(image, Format.NUMERIC, tags);
   }
 
@@ -505,7 +513,7 @@ public class ExifTool {
     String [] stringTags = new String[tags.length];
     int i=0;
     for (Tag tag : tags){
-      stringTags[i++] = tag.getName();
+      stringTags[i++] = tag.getKey();
     }
     Map<String,String> result = getImageMeta(image, format, true, stringTags);
     return Tag.toTagMap(result);
@@ -516,68 +524,103 @@ public class ExifTool {
     String [] stringTags = new String[tags.length];
     int i=0;
     for (TagGroup tag : tags){
-      stringTags[i++] = tag.getValue();
+      stringTags[i++] = tag.getKey();
     }
     return getImageMeta(image, format, false, stringTags);
   }
 
-  private Map<String, String> getImageMeta(final File image, final Format format, final boolean suppressDuplicates, final String... tags)
-    throws IllegalArgumentException, SecurityException, IOException {
-
-    //Validate input and create Arg Array
-    List<String> args = new ArrayList<String>(tags.length+4);
-    if (format == null){
-      throw new IllegalArgumentException("format cannot be null");
-    } else if (format == Format.NUMERIC){
-      args.add("-n"); // numeric output
+  public Map<String,String> getImageMeta(File file, Format format, boolean supressDuplicates, String... tags) throws IOException {
+    ReadOptions options = defReadOptions.withNumericOutput(format == Format.NUMERIC).withShowDuplicates(!supressDuplicates).withConvertTypes(false);
+    Map<Object,Object> result = readMetadata(options, file, tags);
+    Map<String,String> data = new TreeMap<String,String>();
+    for(Map.Entry<Object,Object> entry : result.entrySet()) {
+      data.put(entry.getKey().toString(), entry.getValue()!=null?entry.getValue().toString():"");
     }
-    if (!suppressDuplicates){
-      args.add("-a"); //suppress duplicates
-    }
-    args.add("-S"); // compact output
-
-    if (tags.length == 0){
-      throw new IllegalArgumentException("tags cannot be null and must contain 1 or more Tag to query the image for.");
-    }
-    for (String tag : tags) {
-      args.add("-" + tag);
-    }
-    if (image == null){
-      throw new IllegalArgumentException("image cannot be null and must be a valid stream of image data.");
-    }
-    if (!image.canRead()){
-      throw new SecurityException("Unable to read the given image ["+image.getAbsolutePath()
-        + "], ensure that the image exists at the given path and that the executing Java process has permissions to read it.");
-    }
-    args.add(image.getAbsolutePath());
-
-    //do process
-    long startTime = System.currentTimeMillis();
-    log.debug(String.format("Querying %d tags from image: %s", tags.length, image.getAbsolutePath()));
-    Map<String, String> resultMap = exifProxy.execute(args);
-
-    // Print out how long the call to external ExifTool process took.
-    if (log.isDebugEnabled()){
-      log.debug(String.format("Image Meta Processed in %d ms [queried %d tags and found %d values]",
-        (System.currentTimeMillis() - startTime), tags.length,
-        resultMap.size()));
-    }
-
-    return resultMap;
+    return data;
   }
 
   public <T> void addImageMetadata(File image, Map<T, Object> values) throws IOException {
-    addImageMetadata(image,values,false);
+    writeMetadata(defWriteOptions.withDeleteBackupFile(false),image,values);
+  }
+  //================================================================================
+  public Map<Object,Object> readMetadata(File file, Object... tags) throws IOException {
+    return readMetadata(defReadOptions,file,tags);
+  }
+  /**
+   * Reads metadata from the file.
+   */
+  public Map<Object,Object> readMetadata(ReadOptions options, File file, Object... tags) throws IOException {
+    if (file == null){
+      throw new IllegalArgumentException("file cannot be null and must be a valid stream of image data.");
+    }
+    if (!file.canRead()){
+      throw new SecurityException("Unable to read the given image ["+file.getAbsolutePath()
+        + "], ensure that the image exists at the given path and that the executing Java process has permissions to read it.");
+    }
+
+    List<String> args = new ArrayList<String>(tags.length+2);
+    if ( options.numericOutput ) {
+      args.add("-n"); // numeric output
+    }
+    if ( options.showDuplicates) {
+      args.add("-a");
+    }
+    if ( ! options.showEmptyTags ) {
+      args.add("-S"); // compact output
+    }
+    for(Object tag: tags) {
+      if ( tag instanceof MetadataTag ) {
+        args.add("-"+((MetadataTag) tag).getKey());
+      } else {
+        args.add("-" + tag);
+      }
+    }
+    args.add(file.getAbsolutePath());
+
+    Map<String,String> resultMap = exifProxy.execute(options.runTimeoutMills,args);
+
+    Map<Object,Object> metadata = new HashMap<Object,Object>(resultMap.size());
+
+    for(Object tag: tags) {
+      MetadataTag metaTag;
+      if (tag instanceof MetadataTag) {
+        metaTag = (MetadataTag) tag;
+      } else {
+        metaTag = toTag(tag.toString());
+      }
+      if ( metaTag.isMapped() ) {
+        String input = resultMap.remove(metaTag.getKey());
+        if ( ! options.showEmptyTags && (input == null || input.isEmpty())  ) {
+          continue;
+        }
+        Object value = options.convertTypes ? deserialize(metaTag.getKey(), input, metaTag.getType()) : input;
+        //maps with tag passed in, as caller expects to fetch
+        metadata.put(tag, value);
+      }
+    }
+    for(Map.Entry<String,String> entry : resultMap.entrySet()) {
+      if ( ! options.showEmptyTags && entry.getValue() == null || entry.getValue().isEmpty() ) {
+        continue;
+      }
+      if ( options.convertTypes) {
+        MetadataTag metaTag = toTag(entry.getKey());
+        Object value = deserialize(metaTag.getKey(), entry.getValue(), metaTag.getType());
+        metadata.put(entry.getKey(), value);
+      } else {
+        metadata.put(entry.getKey(),entry.getValue());
+
+      }
+    }
+    return metadata;
+  }
+
+  public <T> void writeMetadata(File image, Map<T, Object> values) throws IOException {
+    writeMetadata(defWriteOptions, image, values);
   }
   /**
    * Takes a map of tags (either (@link Tag) or Strings for keys) and replaces/appends them to the metadata.
-   * @param image file to update
-   * @param values Map of (@link Tag) or Strings to values
-   * @throws IOException
    */
-  public <T> void addImageMetadata(File image, Map<T, Object> values, boolean deleteBackupFile) throws IOException {
-
-
+  public <T> void writeMetadata(WriteOptions options, File image, Map<T, Object> values) throws IOException {
     if (image == null){
       throw new IllegalArgumentException("image cannot be null and must be a valid stream of image data.");
     }
@@ -592,51 +635,18 @@ public class ExifTool {
 
     log.info("Adding Tags {} to {}", values, image.getAbsolutePath());
 
-    List<String> args = new ArrayList<String>(values.size()+1);
-    for(Map.Entry<T, Object> entry : values.entrySet()) {
-      Object key = entry.getKey();
-      Object value = entry.getValue();
-      final String tagName;
-      if ( key instanceof Tag ) {
-        tagName = ((Tag) key).getName();
-      } else {
-        tagName = key.toString();
-      }
-
-      String arg;
-      if (value == null ) {
-        arg = String.format("-%s=",tagName);
-      } else if ( value instanceof Number ) {
-        arg = String.format("-%s#=%s",tagName,value);
-      } else if(value instanceof Date) {
-        SimpleDateFormat formatter = new SimpleDateFormat("yyyy:MM:dd HH:mm:ss");
-        arg = String.format("-%s=%s",tagName,formatter.format((Date)value));
-      } else if (value instanceof Iterable) {
-        Iterable it = (Iterable) value;
-        args.add("-sep");
-        args.add(",");
-        StringBuilder itemList = new StringBuilder();
-        for(Object item : it) {
-          if ( itemList.length() > 0 ) {
-            itemList.append(",");
-          }
-          itemList.append(item);
-        }
-        arg = String.format("-%s=%s",tagName, itemList);
-      } else {
-        arg = String.format("-%s=%s",tagName,value);
-      }
-      args.add(arg);
-
+    List<String> args = new ArrayList<String>(values.size()+3);
+    for(Map.Entry<?, Object> entry : values.entrySet()) {
+      args.addAll(serializeToArgs(entry.getKey(),entry.getValue()));
     }
     args.add(image.getAbsolutePath());
 
     //start process
     long startTime = System.currentTimeMillis();
     try {
-      exifProxy.execute(args);
+      exifProxy.execute(options.runTimeoutMills, args);
     } finally {
-      if ( deleteBackupFile ) {
+      if ( options.deleteBackupFile ) {
         File origBackup = new File(image.getAbsolutePath()+"_original");
         if ( origBackup.exists() ) origBackup.delete();
       }
@@ -648,11 +658,137 @@ public class ExifTool {
         (System.currentTimeMillis() - startTime), values.size()));
     }
   }
+  //================================================================================
+  //STATIC helpers
+
+  static List<String> serializeToArgs(Object tag, Object value) {
+    final Class tagType;
+    final String tagName;
+    if ( tag instanceof MetadataTag ) {
+      tagName = ((MetadataTag) tag).getKey();
+      tagType = ((MetadataTag) tag).getType();
+    } else {
+      tagName = tag.toString();
+      tagType = null;
+    }
+
+    //pre process
+    if ( value != null ) {
+      if ( value.getClass().isArray() ) {
+        //convert array to iterable, this is lame
+        int len = Array.getLength(value);
+        List<Object> newList = new ArrayList<Object>(len);
+        for (int i = 0; i < len; i++) {
+          Object item = Array.get(value,i);
+          newList.add(item);
+        }
+        value = newList;
+      } else if ( value instanceof Number && Date.class.equals(tagType) ) {
+        //if we know this is a date field and data is a number assume it is unix epoch time
+        Date date = new Date(((Number) value).longValue());
+        value = date;
+      }
+    }
+
+    List<String> args = new ArrayList<String>(4);
+    String arg;
+    if (value == null ) {
+      arg = String.format("-%s=",tagName);
+    } else if ( value instanceof Number ) {
+      arg = String.format("-%s#=%s",tagName,value);
+    } else if(value instanceof Date) {
+      SimpleDateFormat formatter = new SimpleDateFormat(EXIF_DATE_FORMAT);
+      arg = String.format("-%s=%s",tagName,formatter.format((Date)value));
+    } else if (value instanceof Iterable) {
+      Iterable it = (Iterable) value;
+      args.add("-sep");
+      args.add(",");
+      StringBuilder itemList = new StringBuilder();
+      for(Object item : it) {
+        if ( itemList.length() > 0 ) {
+          itemList.append(",");
+        }
+        itemList.append(item);
+      }
+      arg = String.format("-%s=%s",tagName, itemList);
+    } else {
+      if ( tagType != null && tagType.isArray() ) {
+        args.add("-sep");
+        args.add(",");
+      }
+      arg = String.format("-%s=%s",tagName,value);
+    }
+    args.add(arg);
+    return args;
+  }
+
+  static Object deserialize(String tagName, String value, Class expectedType) {
+    try {
+      if ( Boolean.class.equals(expectedType) ) {
+        if ( value == null ) return null;
+        value = value.trim().toLowerCase();
+        switch (value.charAt(0)) {
+          case 'n': case 'f': case '0': return false;
+        }
+        if ( value.equals("off") ) {
+          return false;
+        }
+        return true;
+      } else if ( Date.class.equals(expectedType) ) {
+        if ( value == null ) return null;
+        SimpleDateFormat formatter = new SimpleDateFormat(EXIF_DATE_FORMAT);
+        return formatter.parse(value);
+      } else if ( Integer.class.equals(expectedType) ) {
+        if ( value == null ) return 0;
+        return Integer.parseInt(value);
+      } else if ( Long.class.equals(expectedType) ) {
+        if ( value == null ) return 0;
+        return Long.parseLong(value);
+      } else if ( Float.class.equals(expectedType) ) {
+        if ( value == null ) return 0;
+        return Float.parseFloat(value);
+      } else if ( Double.class.equals(expectedType) ) {
+        if ( value == null ) return 0;
+        String[] enumeratorAndDivisor = value.split("/");
+        if ( enumeratorAndDivisor.length == 2 ) {
+          return Double.parseDouble(enumeratorAndDivisor[0]) / Double.parseDouble(enumeratorAndDivisor[1]);
+        } else {
+          return Double.parseDouble(value);
+        }
+      } else if ( String[].class.equals(expectedType) ) {
+        if ( value == null ) return new String[0];
+        return value.split(",");
+      } else {
+        return value;
+      }
+    } catch (ParseException ex) {
+      log.warn("Invalid format, Tag:"+tagName);
+      return null;
+    } catch (NumberFormatException ex) {
+      log.warn("Invalid format, Tag:"+tagName);
+      return null;
+    }
+
+  }
+
+  static MetadataTag toTag(String name) {
+    for(Tag tag: Tag.values()) {
+      if ( tag.getKey().equalsIgnoreCase(name) ) {
+        return tag;
+      }
+    }
+    for(MwgTag tag: MwgTag.values()) {
+      if ( tag.getKey().equalsIgnoreCase(name) ) {
+        return tag;
+      }
+    }
+    return new CustomTag(name,String.class);
+  }
 
   //================================================================================
   /**
    * Represents an external exif process.  Works for both single use and keep alive modes.
-   *
+   * This is the actual process, with streams for reading and writing data.
    */
   public static final class ExifProcess {
     public static VersionNumber readVersion(String exifCmd) {
@@ -693,7 +829,7 @@ public class ExifTool {
       }
     }
 
-    public synchronized Map<String, String> sendArgs(List<String> args) throws IOException {
+    public synchronized Map<String, String> sendToRunning(List<String> args) throws IOException {
       if (!keepAlive) {
         throw new IOException("Not KeepAlive Process");
       }
@@ -802,7 +938,7 @@ public class ExifTool {
    */
   public interface ExifProxy {
     public void startup();
-    public Map<String, String> execute(List<String> args) throws IOException;
+    public Map<String, String> execute(long runTimeoutMills, List<String> args) throws IOException;
     public boolean isRunning();
     public void shutdown();
   }
@@ -815,7 +951,6 @@ public class ExifTool {
     private final AtomicBoolean shuttingDown = new AtomicBoolean(false);
     private final Timer cleanupTimer = new Timer(CLEANUP_THREAD_NAME, true);
     private long inactivityTimeout = 0;
-    private long runTimeout = 0;
     private volatile long lastRunStart = 0;
     private volatile ExifProcess process;
 
@@ -847,11 +982,6 @@ public class ExifTool {
       this.inactivityTimeout = mills;
     }
 
-    public void setRunTimeout(long mills) {
-      this.runTimeout = mills;
-
-    }
-
     public void startup() {
       shuttingDown.set(false);
       if (process ==null || process.isClosed()) {
@@ -864,7 +994,7 @@ public class ExifTool {
       }
     }
 
-    public Map<String,String> execute(List<String> args) throws IOException {
+    public Map<String,String> execute(final long runTimeoutMills, List<String> args) throws IOException {
       lastRunStart = System.currentTimeMillis();
       int attempts = 0;
       while (attempts < 3 && ! shuttingDown.get()){
@@ -879,19 +1009,19 @@ public class ExifTool {
         }
         TimerTask attemptTimer = null;
         try {
-          if ( runTimeout > 0 ) {
+          if ( runTimeoutMills > 0 ) {
             attemptTimer = new TimerTask() {
               public void run() {
-                if (process != null) {
-                  log.warn("Process ran too long closing, max " + runTimeout + " mills");
+                if (process != null && ! process.isClosed()) {
+                  log.warn("Process ran too long closing, max " + runTimeoutMills + " mills");
                   process.close();
                 }
               }
             };
-            cleanupTimer.schedule(attemptTimer, runTimeout);
+            cleanupTimer.schedule(attemptTimer, runTimeoutMills);
           }
           log.debug("Streaming arguments to ExifTool process...");
-          return process.sendArgs(args);
+          return process.sendToRunning(args);
         } catch (IOException ex){
           if ( STREAM_CLOSED_MESSAGE.equals(ex.getMessage()) && ! shuttingDown.get() ){
             //only catch "Stream Closed" error (happens when process has died)
@@ -920,6 +1050,7 @@ public class ExifTool {
   }
 
   public static class SingleUseExifProxy implements ExifProxy {
+    private final Timer cleanupTimer = new Timer(CLEANUP_THREAD_NAME, true);
     private final List<String> baseArgs;
 
     public SingleUseExifProxy(String exifCmd, List<String> defaultArgs) {
@@ -928,15 +1059,28 @@ public class ExifTool {
       this.baseArgs.addAll(defaultArgs);
     }
 
-    public Map<String, String> execute(List<String> args) throws IOException {
+    public Map<String, String> execute(final long runTimeoutMills, List<String> args) throws IOException {
       List<String> newArgs = new ArrayList<String>(baseArgs.size()+args.size());
       newArgs.addAll(baseArgs);
       newArgs.addAll(args);
-      ExifProcess process = new ExifProcess(false, newArgs);
+      final ExifProcess process = new ExifProcess(false, newArgs);
+      TimerTask attemptTimer = null;
+      if ( runTimeoutMills > 0 ) {
+        attemptTimer = new TimerTask() {
+          public void run() {
+            if ( ! process.isClosed() ) {
+              log.warn("Process ran too long closing, max " + runTimeoutMills + " mills");
+              process.close();
+            }
+          }
+        };
+        cleanupTimer.schedule(attemptTimer, runTimeoutMills);
+      }
       try {
         return process.readResponse();
       } finally {
         process.close();
+        if ( attemptTimer != null ) attemptTimer.cancel();
       }
     }
 
@@ -950,6 +1094,128 @@ public class ExifTool {
 
     public void shutdown() {
       ;
+    }
+  }
+  //================================================================================
+  /**
+   * All the read options, is immutable, copy on change, fluent style "with" setters.
+   */
+  public static class ReadOptions {
+    private final long runTimeoutMills;
+    private final boolean convertTypes;
+    private final boolean numericOutput;
+    private final boolean showDuplicates;
+    private final boolean showEmptyTags;
+
+    public ReadOptions() {
+      this(0,false,false,false,false);
+    }
+
+    private ReadOptions(long runTimeoutMills, boolean convertTypes, boolean numericOutput, boolean showDuplicates, boolean showEmptyTags) {
+      this.runTimeoutMills = runTimeoutMills;
+      this.convertTypes = convertTypes;
+      this.numericOutput = numericOutput;
+      this.showDuplicates = showDuplicates;
+      this.showEmptyTags = showEmptyTags;
+    }
+
+    public String toString() {
+      return String.format("%s(runTimeout:%,d convertTypes:%s showDuplicates:%s showEmptyTags:%s)",
+        getClass().getSimpleName(),runTimeoutMills,convertTypes,showDuplicates,showEmptyTags);
+    }
+
+    /**
+     * Sets the maximum time a process can run
+     */
+    public ReadOptions withRunTimeoutMills(long mills) {
+      return new ReadOptions(mills,convertTypes,numericOutput, showDuplicates,showEmptyTags);
+    }
+
+    /**
+     * By default all values will be returned as the strings printed by the exiftool.
+     * If this is enabled then {@link MetadataTag#getType()} is used to cast the string into a java type.
+     */
+    public ReadOptions withConvertTypes(boolean enabled) {
+      return new ReadOptions(runTimeoutMills,enabled,numericOutput, showDuplicates,showEmptyTags);
+    }
+
+    /**
+     * Setting this to true will add the "-n" option causing the ExifTool to output of some tags to change.
+     * <p/>
+     * ExifTool, via the <code>-n</code> command line arg, is capable of
+     * returning most values in their raw numeric form (e.g.
+     * Aperture="2.8010323841") as well as a more human-readable/friendly format
+     * (e.g. Aperture="2.8").
+     * <p/>
+     * While the {@link Tag}s defined on this class do provide a hint at the
+     * type of the result (see {@link MetadataTag#getType()}), that hint only applies
+     * when the numeric value is returned.
+     * <p/>
+     * If the caller finds the human-readable format easier to process,
+     * Set this to false, the default.
+     * <p/>
+     * In order to see the types of values that are returned when human readable
+     * is used (default), you can check the comprehensive <a
+     * href="http://www.sno.phy.queensu.ca/~phil/exiftool/TagNames/index.html">
+     * ExifTool Tag Guide</a>.
+     * <p/>
+     * This makes sense with some values like Aperture that in numeric
+     * format end up returning as 14-decimal-place, high
+     * precision values that are near the intended value (e.g.
+     * "2.79999992203711" instead of just returning "2.8"). On the other hand,
+     * other values (like Orientation) are easier to parse when their numeric
+     * value (1-8) is returned instead of a much longer friendly name (e.g.
+     * "Mirror horizontal and rotate 270 CW").
+     *
+     * Attempted from work done by
+     * @author Riyad Kalla (software@thebuzzmedia.com)
+     */
+    public ReadOptions withNumericOutput(boolean enabled) {
+      return new ReadOptions(runTimeoutMills,convertTypes,enabled, showDuplicates,showEmptyTags);
+    }
+
+    /**
+     * If enabled will show tags which are duplicated between different tag regions, relates to the "-a" option in ExifTool.
+     */
+    public ReadOptions withShowDuplicates(boolean enabled) {
+      return new ReadOptions(runTimeoutMills,convertTypes,numericOutput,enabled,showEmptyTags);
+    }
+
+    public ReadOptions withShowEmptyTags(boolean enabled) {
+      return new ReadOptions(runTimeoutMills,convertTypes,numericOutput,showDuplicates,enabled);
+    }
+  }
+
+  //================================================================================
+  /**
+   * All the write options, is immutable, copy on change, fluent style "with" setters.
+   */
+  public static class WriteOptions {
+    private final long runTimeoutMills;
+    private final boolean deleteBackupFile;
+
+    public WriteOptions() {
+      this(0,false);
+    }
+
+    private WriteOptions(long runTimeoutMills, boolean deleteBackupFile) {
+      this.runTimeoutMills = runTimeoutMills;
+      this.deleteBackupFile = deleteBackupFile;
+    }
+
+    public String toString() {
+      return String.format("%s(runTimeOut:%,d deleteBackupFile:%s)",getClass().getSimpleName(),runTimeoutMills,deleteBackupFile);
+    }
+
+    public WriteOptions withRunTimeoutMills(long mills) {
+      return new WriteOptions(mills,deleteBackupFile);
+    }
+    /**
+     * ExifTool automatically makes a backup copy a file before writing metadata tags in the form
+     * "file.ext_original", by default this tool will delete that original file after the writing is done.
+     */
+    public WriteOptions withDeleteBackupFile(boolean enabled) {
+      return new WriteOptions(runTimeoutMills,enabled);
     }
   }
 
@@ -981,7 +1247,6 @@ public class ExifTool {
      * reconciled when reading, and synchronized when writing. The MWG Composite tags
      * below are designed to aid in the implementation of these recommendations.
      * Will add the args " -use MWG"
-     *
      *
      * @see <a href="http://www.sno.phy.queensu.ca/~phil/exiftool/TagNames/MWG.html">ExifTool MWG Docs</a>
      * !! Note these version numbers are not correct
@@ -1058,42 +1323,23 @@ public class ExifTool {
 
   //================================================================================
   /**
-   * Enum used to define the 2 different output formats that {@link Tag}
-   * values can be returned in: numeric or human-readable text.
-   * <p/>
-   * ExifTool, via the <code>-n</code> command line arg, is capable of
-   * returning most values in their raw numeric form (e.g.
-   * Aperture="2.8010323841") as well as a more human-readable/friendly format
-   * (e.g. Aperture="2.8").
-   * <p/>
-   * While the {@link Tag}s defined on this class do provide a hint at the
-   * type of the result (see {@link Tag#getType()}), that hint only applies
-   * when the {@link Format#NUMERIC} form of the value is returned.
-   * <p/>
-   * If the caller finds the human-readable format easier to process,
-   * {@link Format#HUMAN_READABLE} can be specified when calling
-   * {@link ExifTool#getImageMeta(File, Format, Tag...)} and the returned
-   * {@link String} values processed manually by the caller.
-   * <p/>
-   * In order to see the types of values that are returned when
-   * {@link Format#HUMAN_READABLE} is used, you can check the comprehensive <a
-   * href="http://www.sno.phy.queensu.ca/~phil/exiftool/TagNames/index.html">
-   * ExifTool Tag Guide</a>.
-   * <p/>
-   * This makes sense with some values like Aperture that in
-   * {@link Format#NUMERIC} format end up returning as 14-decimal-place, high
-   * precision values that are near the intended value (e.g.
-   * "2.79999992203711" instead of just returning "2.8"). On the other hand,
-   * other values (like Orientation) are easier to parse when their numeric
-   * value (1-8) is returned instead of a much longer friendly name (e.g.
-   * "Mirror horizontal and rotate 270 CW").
+   * Base type for all "tag" passed to exiftool.
+   * The key is the value passed to the exiftool like "-creator".
+   * The Types is used for automatic type conversions.
    *
-   * @author Riyad Kalla (software@thebuzzmedia.com)
-   * @since 1.1
    */
-  public enum Format {
-    NUMERIC, HUMAN_READABLE
+  public interface MetadataTag {
+    /**
+     * Returns the values passed to exiftool
+     */
+    public String getKey();
+    /**
+     * The types
+     */
+    public Class getType();
+    public boolean isMapped();
   }
+
   //================================================================================
   /**
    * Enum used to pre-define a convenient list of tags that can be easily
@@ -1101,21 +1347,7 @@ public class ExifTool {
    * ExifTool.
    * <p/>
    * Each tag defined also includes a type hint for the parsed value
-   * associated with it when the default {@link Format#NUMERIC} value format
-   * is used.
-   * <p/>
-   * All replies from ExifTool are parsed as {@link String}s and using the
-   * type hint from each {@link Tag} can easily be converted to the correct
-   * data format by using the provided {@link Tag#parseValue(String)}
-   * method.
-   * <p/>
-   * This class does not make an attempt at converting the value automatically
-   * in case the caller decides they would prefer tag values returned in
-   * {@link Format#HUMAN_READABLE} format and to avoid any compatibility
-   * issues with future versions of ExifTool if a tag's return value is
-   * changed. This approach to leaving returned tag values as strings until
-   * the caller decides they want to parse them is a safer and more robust
-   * approach.
+   * associated with it when the default humanReadable is false.
    * <p/>
    * The types provided by each tag are merely a hint based on the <a
    * href="http://www.sno.phy.queensu.ca/~phil/exiftool/TagNames/index.html"
@@ -1141,17 +1373,17 @@ public class ExifTool {
    * @author Riyad Kalla (software@thebuzzmedia.com)
    * @since 1.1
    */
-  public enum Tag {
+  public enum Tag implements MetadataTag {
     //single entry tags
     APERTURE("ApertureValue", Double.class),
     AUTHOR("XPAuthor", String.class),
     COLOR_SPACE("ColorSpace", Integer.class),
     COMMENT("XPComment", String.class),
     CONTRAST("Contrast", Integer.class),
-    CREATE_DATE("CreateDate", String.class),
-    CREATION_DATE("CreationDate", String.class),
-    DATE_CREATED("DateCreated", String.class),
-    DATE_TIME_ORIGINAL("DateTimeOriginal", String.class),
+    CREATE_DATE("CreateDate", Date.class),
+    CREATION_DATE("CreationDate", Date.class),
+    DATE_CREATED("DateCreated", Date.class),
+    DATE_TIME_ORIGINAL("DateTimeOriginal", Date.class),
     DIGITAL_ZOOM_RATIO("DigitalZoomRatio", Double.class),
     EXIF_VERSION("ExifVersion", String.class),
     EXPOSURE_COMPENSATION("ExposureCompensation", Double.class),
@@ -1213,7 +1445,7 @@ public class ExifTool {
      */
     public static Tag forName(String name) {
       for (Tag tag : Tag.values()){
-        if (tag.getName().equals(name)){
+        if (tag.getKey().equals(name)){
           return tag;
         }
       }
@@ -1223,8 +1455,8 @@ public class ExifTool {
     public static Map<Tag,String> toTagMap(Map<String,String> values) {
       Map<Tag, String> tagMap = new EnumMap<Tag, String>(Tag.class);
       for (Tag tag : Tag.values()){
-        if (values.containsKey(tag.getName())){
-          tagMap.put(tag, values.get(tag.getName()));
+        if (values.containsKey(tag.getKey())){
+          tagMap.put(tag, values.get(tag.getKey()));
         }
       }
       return tagMap;
@@ -1266,38 +1498,7 @@ public class ExifTool {
      */
     @SuppressWarnings("unchecked")
     public <T> T parseValue(String value) throws IllegalArgumentException {
-
-      if (value != null) {
-        if (Boolean.class.isAssignableFrom(this.getType())){
-          return (T) Boolean.valueOf(value);
-        } else if (Byte.class.isAssignableFrom(this.getType())){
-          return (T) Byte.valueOf(Byte.parseByte(value));
-        } else if (Integer.class.isAssignableFrom(this.getType())){
-          return  (T) Integer.valueOf(Integer.parseInt(value));
-        } else if (Short.class.isAssignableFrom(this.getType())){
-          return  (T) Short.valueOf(Short.parseShort(value));
-        } else if (Long.class.isAssignableFrom(this.getType())){
-          return  (T) Long.valueOf(Long.parseLong(value));
-        } else if (Float.class.isAssignableFrom(this.getType())){
-          return (T) Float.valueOf(Float.parseFloat(value));
-        } else if (Double.class.isAssignableFrom(this.getType())){
-          return  (T) parseDouble(value);
-        } else if (Character.class.isAssignableFrom(this.getType())){
-          return  (T) Character.valueOf(value.charAt(0));
-        } else if (String.class.isAssignableFrom(this.getType())){
-          return  (T) value;
-        }
-      }
-      return null;
-    }
-
-    private Double parseDouble(String in) {
-      if (in.contains("/")) {
-        String[] enumeratorAndDivisor = in.split("/");
-        return Double.parseDouble(enumeratorAndDivisor[0]) / Double.parseDouble(enumeratorAndDivisor[1]);
-      } else {
-        return Double.parseDouble(in);
-      }
+      return (T) deserialize(getKey(),value,getType());
     }
 
     /**
@@ -1321,6 +1522,9 @@ public class ExifTool {
       return type;
     }
 
+    public String getKey() { return name; }
+    public boolean isMapped() { return true; }
+
     private String name;
     private Class<?> type;
 
@@ -1329,29 +1533,108 @@ public class ExifTool {
       this.type = type;
     }
   }
+  //================================================================================
+  public enum MwgTag implements MetadataTag {
+    LOCATION("Location",String.class),
+    CITY("City",String.class),
+    STATE("State",String.class),
+    COUNTRY("Country",String.class),
+
+    COPYRIGHT("Copyright",String.class),
+
+    DATE_TIME_ORIGINAL("DateTimeOriginal",Date.class),
+    CREATE_DATE("CreateDate",Date.class),
+    MODIFY_DATE("ModifyDate",Date.class),
+
+    CREATOR("Creator",String.class),
+    DESCRIPTION("Description",String.class),
+    KEYWORDS("Keywords",String[].class),
+
+    ORIENTATION("Orientation",Integer.class),
+    RATING("Rating",Integer.class),
+
+    ;
+
+
+    private String name;
+    private Class<?> type;
+    private MwgTag(String name, Class type) {
+      this.name = name;
+      this.type = type;
+    }
+    public String getKey() { return name; }
+    public Class<?> getType() { return type; }
+    public boolean isMapped() { return true; }
+    public String toString() { return name; }
+  }
 
   //================================================================================
-  public enum TagGroup {
+
+  /**
+   * A Custom Tag that the user defines.  Used to cover tags not in the enum.
+   */
+  public static class CustomTag implements MetadataTag {
+    private final String name;
+    private final Class type;
+    private final boolean mapped;
+
+    public CustomTag(String name, Class type) {
+      this(name,type,!name.trim().endsWith(":all"));
+    }
+    public CustomTag(String name, Class type, boolean mapped) {
+      this.name = name.trim();
+      this.type = type;
+      this.mapped = mapped;
+    }
+
+    public String getKey() {
+      return name;
+    }
+
+    public Class getType() {
+      return type;
+    }
+
+    public boolean isMapped() {
+      return mapped;
+    }
+
+    public String toString() {
+      return getKey();
+    }
+  }
+
+
+  //================================================================================
+  public enum TagGroup implements MetadataTag {
     EXIF("EXIF","exif:all"),
-    IPTC("IPTC", "iptc:all"),
-    XMP("XMP", "xmp:all"),
-    ALL("ALL", "all");
+    IPTC("IPTC","iptc:all"),
+    XMP("XMP","xmp:all"),
+    ALL("ALL","all");
 
     private final String name;
-    private final String value;
+    private final String key;
 
-    private TagGroup(String name, String value) {
+    private TagGroup(String name, String key) {
       this.name = name;
-      this.value = value;
+      this.key = key;
     }
 
     public String getName() {
       return name;
     }
-
-    public String getValue() {
-      return value;
+    public String getKey() {
+      return key;
     }
+
+    public Class getType() {
+      return Void.class;
+    }
+
+    public boolean isMapped() {
+      return false;
+    }
+
   }
 
 
