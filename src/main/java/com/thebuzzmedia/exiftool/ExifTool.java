@@ -892,19 +892,20 @@ public class ExifTool {
         try {
           if (!closed) {
             closed = true;
-            log.debug("Attempting to close ExifTool daemon process, issuing '-stay_open\\nFalse\\n' command...");
-            try {
-              writer.write("-stay_open\nFalse\n");
-              writer.flush();
-            } catch (IOException ex) {
-              //log.error(ex,ex);
-            }
             try {
               log.debug("Closing Read stream...");
               reader.close();
               log.debug("\tSuccessful");
             } catch (Exception e) {
               // no-op, just try to close it.
+            }
+
+            try {
+              log.debug("Attempting to close ExifTool daemon process, issuing '-stay_open\\nFalse\\n' command...");
+              writer.write("-stay_open\nFalse\n");
+              writer.flush();
+            } catch (IOException ex) {
+              //log.error(ex,ex);
             }
 
             try {
