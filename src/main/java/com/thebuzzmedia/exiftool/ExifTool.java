@@ -20,6 +20,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
@@ -271,15 +272,10 @@ public class ExifTool {
    */
   private static final String CLEANUP_THREAD_NAME = "ExifTool Cleanup Thread";
 
-  /**
-   * Compiled {@link Pattern} of ": " used to split compact output from
-   * ExifTool evenly into name/value pairs.
-   */
-  private static final Pattern TAG_VALUE_PATTERN = Pattern.compile("\\s*:\\s*");
   private static final String STREAM_CLOSED_MESSAGE = "Stream closed";
   private static final String EXIF_DATE_FORMAT = "yyyy:MM:dd HH:mm:ss";
 
-  private static Logger log = LoggerFactory.getLogger(ExifTool.class);
+  private static final Logger log = LoggerFactory.getLogger(ExifTool.class);
 
   private final Map<Feature, Boolean> featureSupportedMap = new HashMap<Feature, Boolean>();
   private final Set<Feature> featureEnabledSet = EnumSet.noneOf(Feature.class);
@@ -620,26 +616,18 @@ public class ExifTool {
   /**
    * Takes a map of tags (either (@link Tag) or Strings for keys) and replaces/appends them to the metadata.
    */
-  public <T> void writeMetadata(WriteOptions options, File image, Map<T, Object> values) throws IOException {
-    if (image == null){
-      throw new IllegalArgumentException("image cannot be null and must be a valid stream of image data.");
-    }
-    if (values == null || values.isEmpty()){
-      throw new IllegalArgumentException("values cannot be null and must contain 1 or more tag to value mappings");
-    }
+  public <T> void writeMetadata(WriteOptions options, File file, Map<T, Object> values) throws IOException {
+    if ( file == null ) throw new NullPointerException("File is null");
+    if ( ! file.exists() ) throw new FileNotFoundException(String.format("File \"%s\" does not exits",file.getAbsolutePath()));
+    if ( ! file.canWrite() ) throw new SecurityException(String.format("File \"%s\" cannot be written to",file.getAbsolutePath()));
 
-    if (!image.canWrite()){
-      throw new SecurityException("Unable to write the given image [" + image.getAbsolutePath()
-        + "], ensure that the image exists at the given path and that the executing Java process has permissions to write to it.");
-    }
-
-    log.info("Adding Tags {} to {}", values, image.getAbsolutePath());
+    log.info("Adding Tags {} to {}", values, file.getAbsolutePath());
 
     List<String> args = new ArrayList<String>(values.size()+3);
     for(Map.Entry<?, Object> entry : values.entrySet()) {
       args.addAll(serializeToArgs(entry.getKey(),entry.getValue()));
     }
-    args.add(image.getAbsolutePath());
+    args.add(file.getAbsolutePath());
 
     //start process
     long startTime = System.currentTimeMillis();
@@ -647,15 +635,39 @@ public class ExifTool {
       exifProxy.execute(options.runTimeoutMills, args);
     } finally {
       if ( options.deleteBackupFile ) {
-        File origBackup = new File(image.getAbsolutePath()+"_original");
+        File origBackup = new File(file.getAbsolutePath()+"_original");
         if ( origBackup.exists() ) origBackup.delete();
       }
     }
 
     // Print out how long the call to external ExifTool process took.
-    if (log.isDebugEnabled()){
-      log.debug(String.format("Image Meta Processed in %d ms [added %d tags]",
-        (System.currentTimeMillis() - startTime), values.size()));
+    if (log.isDebugEnabled()) log.debug(String.format("Image Meta Processed in %d ms [added %d tags]", (System.currentTimeMillis() - startTime), values.size()));
+
+  }
+
+  public void rebuildMetadata(File file) throws IOException {
+    rebuildMetadata(getWriteOptions(),file);
+  }
+
+  /**
+   * Rewrite all the the metadata tags in a JPEG image. This will not work for TIFF files.
+   * Use this when the image has some corrupt tags.
+   *
+   * @link http://www.sno.phy.queensu.ca/~phil/exiftool/faq.html#Q20
+   */
+  public void rebuildMetadata(WriteOptions options, File file) throws IOException {
+    if ( file == null ) throw new NullPointerException("File is null");
+    if ( ! file.exists() ) throw new FileNotFoundException(String.format("File \"%s\" does not exits",file.getAbsolutePath()));
+    if ( ! file.canWrite() ) throw new SecurityException(String.format("File \"%s\" cannot be written to",file.getAbsolutePath()));
+
+    List<String> args = Arrays.asList("-all=", "-tagsfromfile", "@", "-all:all", "-unsafe",file.getAbsolutePath());
+    try {
+      exifProxy.execute(options.runTimeoutMills, args);
+    } finally {
+      if ( options.deleteBackupFile ) {
+        File origBackup = new File(file.getAbsolutePath()+"_original");
+        if ( origBackup.exists() ) origBackup.delete();
+      }
     }
   }
   //================================================================================
@@ -791,6 +803,12 @@ public class ExifTool {
    * This is the actual process, with streams for reading and writing data.
    */
   public static final class ExifProcess {
+    /**
+     * Compiled {@link Pattern} of ": " used to split compact output from
+     * ExifTool evenly into name/value pairs.
+     */
+    private static final Pattern TAG_VALUE_PATTERN = Pattern.compile("\\s*:\\s*");
+
     public static VersionNumber readVersion(String exifCmd) {
       ExifProcess process = new ExifProcess(false, Arrays.asList(exifCmd, "-ver"));
       try {
@@ -805,8 +823,9 @@ public class ExifTool {
     private final ReentrantLock closeLock = new ReentrantLock(false);
     private final boolean keepAlive;
     private final Process process;
-    private final BufferedReader reader;
-    private final OutputStreamWriter writer;
+    private final BufferedReader out;
+    private final OutputStreamWriter in;
+    private final LineReaderThread errReader;
     private volatile boolean closed = false;
 
     public ExifProcess(boolean keepAlive, List<String> args) {
@@ -814,8 +833,10 @@ public class ExifTool {
       log.debug(String.format("Attempting to start ExifTool process using args: %s", args));
       try {
         this.process = new ProcessBuilder(args).start();
-        this.reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
-        this.writer = new OutputStreamWriter(process.getOutputStream());
+        this.out = new BufferedReader(new InputStreamReader(process.getInputStream()));
+        this.in = new OutputStreamWriter(process.getOutputStream());
+        this.errReader = new LineReaderThread("exif-process-err-reader",new BufferedReader(new InputStreamReader(process.getErrorStream())));
+        errReader.start();
         log.debug("\tSuccessful");
       } catch (Exception e) {
         String message = "Unable to start external ExifTool process using the execution arguments: "
@@ -844,13 +865,13 @@ public class ExifTool {
 
     public synchronized void writeFlush(String message) throws IOException {
       if (closed) throw new IOException(STREAM_CLOSED_MESSAGE);
-      writer.write(message);
-      writer.flush();
+      in.write(message);
+      in.flush();
     }
 
     public synchronized String readLine() throws IOException {
       if (closed) throw new IOException(STREAM_CLOSED_MESSAGE);
-      return reader.readLine();
+      return out.readLine();
     }
 
     public synchronized Map<String, String> readResponse() throws IOException {
@@ -858,25 +879,30 @@ public class ExifTool {
       log.debug("Reading response back from ExifTool...");
       Map<String, String> resultMap = new HashMap<String, String>(500);
       String line;
-
-      while ((line = reader.readLine()) != null) {
+      while ((line = out.readLine()) != null) {
         if (closed) throw new IOException(STREAM_CLOSED_MESSAGE);
         String[] pair = TAG_VALUE_PATTERN.split(line, 2);
-
         if (pair.length == 2) {
           resultMap.put(pair[0], pair[1]);
           log.debug(String.format("\tRead Tag [name=%s, value=%s]", pair[0], pair[1]));
         }
 
-      /*
-       * When using a persistent ExifTool process, it terminates its
-       * output to us with a "{ready}" clause on a new line, we need to
-       * look for it and break from this loop when we see it otherwise
-       * this process will hang indefinitely blocking on the input stream
-       * with no data to read.
-       */
+        /*
+         * When using a persistent ExifTool process, it terminates its
+         * output to us with a "{ready}" clause on a new line, we need to
+         * look for it and break from this loop when we see it otherwise
+         * this process will hang indefinitely blocking on the input stream
+         * with no data to read.
+         */
         if (keepAlive && line.equals("{ready}")) {
           break;
+        }
+      }
+      if ( errReader.hasLines() ) {
+        for(String error : errReader.takeLines()) {
+          if ( error.toLowerCase().startsWith("error") ) {
+            throw new IOException(error);
+          }
         }
       }
       return resultMap;
@@ -894,7 +920,7 @@ public class ExifTool {
             closed = true;
             try {
               log.debug("Closing Read stream...");
-              reader.close();
+              out.close();
               log.debug("\tSuccessful");
             } catch (Exception e) {
               // no-op, just try to close it.
@@ -902,15 +928,23 @@ public class ExifTool {
 
             try {
               log.debug("Attempting to close ExifTool daemon process, issuing '-stay_open\\nFalse\\n' command...");
-              writer.write("-stay_open\nFalse\n");
-              writer.flush();
+              in.write("-stay_open\nFalse\n");
+              in.flush();
             } catch (IOException ex) {
               //log.error(ex,ex);
             }
 
             try {
               log.debug("Closing Write stream...");
-              writer.close();
+              in.close();
+              log.debug("\tSuccessful");
+            } catch (Exception e) {
+              // no-op, just try to close it.
+            }
+
+            try {
+              log.debug("Closing Error stream...");
+              errReader.close();
               log.debug("\tSuccessful");
             } catch (Exception e) {
               // no-op, just try to close it.
