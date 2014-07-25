@@ -15,13 +15,27 @@
  */
 package com.thebuzzmedia.exiftool;
 
-import org.apache.log4j.Logger;
-
-import java.io.*;
-import java.util.*;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.StringTokenizer;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.regex.Pattern;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Class used to provide a Java-like interface to Phil Harvey's excellent,
@@ -221,7 +235,7 @@ public class ExifTool {
   private static final Pattern TAG_VALUE_PATTERN = Pattern.compile("\\s*:\\s*");
   private static final String STREAM_CLOSED_MESSAGE = "Stream closed";
 
-  private static Logger log = Logger.getLogger(ExifTool.class);
+  private static Logger log = LoggerFactory.getLogger(ExifTool.class);
 
   /**
    * The absolute path to the ExifTool executable on the host system running

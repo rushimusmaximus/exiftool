@@ -1,14 +1,16 @@
 package com.thebuzzmedia.exiftool;
 
-import junit.framework.TestCase;
-import org.apache.log4j.Logger;
-
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import junit.framework.TestCase;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * TestMetadata<p>
@@ -19,7 +21,7 @@ import java.util.Set;
 public class TestExifTool extends TestCase {
 
   private static final String TEST_FILES_PATH = "src/test/resources";
-  private static Logger log = Logger.getLogger(TestExifTool.class);
+  private static Logger log = LoggerFactory.getLogger(TestExifTool.class);
 
 
   public void testSingleTool() throws Exception {
@@ -63,7 +65,7 @@ public class TestExifTool extends TestCase {
             runTests(tool,getName());
             log.info(getName() + ": finished");
           } catch (IOException e) {
-            log.error(e,e);
+            log.error("",e);
             fail(e.getMessage());
           } finally {
             tool.shutdown();
@@ -87,7 +89,6 @@ public class TestExifTool extends TestCase {
       for(int i=0; i < threads.length; i++) {
         final String label = "run "+i;
         threads[i] = new Thread(new Runnable() {
-                                  @Override
                                   public void run() {
             try {
               for(int j=0; j<5; j++) {

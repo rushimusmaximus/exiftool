@@ -1,16 +1,18 @@
 package com.thebuzzmedia.exiftool;
 
-import com.thebuzzmedia.exiftool.ExifTool.Feature;
-import com.thebuzzmedia.exiftool.ExifTool.Tag;
-import org.apache.log4j.Logger;
-
 import java.io.File;
 import java.io.IOException;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.thebuzzmedia.exiftool.ExifTool.Feature;
+import com.thebuzzmedia.exiftool.ExifTool.Tag;
 
 public class Benchmark {
 
 	public static final int ITERATIONS = 25;
-  private static Logger log = Logger.getLogger(Benchmark.class);
+  private static Logger log = LoggerFactory.getLogger(Benchmark.class);
 
 
 	public static void main(String[] args) throws IOException, InterruptedException {

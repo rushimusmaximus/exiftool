@@ -8,7 +8,7 @@
     <groupId>com.thebuzzmedia.exiftool</groupId>
     <artifactId>exiftool-lib</artifactId>
     <packaging>jar</packaging>
-    <version>2.1.2</version>
+    <version>2.2.0</version>
     <url>https://github.com/thebuzzmedia/exiftool</url>
 
     <developers>
@@ -32,4 +32,28 @@
             </plugin>
         </plugins>
     </build>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+            <version>1.7.5</version>
+            <scope>compile</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.11</version>
+            <scope>test</scope>
+        </dependency>
+
+        <!-- For testing just use simple logging framework -->
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-simple</artifactId>
+            <version>1.7.5</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
 </project>
