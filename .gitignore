@@ -1,9 +1,6 @@
 target
 dist
 bin
-
-/.classpath
-
 /.project
-
 /.settings
+/.classpath
