@@ -467,9 +467,6 @@ public class ExifTool {
 			try {
 				// Read the single-line reply (version number)
 				ver = streams.reader.readLine();
-
-				// Close r/w streams to exited process.
-				streams.close();
 			} catch (Exception e) {
 				/*
 				 * no-op, while it is important to know that we COULD launch the
@@ -489,6 +486,9 @@ public class ExifTool {
 				 * scenarios, so making this method easier to use is more
 				 * important that robust IOException handling right here.
 				 */
+			} finally {
+                // Close r/w streams to exited process.
+                streams.close();
 			}
 
 			// Ensure the version found is >= the required version.
@@ -720,10 +720,12 @@ public class ExifTool {
 		COLOR_SPACE("ColorSpace", Integer.class),
 		COMMENT("XPComment", String.class),
 		CONTRAST("Contrast", Integer.class),
+		CREATE_DATE("CreateDate", String.class),
 		COPYRIGHT("Copyright", String.class),
 		COPYRIGHT_NOTICE("CopyrightNotice", String.class),
 		CREATION_DATE("CreationDate", String.class),
 		CREATOR("Creator", String.class),
+		DATE_CREATED("DateCreated", String.class),
 		DATE_TIME_ORIGINAL("DateTimeOriginal", String.class),
 		DEVICE_SERIAL_NUMBER("DeviceSerialNumber", String.class),
 		DIGITAL_ZOOM_RATIO("DigitalZoomRatio", Double.class),
@@ -741,6 +743,7 @@ public class ExifTool {
 		GPS_ALTITUDE_REF("GPSAltitudeRef", Integer.class),
 		GPS_BEARING("GPSDestBearing", Double.class),
 		GPS_BEARING_REF("GPSDestBearingRef", String.class),
+		GPS_DATESTAMP("GPSDateStamp", String.class),
 		GPS_LATITUDE("GPSLatitude", Double.class),
 		GPS_LATITUDE_REF("GPSLatitudeRef", String.class),
 		GPS_LONGITUDE("GPSLongitude", Double.class),
@@ -977,6 +980,16 @@ public class ExifTool {
 			resetCleanupTask();
 		}
 	}
+
+    public void shutdownCleanupTask() {
+        if(currentCleanupTask != null) {
+            currentCleanupTask.cancel();
+        }
+        currentCleanupTask = null;
+        if(cleanupTimer != null) {
+            cleanupTimer.cancel();
+        }
+    }
 
 	/**
 	 * Used to shutdown the external ExifTool process and close the read/write
