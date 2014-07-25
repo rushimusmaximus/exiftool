@@ -3,3 +3,7 @@ dist
 bin
 
 /.project
+
+/.settings
+
+/.classpath
