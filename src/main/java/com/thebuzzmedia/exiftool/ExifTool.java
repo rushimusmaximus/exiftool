@@ -719,7 +719,7 @@ public class ExifTool {
 		CREATION_DATE("CreationDate", String.class),
 		DATE_TIME_ORIGINAL("DateTimeOriginal", String.class),
 		DIGITAL_ZOOM_RATIO("DigitalZoomRatio", Double.class),
-		EXIF_VERSION("ExifVersion", String.class)
+		EXIF_VERSION("ExifVersion", String.class),
 		EXPOSURE_COMPENSATION("ExposureCompensation", Double.class),
 		EXPOSURE_PROGRAM("ExposureProgram", Integer.class),
 		EXPOSURE_TIME("ExposureTime", Double.class),
