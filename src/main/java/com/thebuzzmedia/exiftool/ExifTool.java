@@ -752,7 +752,6 @@ public class ExifTool {
                 OBJECT_NAME("ObjectName", String.class), CAPTION_ABSTRACT("Caption-Abstract",
                 String.class), CREATOR("Creator", String.class), IPTC_KEYWORDS("Keywords",
                 String.class), COPYRIGHT_NOTICE("CopyrightNotice", String.class),
-                SUB_SEC_TIME_ORIGINAL("SubSecTimeOriginal", Integer.class),
                 SERIAL_NUMBER("SerialNumber", String.class),
                 INTERNAL_SERIAL_NUMBER("InternalSerialNumber", String.class),
                 BODY_SERIAL_NUMBER("BodySerialNumber", String.class),
@@ -763,8 +762,6 @@ public class ExifTool {
                 LENS_SERIAL_NUMBER("LensSerialNumber", String.class),
                 SCANNER_SERIAL_NUMBER("ScannerSerialNumber", String.class),
                 SOURCE_SERIAL_NUMBER("SourceSerialNumber", String.class),
-                CREATOR("Creator", String.class),
-                COPYRIGHT_NOTICE("CopyrightNotice", String.class),
                 IMAGE_UNIQUE_ID("ImageUniqueID", String.class),
                 LENS("Lens", String.class),
 	;
