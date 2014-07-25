@@ -202,7 +202,7 @@ import java.util.regex.Pattern;
  * written the 2nd most robust image metadata library I have come across: <a
  * href="http://drewnoakes.com/drewnoakes.com/code/exif/">Metadata Extractor</a>
  * that you might want to look at.
- *
+ * 
  * @author Riyad Kalla (software@thebuzzmedia.com)
  * @since 1.1
  */
@@ -359,15 +359,15 @@ public class ExifTool {
 	 * The external call to ExifTool to confirm feature support is only ever
 	 * done once per JVM session and stored in a <code>static final</code>
 	 * {@link Map} that all instances of this class share.
-	 *
+	 * 
 	 * @param feature
 	 *            The feature to check support for in the underlying ExifTool
 	 *            install.
-	 *
+	 * 
 	 * @return <code>true</code> if support for the given {@link Feature} was
 	 *         confirmed to work with the currently installed ExifTool or
 	 *         <code>false</code> if it is not supported.
-	 *
+	 * 
 	 * @throws IllegalArgumentException
 	 *             if <code>feature</code> is <code>null</code>.
 	 * @throws RuntimeException
@@ -487,8 +487,8 @@ public class ExifTool {
 				 * important that robust IOException handling right here.
 				 */
 			} finally {
-                // Close r/w streams to exited process.
-                streams.close();
+				// Close r/w streams to exited process.
+				streams.close();
 			}
 
 			// Ensure the version found is >= the required version.
@@ -661,7 +661,8 @@ public class ExifTool {
 	 * @since 1.1
 	 */
 	public enum Format {
-		NUMERIC, HUMAN_READABLE;
+		NUMERIC,
+		HUMAN_READABLE;
 	}
 
 	/**
@@ -786,8 +787,7 @@ public class ExifTool {
 		TITLE("XPTitle", String.class),
 		WHITE_BALANCE("WhiteBalance", Integer.class),
 		X_RESOLUTION("XResolution", Double.class),
-		Y_RESOLUTION("YResolution", Double.class),
-	;
+		Y_RESOLUTION("YResolution", Double.class), ;
 		private static final Map<String, Tag> TAG_LOOKUP_MAP;
 
 		/**
@@ -981,15 +981,15 @@ public class ExifTool {
 		}
 	}
 
-    public void shutdownCleanupTask() {
-        if(currentCleanupTask != null) {
-            currentCleanupTask.cancel();
-        }
-        currentCleanupTask = null;
-        if(cleanupTimer != null) {
-            cleanupTimer.cancel();
-        }
-    }
+	public void shutdownCleanupTask() {
+		if (currentCleanupTask != null) {
+			currentCleanupTask.cancel();
+		}
+		currentCleanupTask = null;
+		if (cleanupTimer != null) {
+			cleanupTimer.cancel();
+		}
+	}
 
 	/**
 	 * Used to shutdown the external ExifTool process and close the read/write
@@ -1266,13 +1266,13 @@ public class ExifTool {
 
 		return resultMap;
 	}
-        
-        public void setImageMeta(File image, Map<Tag, String> tags) 
-                        throws IllegalArgumentException, SecurityException, IOException {
+
+	public void setImageMeta(File image, Map<Tag, String> tags)
+			throws IllegalArgumentException, SecurityException, IOException {
 		setImageMeta(image, Format.NUMERIC, tags);
 	}
-        
-        public void setImageMeta(File image, Format format, Map<Tag, String> tags )
+
+	public void setImageMeta(File image, Format format, Map<Tag, String> tags)
 			throws IllegalArgumentException, SecurityException, IOException {
 		if (image == null)
 			throw new IllegalArgumentException(
@@ -1338,7 +1338,7 @@ public class ExifTool {
 
 			streams.writer.write("-S\n"); // compact output
 
-                        for ( Entry<Tag,String> entry :tags.entrySet() ) {
+			for (Entry<Tag, String> entry : tags.entrySet()) {
 				streams.writer.write('-');
 				streams.writer.write(entry.getKey().name);
 				streams.writer.write("='");
@@ -1371,8 +1371,9 @@ public class ExifTool {
 
 			args.add("-S"); // compact output
 
-			for ( Entry<Tag,String> entry :tags.entrySet() )
-				args.add("-" + entry.getKey().name + "='" + entry.getValue() + "'" );
+			for (Entry<Tag, String> entry : tags.entrySet())
+				args.add("-" + entry.getKey().name + "='" + entry.getValue()
+						+ "'");
 
 			args.add(image.getAbsolutePath());
 
@@ -1495,16 +1496,16 @@ public class ExifTool {
 			return feature;
 		}
 	}
-	
+
 	/**
-	 * Class used to handle XMP Sidecar files using exiftool. 
+	 * Class used to handle XMP Sidecar files using exiftool.
 	 * 
 	 * @author Clinton LaForest (clafore@bgsu.edu)
 	 * @since 1.2_thespiritx
 	 */
 	public class Sidecar {
 		public Sidecar(Feature feature) {
-			
+
 		}
 
 		/**
@@ -1512,13 +1513,13 @@ public class ExifTool {
 		 * 
 		 * @param xmp
 		 *            The xmp sidecar file.
-		 *            
+		 * 
 		 * @param file
-		 * 			  The image file.
+		 *            The image file.
 		 * 
 		 * @param preserve
-		 * 			  <code>true</code> - preserves name mappings
-		 * 			  <code>false</code> - uses preferred name mappings
+		 *            <code>true</code> - preserves name mappings
+		 *            <code>false</code> - uses preferred name mappings
 		 * 
 		 * @return <code>void</code>
 		 * 
@@ -1540,20 +1541,21 @@ public class ExifTool {
 			long startTime = System.currentTimeMillis();
 
 			if (DEBUG)
-				log("Writing %s tags to image: %s", xmp.getAbsolutePath(), file.getAbsolutePath());
+				log("Writing %s tags to image: %s", xmp.getAbsolutePath(),
+						file.getAbsolutePath());
 
 			long exifToolCallElapsedTime = 0;
 
 			/*
-			 * Using ExifTool in daemon mode (-stay_open True) executes different
-			 * code paths below. So establish the flag for this once and it is
-			 * reused a multitude of times later in this method to figure out where
-			 * to branch to.
+			 * Using ExifTool in daemon mode (-stay_open True) executes
+			 * different code paths below. So establish the flag for this once
+			 * and it is reused a multitude of times later in this method to
+			 * figure out where to branch to.
 			 */
 			boolean stayOpen = featureSet.contains(Feature.STAY_OPEN);
-			
+
 			args.clear();
-			
+
 			if (stayOpen) {
 				log("\tUsing ExifTool in daemon mode (-stay_open True)...");
 
@@ -1561,9 +1563,9 @@ public class ExifTool {
 				resetCleanupTask();
 
 				/*
-				 * If this is our first time calling getImageMeta with a stayOpen
-				 * connection, set up the persistent process and run it so it is
-				 * ready to receive commands from us.
+				 * If this is our first time calling getImageMeta with a
+				 * stayOpen connection, set up the persistent process and run it
+				 * so it is ready to receive commands from us.
 				 */
 				if (streams == null) {
 					log("\tStarting daemon ExifTool process and creating read/write streams (this only happens once)...");
@@ -1582,30 +1584,30 @@ public class ExifTool {
 
 				try {
 					streams.writer.write("-tagsfromfile\n");
-				
+
 					streams.writer.write(file.getAbsolutePath());
 					streams.writer.write("\n");
-					
-					if(preserve){
+
+					if (preserve) {
 						streams.writer.write("-all:all");
 						streams.writer.write("\n");
 					} else {
 						streams.writer.write("-xmp");
 						streams.writer.write("\n");
 					}
-					
+
 					streams.writer.write(xmp.getAbsolutePath());
 					streams.writer.write("\n");
-	
+
 					log("\tExecuting ExifTool...");
-	
+
 					// Begin tracking the duration ExifTool takes to respond.
 					exifToolCallElapsedTime = System.currentTimeMillis();
-	
+
 					// Run ExifTool on our file with all the given arguments.
 					streams.writer.write("-execute\n");
 					streams.writer.flush();
-					
+
 				} catch (IOException e) {
 					log("\tError received in stayopen stream: %s",
 							e.getMessage());
@@ -1614,21 +1616,21 @@ public class ExifTool {
 				log("\tUsing ExifTool in non-daemon mode (-stay_open False)...");
 
 				/*
-				 * Since we are not using a stayOpen process, we need to setup the
-				 * execution arguments completely each time.
+				 * Since we are not using a stayOpen process, we need to setup
+				 * the execution arguments completely each time.
 				 */
 				args.add(EXIF_TOOL_PATH);
 
 				args.add("-tagsfromfile"); // compact output
 
 				args.add(file.getAbsolutePath());
-				
-				if(preserve) {
+
+				if (preserve) {
 					args.add("-all:all");
 				} else {
 					args.add("-xmp");
 				}
-				
+
 				args.add(xmp.getAbsolutePath());
 
 				// Run the ExifTool with our args.
@@ -1637,7 +1639,7 @@ public class ExifTool {
 				// Begin tracking the duration ExifTool takes to respond.
 				exifToolCallElapsedTime = System.currentTimeMillis();
 			}
-			
+
 			log("\tReading response back from ExifTool...");
 
 			String line = null;
@@ -1645,18 +1647,17 @@ public class ExifTool {
 			try {
 				while ((line = streams.reader.readLine()) != null) {
 					/*
-					 * When using a persistent ExifTool process, it terminates its
-					 * output to us with a "{ready}" clause on a new line, we need to
-					 * look for it and break from this loop when we see it otherwise
-					 * this process will hang indefinitely blocking on the input stream
-					 * with no data to read.
+					 * When using a persistent ExifTool process, it terminates
+					 * its output to us with a "{ready}" clause on a new line,
+					 * we need to look for it and break from this loop when we
+					 * see it otherwise this process will hang indefinitely
+					 * blocking on the input stream with no data to read.
 					 */
 					if (stayOpen && line.equals("{ready}"))
 						break;
 				}
 			} catch (IOException e) {
-				log("\tError received in response: %d",
-						e.getMessage());
+				log("\tError received in response: %d", e.getMessage());
 			}
 
 			// Print out how long the call to external ExifTool process took.
@@ -1664,38 +1665,40 @@ public class ExifTool {
 					(System.currentTimeMillis() - exifToolCallElapsedTime));
 
 			/*
-			 * If we are not using a persistent ExifTool process, then after running
-			 * the command above, the process exited in which case we need to clean
-			 * our streams up since it no longer exists. If we were using a
-			 * persistent ExifTool process, leave the streams open for future calls.
+			 * If we are not using a persistent ExifTool process, then after
+			 * running the command above, the process exited in which case we
+			 * need to clean our streams up since it no longer exists. If we
+			 * were using a persistent ExifTool process, leave the streams open
+			 * for future calls.
 			 */
 			if (!stayOpen)
 				streams.close();
 
 			if (DEBUG)
 				log("\tImage Meta Processed in %d ms [write %s tags]",
-						(System.currentTimeMillis() - startTime), xmp.getAbsolutePath());
-			
+						(System.currentTimeMillis() - startTime),
+						xmp.getAbsolutePath());
+
 		}
-		
+
 		/**
 		 * Used to export a XMP Sidecar file from an image.
 		 * 
 		 * @param xmp
 		 *            The xmp sidecar file.
-		 *            
+		 * 
 		 * @param file
-		 * 			  The image file.
+		 *            The image file.
 		 * 
 		 * @param preserve
-		 * 			  <code>true</code> - preserves name mappings
-		 * 			  <code>false</code> - uses preferred name mappings
+		 *            <code>true</code> - preserves name mappings
+		 *            <code>false</code> - uses preferred name mappings
 		 * 
 		 * @return <code>void</code>
 		 * 
 		 */
 		public void export(File xmp, File file, boolean preserve) {
-			
+
 		}
 	}
 }
