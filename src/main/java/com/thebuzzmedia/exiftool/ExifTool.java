@@ -1209,7 +1209,6 @@ public class ExifTool {
     WHITE_BALANCE("WhiteBalance", Integer.class),
     X_RESOLUTION("XResolution", Double.class),
     Y_RESOLUTION("YResolution", Double.class),
-		Y_RESOLUTION("YResolution", Double.class),
 		// select ICC metadata
 		ICC_DESCRIPTION("ProfileDescription", String.class), 
 		ICC_COLORSPACEDATA(	"ColorSpaceData", String.class),
