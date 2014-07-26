@@ -13,10 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package com.thebuzzmedia.exiftool;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
@@ -34,6 +36,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.regex.Pattern;
 
+import org.apache.commons.io.FilenameUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -710,6 +713,103 @@ public class ExifTool {
 		return args;
 
 	}
+	/**
+	 * extract image metadata to exiftool's internal xml format.
+	 * 
+	 * @param input
+	 *            the input file
+	 * @return command output as xml string
+	 * @throws IOException
+	 *             Signals that an I/O exception has occurred.
+	 */
+	public String getImageMetadataXml(File input, boolean includeBinary)
+			throws IOException {
+		List<String> args = new ArrayList<String>();
+		args.add("-X");
+		if (includeBinary)
+			args.add("-b");
+		args.add(input.getAbsolutePath());
+
+		return ExifProcess.executeToString(exifCmd, args);
+	}
+
+	/**
+	 * extract image metadata to exiftool's internal xml format.
+	 * 
+	 * @param input
+	 *            the input file
+	 * @param output
+	 *            the output file
+	 * @throws IOException
+	 *             Signals that an I/O exception has occurred.
+	 */
+	public void getImageMetadataXml(File input, File output,
+			boolean includeBinary) throws IOException {
+
+		String result = getImageMetadataXml(input, includeBinary);
+
+		try (FileWriter w = new FileWriter(output)) {
+			w.write(result);
+		}
+	}
+
+	/**
+	 * output icc profile from input to output.
+	 * 
+	 * @param input
+	 *            the input file
+	 * @param output
+	 *            the output file for icc data
+	 * @return the command result from standard output e.g.
+	 *         "1 output files created"
+	 * @throws IOException
+	 *             Signals that an I/O exception has occurred.
+	 */
+	public String extractImageIccProfile(File input, File output)
+			throws IOException {
+
+		List<String> args = new ArrayList<String>();
+		args.add("-icc_profile");
+		args.add(input.getAbsolutePath());
+
+		args.add("-o");
+		args.add(output.getAbsolutePath());
+
+		return ExifProcess.executeToString(exifCmd, args);
+	}
+
+	/**
+	 * Extract thumbnail from the given tag.
+	 * 
+	 * @param input
+	 *            the input file
+	 * @param tag
+	 *            the tag containing binary data PhotoshopThumbnail or
+	 *            ThumbnailImage
+	 * @return the thumbnail file created. it is in the same folder as the input
+	 *         file because of the syntax of exiftool and has the suffix
+	 *         ".thumb.jpg"
+	 * @throws IOException
+	 *             Signals that an I/O exception has occurred.
+	 */
+	public File extractThumbnail(File input, Tag tag) throws IOException {
+
+		List<String> args = new ArrayList<String>();
+		String suffix = ".thumb.jpg";
+		String thumbname = FilenameUtils.getBaseName(input.getName()) + suffix;
+
+		args.add("-" + tag.getName());
+		args.add(input.getAbsolutePath());
+		args.add("-b");
+		args.add("-w");
+		args.add(suffix);
+		String result = ExifProcess.executeToString(exifCmd, args);
+		File thumbnail = new File(input.getParent() + File.separator
+				+ thumbname);
+		if (!thumbnail.exists())
+			throw new IOException("could not create thumbnail: " + result);
+		return thumbnail;
+	}
 
 	/**
 	 * Will attempt 3 times to use the running exif process, and if unable to
@@ -809,6 +909,19 @@ public class ExifTool {
 			}
 		}
 
+		public static String executeToString(String exifCmd, List<String> args)
+				throws IOException {
+			List<String> newArgs = new ArrayList<String>(args.size() + 1);
+			newArgs.add(exifCmd);
+			newArgs.addAll(args);
+			ExifProcess process = _execute(false, newArgs);
+			try {
+				return process.readResponseString();
+			} finally {
+				process.close();
+			}
+		}
+
 		public static ExifProcess startup(String exifCmd) {
 			List<String> args = Arrays.asList(exifCmd, "-stay_open", "True",
 					"-@", "-");
@@ -898,6 +1011,31 @@ public class ExifTool {
 				}
 			}
 			return resultMap;
+		}
+
+		public synchronized String readResponseString() throws IOException {
+			if (closed)
+				throw new IOException(STREAM_CLOSED_MESSAGE);
+			log.debug("Reading response back from ExifTool...");
+			String line;
+			StringBuilder result = new StringBuilder();
+			while ((line = reader.readLine()) != null) {
+				if (closed)
+					throw new IOException(STREAM_CLOSED_MESSAGE);
+
+				/*
+				 * When using a persistent ExifTool process, it terminates its
+				 * output to us with a "{ready}" clause on a new line, we need
+				 * to look for it and break from this loop when we see it
+				 * otherwise this process will hang indefinitely blocking on the
+				 * input stream with no data to read.
+				 */
+				if (keepAlive && line.equals("{ready}")) {
+					break;
+				} else
+					result.append(line);
+			}
+			return result.toString();
 		}
 
 		public boolean isClosed() {
@@ -1183,7 +1321,15 @@ public class ExifTool {
 		TITLE("XPTitle", String.class),
 		WHITE_BALANCE("WhiteBalance", Integer.class),
 		X_RESOLUTION("XResolution", Double.class),
-		Y_RESOLUTION("YResolution", Double.class), ;
+		Y_RESOLUTION("YResolution", Double.class),
+		// select ICC metadata
+		ICC_DESCRIPTION("ProfileDescription", String.class),
+		ICC_COLORSPACEDATA("ColorSpaceData", String.class),
+		// actually binary data, but what are we doing to do here??? Just use to
+		// save to file...
+		THUMBNAIL_IMAGE("ThumbnailImage", String.class),
+		THUMBNAIL_PHOTOSHOP("PhotoshopThumbnail", String.class),
+	;
 
 		/**
 		 * Used to get the {@link Tag} identified by the given, case-sensitive,
@@ -1310,7 +1456,9 @@ public class ExifTool {
 		EXIF("EXIF", "exif:all"),
 		IPTC("IPTC", "iptc:all"),
 		XMP("XMP", "xmp:all"),
-		ALL("ALL", "all");
+		ALL("ALL", "all"),
+		FILE("FILE", "file:all"),
+		ICC("ICC", "icc_profile:all");
 
 		private final String name;
 		private final String value;

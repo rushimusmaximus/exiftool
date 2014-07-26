@@ -22,6 +22,11 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import junit.framework.TestCase;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * TestMetadata
  * <p>
@@ -29,8 +34,10 @@ import org.slf4j.LoggerFactory;
  * @author Michael Rush (michaelrush@gmail.com)
  * @since Initially created 8/8/13
  */
+
 public class TestExifTool {
 
+	private static final String TEST_FILES_PATH = "src/test/resources";
 	private static Logger log = LoggerFactory.getLogger(TestExifTool.class);
 
 	@Test
@@ -157,7 +164,7 @@ public class TestExifTool {
 		imageFile = new File(url.toURI());
 		metadata = tool.getImageMeta(imageFile, ExifTool.Format.HUMAN_READABLE,
 				ExifTool.Tag.values());
-		assertEquals(22, metadata.size());
+		assertEquals(25, metadata.size());
 
 		keys = metadata.keySet();
 
@@ -176,7 +183,7 @@ public class TestExifTool {
 		imageFile = new File(url.toURI());
 		metadata = tool.getImageMeta(imageFile, ExifTool.Format.HUMAN_READABLE,
 				ExifTool.Tag.values());
-		assertEquals(23, metadata.size());
+		assertEquals(24, metadata.size());
 
 		keys = metadata.keySet();
 		tag = ExifTool.Tag.IMAGE_WIDTH;

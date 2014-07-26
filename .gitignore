@@ -1,11 +1,9 @@
 target
 dist
 bin
+/.project
+/.settings
+/.classpath
 *.iml
 .idea
 
-/.classpath
-
-/.project
-
-/.settings
