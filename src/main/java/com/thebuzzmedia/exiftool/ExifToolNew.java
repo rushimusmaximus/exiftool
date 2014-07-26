@@ -16,6 +16,7 @@
 package com.thebuzzmedia.exiftool;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.lang.reflect.Array;
 import java.text.ParseException;
@@ -266,7 +267,7 @@ public class ExifToolNew {
 	static final String CLEANUP_THREAD_NAME = "ExifTool Cleanup Thread";
 
 	static final String STREAM_CLOSED_MESSAGE = "Stream closed";
-	private static final String EXIF_DATE_FORMAT = "yyyy:MM:dd HH:mm:ss";
+	static final String EXIF_DATE_FORMAT = "yyyy:MM:dd HH:mm:ss";
 
 	static final Logger log = LoggerFactory.getLogger(ExifTool.class);
 
