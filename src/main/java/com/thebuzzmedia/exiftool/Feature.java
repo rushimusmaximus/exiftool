@@ -21,7 +21,19 @@ public enum Feature {
 	 * <p/>
 	 * Required ExifTool version is <code>8.36</code> or higher.
 	 */
-	STAY_OPEN(8, 36);
+	STAY_OPEN(8, 36),
+	/**
+	 * Acitves the MWG modules. The Metadata Working Group (MWG) recommends
+	 * techniques to allow certain overlapping EXIF, IPTC and XMP tags to be
+	 * reconciled when reading, and synchronized when writing. The MWG Composite
+	 * tags below are designed to aid in the implementation of these
+	 * recommendations. Will add the args " -use MWG"
+	 * 
+	 * @see <a
+	 *      href="http://www.sno.phy.queensu.ca/~phil/exiftool/TagNames/MWG.html">ExifTool
+	 *      MWG Docs</a> !! Note these version numbers are not correct
+	 */
+	MWG_MODULE(8, 36), ;
 
 	private VersionNumber requireVersion;
 

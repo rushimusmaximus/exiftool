@@ -27,7 +27,7 @@ public class Example {
 			Map<Tag, String> metadata = tool.getImageMeta(f,
 					Format.HUMAN_READABLE, Tag.values());
 			for (Tag key : metadata.keySet()) {
-				log.info(String.format("\t\t%s: %s", key.getName(),
+				log.info(String.format("\t\t%s: %s", key.getKey(),
 						metadata.get(key)));
 			}
 		}
@@ -41,7 +41,7 @@ public class Example {
 				TagGroup.XMP }) {
 			Map<String, String> metadata = tool.getImageMeta(f,
 					Format.HUMAN_READABLE, tagGroup);
-			log.info(tagGroup.getName());
+			log.info(tagGroup.getKey());
 			for (String key : metadata.keySet()) {
 				log.info(String.format("\t\t%s: %s", key, metadata.get(key)));
 			}

@@ -13,9 +13,10 @@ import java.util.concurrent.locks.ReentrantLock;
 
 // ================================================================================
 /**
- * Represents an Exif Process.
+ * Represents an external exif process. Works for both single use and keep alive
+ * modes. This is the actual process, with streams for reading and writing data.
  */
-public class ExifProcess {
+public final class ExifProcess {
 	private final ReentrantLock closeLock = new ReentrantLock(false);
 	private final boolean keepAlive;
 	private final Process process;
@@ -24,17 +25,19 @@ public class ExifProcess {
 	private volatile boolean closed = false;
 
 	public static VersionNumber readVersion(String exifCmd) {
-		ExifProcess process = _execute(false,
-				Arrays.asList(exifCmd, "-ver"));
+		ExifProcess process = _execute(false, Arrays.asList(exifCmd, "-ver"));
 		try {
 			return new VersionNumber(process.readLine());
 		} catch (IOException ex) {
 			throw new RuntimeException(String.format(
-					"Unable to check version number of ExifTool: %s",
-					exifCmd));
+					"Unable to check version number of ExifTool: %s", exifCmd));
 		} finally {
 			process.close();
 		}
+	}
+
+	public static ExifProcess _execute(boolean keepAlive, List<String> args) {
+		return new ExifProcess(keepAlive,args);
 	}
 
 	public static Map<String, String> executeToResults(String exifCmd,
@@ -69,14 +72,17 @@ public class ExifProcess {
 		return _execute(true, args);
 	}
 
-	public static ExifProcess _execute(boolean keepAlive, List<String> args) {
-		ExifTool.log.debug(String
-				.format("Attempting to start external ExifTool process using args: %s",
-						args));
+
+	public ExifProcess(boolean keepAlive, List<String> args) {
+		this.keepAlive = keepAlive;
+		ExifTool.log.debug(String.format(
+				"Attempting to start ExifTool process using args: %s", args));
 		try {
-			Process process = new ProcessBuilder(args).start();
+			this.process = new ProcessBuilder(args).start();
+			this.reader = new BufferedReader(new InputStreamReader(
+					process.getInputStream()));
+			this.writer = new OutputStreamWriter(process.getOutputStream());
 			ExifTool.log.debug("\tSuccessful");
-			return new ExifProcess(keepAlive, process);
 		} catch (Exception e) {
 			String message = "Unable to start external ExifTool process using the execution arguments: "
 					+ args
@@ -88,17 +94,11 @@ public class ExifProcess {
 			throw new RuntimeException(message, e);
 		}
 	}
-
-	public ExifProcess(boolean keepAlive, Process process) {
-		this.keepAlive = keepAlive;
-		this.process = process;
-		this.reader = new BufferedReader(new InputStreamReader(
-				process.getInputStream()));
-		this.writer = new OutputStreamWriter(process.getOutputStream());
+	public synchronized Map<String, String> sendToRunning(List<String> args) throws IOException {
+		return sendArgs(args);
 	}
 
-	public synchronized Map<String, String> sendArgs(List<String> args)
-			throws IOException {
+	public synchronized Map<String, String> sendArgs(List<String> args) throws IOException {
 		StringBuilder builder = new StringBuilder();
 		for (String arg : args) {
 			builder.append(arg).append("\n");
@@ -121,8 +121,7 @@ public class ExifProcess {
 		return reader.readLine();
 	}
 
-	public synchronized Map<String, String> readResponse()
-			throws IOException {
+	public synchronized Map<String, String> readResponse() throws IOException {
 		if (closed)
 			throw new IOException(ExifTool.STREAM_CLOSED_MESSAGE);
 		ExifTool.log.debug("Reading response back from ExifTool...");
@@ -136,8 +135,8 @@ public class ExifProcess {
 
 			if (pair.length == 2) {
 				resultMap.put(pair[0], pair[1]);
-				ExifTool.log.debug(String.format("\tRead Tag [name=%s, value=%s]",
-						pair[0], pair[1]));
+				ExifTool.log.debug(String.format(
+						"\tRead Tag [name=%s, value=%s]", pair[0], pair[1]));
 			}
 
 			/*
@@ -189,19 +188,21 @@ public class ExifProcess {
 			try {
 				if (!closed) {
 					closed = true;
-					ExifTool.log.debug("Attempting to close ExifTool daemon process, issuing '-stay_open\\nFalse\\n' command...");
-					try {
-						writer.write("-stay_open\nFalse\n");
-						writer.flush();
-					} catch (IOException ex) {
-						// log.error(ex,ex);
-					}
 					try {
 						ExifTool.log.debug("Closing Read stream...");
 						reader.close();
 						ExifTool.log.debug("\tSuccessful");
 					} catch (Exception e) {
 						// no-op, just try to close it.
+					}
+
+					try {
+						ExifTool.log
+								.debug("Attempting to close ExifTool daemon process, issuing '-stay_open\\nFalse\\n' command...");
+						writer.write("-stay_open\nFalse\n");
+						writer.flush();
+					} catch (IOException ex) {
+						// log.error(ex,ex);
 					}
 
 					try {

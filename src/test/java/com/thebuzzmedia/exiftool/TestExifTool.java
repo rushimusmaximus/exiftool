@@ -12,7 +12,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -513,6 +515,108 @@ public class TestExifTool {
 
 		Files.move(backupFile, imageFile, StandardCopyOption.REPLACE_EXISTING);
 
+	}
+
+	@Test
+	public void testWriteMultipleTagNonDaemon2() throws Exception {
+
+		ExifToolNew tool = new ExifToolNew();
+		URL url = getClass().getResource("/nexus-s-electric-cars.jpg");
+		Path imageFile = Paths.get(url.toURI());
+
+		// Test what orientation value is at the start
+		Map<Tag, String> metadata = tool.getImageMeta(
+				imageFile.toFile(), Format.HUMAN_READABLE,
+				Tag.ORIENTATION, Tag.DATE_TIME_ORIGINAL);
+		assertEquals("Orientation tag starting value is wrong",
+				"Horizontal (normal)", metadata.get(Tag.ORIENTATION));
+		assertEquals("Wrong starting value", "2010:12:10 17:07:05",
+				metadata.get(Tag.DATE_TIME_ORIGINAL));
+
+		// Now change them
+		String newDate = "2014:01:23 10:07:05";
+		Map<Tag, Object> newValues = new HashMap<Tag, Object>();
+		newValues.put(Tag.DATE_TIME_ORIGINAL, newDate);
+		newValues.put(Tag.ORIENTATION, 3);
+
+		tool.writeMetadata(imageFile.toFile(), newValues);
+
+		// Finally check the updated value
+		metadata = tool.getImageMeta(imageFile.toFile(),
+				Format.HUMAN_READABLE, Tag.ORIENTATION,
+				Tag.DATE_TIME_ORIGINAL);
+		assertEquals("Orientation tag updated value is wrong", "Rotate 180",
+				metadata.get(Tag.ORIENTATION));
+		assertEquals("DateTimeOriginal tag is wrong", newDate,
+				metadata.get(Tag.DATE_TIME_ORIGINAL));
+
+		// Finally copy the source file back over so the next test run is not
+		// affected by the change
+		URL backup_url = getClass().getResource(
+				"/nexus-s-electric-cars.jpg_original");
+		Path backupFile = Paths.get(backup_url.toURI());
+
+		Files.move(backupFile, imageFile, StandardCopyOption.REPLACE_EXISTING);
+	}
+	@Test
+	public void testWritingWithImplicitTypes() throws Exception {
+		ExifToolNew tool = new ExifToolNew(Feature.MWG_MODULE);
+		tool.setReadOptions(tool.getReadOptions().withNumericOutput(true)
+				.withConvertTypes(true));
+		URL url = getClass().getResource("/nexus-s-electric-cars.jpg");
+		File imageFile = Paths.get(url.toURI()).toFile();
+		try {
+			// Test what orientation value is at the start
+			SimpleDateFormat formatter = new SimpleDateFormat(
+					"yyyy:MM:dd hh:mm:ss");
+
+			Map<Object, Object> metadata = tool.readMetadata(imageFile,
+					Tag.ORIENTATION,
+					MwgTag.DATE_TIME_ORIGINAL);
+			assertEquals("Orientation tag starting value is wrong", 1,
+					metadata.get(Tag.ORIENTATION));
+			assertEquals("Wrong starting value",
+					formatter.parse("2010:12:10 17:07:05"),
+					metadata.get(MwgTag.DATE_TIME_ORIGINAL));
+
+			// Now change them
+			Map<Object, Object> data = new HashMap<Object, Object>();
+			Date dateTimeOrig = formatter.parse("2014:01:23 10:07:05");
+			data.put(MwgTag.DATE_TIME_ORIGINAL, dateTimeOrig);
+			data.put(Tag.ORIENTATION, 3);
+			Date createDate = formatter.parse("2013:02:21 10:07:05");
+			data.put(MwgTag.CREATE_DATE, createDate.getTime());
+			data.put(MwgTag.KEYWORDS, new String[] { "a", "b", "c" });
+			tool.writeMetadata(
+					tool.getWriteOptions().withDeleteBackupFile(false),
+					imageFile, data);
+
+			// Finally check the updated value
+			metadata = tool.readMetadata(imageFile, Tag.ORIENTATION,
+					imageFile, MwgTag.DATE_TIME_ORIGINAL,
+					MwgTag.CREATE_DATE, MwgTag.KEYWORDS);
+			assertEquals("Orientation tag updated value is wrong", 3,
+					metadata.get(Tag.ORIENTATION));
+			assertEquals("DateTimeOriginal tag is wrong", dateTimeOrig,
+					metadata.get(MwgTag.DATE_TIME_ORIGINAL));
+			assertEquals("CreateDate tag is wrong", createDate,
+					metadata.get(MwgTag.CREATE_DATE));
+			assertEquals("Keywords tag is wrong", "a",
+					((String[]) metadata.get(MwgTag.KEYWORDS))[0]);
+
+			// Finally copy the source file back over so the next test run is
+			// not affected by the change
+
+		} finally {
+			URL backup_url = getClass().getResource(
+					"/nexus-s-electric-cars.jpg_original");
+			if (backup_url != null) {
+				Path backupFile = Paths.get(backup_url.toURI());
+				Files.move(backupFile, imageFile.toPath(),
+						StandardCopyOption.REPLACE_EXISTING);
+			}
+
+		}
 	}
 
 	// todo TEST automatic daemon restart by killing perl process

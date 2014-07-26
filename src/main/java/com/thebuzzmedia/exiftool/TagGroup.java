@@ -1,7 +1,7 @@
 package com.thebuzzmedia.exiftool;
 
 // ================================================================================
-public enum TagGroup {
+public enum TagGroup implements MetadataTag {
 	EXIF("EXIF", "exif:all"),
 	IPTC("IPTC", "iptc:all"),
 	XMP("XMP", "xmp:all"),
@@ -10,18 +10,34 @@ public enum TagGroup {
 	ICC("ICC", "icc_profile:all");
 
 	private final String name;
-	private final String value;
+	private final String key;
 
-	private TagGroup(String name, String value) {
+	private TagGroup(String name, String key) {
 		this.name = name;
-		this.value = value;
+		this.key = key;
 	}
 
 	public String getName() {
 		return name;
 	}
-
+	@Deprecated
 	public String getValue() {
-		return value;
+		return getKey();
 	}
+
+	@Override
+	public String getKey() {
+		return key;
+	}
+
+	@Override
+	public Class getType() {
+		return Void.class;
+	}
+
+	@Override
+	public boolean isMapped() {
+		return false;
+	}
+
 }

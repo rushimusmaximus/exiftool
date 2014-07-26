@@ -3,6 +3,8 @@ package com.thebuzzmedia.exiftool;
 // ================================================================================
 /**
  * Version Number used to determine if one version is after another.
+ * 
+ * @author Matt Gile, msgile
  */
 class VersionNumber {
 	private final int[] numbers;
@@ -36,11 +38,11 @@ class VersionNumber {
 	@Override
 	public String toString() {
 		StringBuilder builder = new StringBuilder();
-		for (int i = 0; i < numbers.length; i++) {
+		for (int number : numbers) {
 			if (builder.length() > 0) {
 				builder.append(".");
 			}
-			builder.append(numbers[i]);
+			builder.append(number);
 		}
 		return builder.toString();
 	}

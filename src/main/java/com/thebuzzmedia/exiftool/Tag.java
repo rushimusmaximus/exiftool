@@ -1,5 +1,10 @@
 package com.thebuzzmedia.exiftool;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 
 // ================================================================================
 /**
@@ -47,17 +52,17 @@ package com.thebuzzmedia.exiftool;
  * @author Riyad Kalla (software@thebuzzmedia.com)
  * @since 1.1
  */
-public enum Tag {
+public enum Tag implements MetadataTag {
 	// single entry tags
 	APERTURE("ApertureValue", Double.class),
 	AUTHOR("XPAuthor", String.class),
 	COLOR_SPACE("ColorSpace", Integer.class),
 	COMMENT("XPComment", String.class),
 	CONTRAST("Contrast", Integer.class),
-	CREATE_DATE("CreateDate", String.class),
-	CREATION_DATE("CreationDate", String.class),
-	DATE_CREATED("DateCreated", String.class),
-	DATE_TIME_ORIGINAL("DateTimeOriginal", String.class),
+	CREATE_DATE("CreateDate", Date.class),
+	CREATION_DATE("CreationDate", Date.class),
+	DATE_CREATED("DateCreated", Date.class),
+	DATE_TIME_ORIGINAL("DateTimeOriginal", Date.class),
 	DIGITAL_ZOOM_RATIO("DigitalZoomRatio", Double.class),
 	EXIF_VERSION("ExifVersion", String.class),
 	EXPOSURE_COMPENSATION("ExposureCompensation", Double.class),
@@ -131,6 +136,18 @@ public enum Tag {
 		}
 		return null;
 	}
+	public static Map<Tag, String> toTagMap(Map<String, String> values) {
+		return mapByTag(values);
+	}
+	private static Map<Tag, String> mapByTag(Map<String, String> stringMap) {
+		Map<Tag, String> tagMap = new HashMap<Tag, String>(Tag.values().length);
+		for (Tag tag : Tag.values()) {
+			if (stringMap.containsKey(tag.getName())) {
+				tagMap.put(tag, stringMap.get(tag.getName()));
+			}
+		}
+		return tagMap;
+	}
 
 	/**
 	 * Convenience method used to convert the given string Tag value
@@ -191,7 +208,6 @@ public enum Tag {
 		}
 		return null;
 	}
-
 	private Double parseDouble(String in) {
 		if (in.contains("/")) {
 			String[] enumeratorAndDivisor = in.split("/");
@@ -200,6 +216,71 @@ public enum Tag {
 		} else {
 			return Double.parseDouble(in);
 		}
+	}
+	@SuppressWarnings("unchecked")
+	public <T> T parseValue2(String value) throws IllegalArgumentException {
+		return (T) deserialize(getKey(), value, getType());
+	}
+
+	public static Object deserialize(String tagName, String value, Class expectedType) {
+		try {
+			if (Boolean.class.equals(expectedType)) {
+				if (value == null)
+					return null;
+				value = value.trim().toLowerCase();
+				switch (value.charAt(0)) {
+				case 'n':
+				case 'f':
+				case '0':
+					return false;
+				}
+				if (value.equals("off")) {
+					return false;
+				}
+				return true;
+			} else if (Date.class.equals(expectedType)) {
+				if (value == null)
+					return null;
+				SimpleDateFormat formatter = new SimpleDateFormat(
+						ExifToolNew.EXIF_DATE_FORMAT);
+				return formatter.parse(value);
+			} else if (Integer.class.equals(expectedType)) {
+				if (value == null)
+					return 0;
+				return Integer.parseInt(value);
+			} else if (Long.class.equals(expectedType)) {
+				if (value == null)
+					return 0;
+				return Long.parseLong(value);
+			} else if (Float.class.equals(expectedType)) {
+				if (value == null)
+					return 0;
+				return Float.parseFloat(value);
+			} else if (Double.class.equals(expectedType)) {
+				if (value == null)
+					return 0;
+				String[] enumeratorAndDivisor = value.split("/");
+				if (enumeratorAndDivisor.length == 2) {
+					return Double.parseDouble(enumeratorAndDivisor[0])
+							/ Double.parseDouble(enumeratorAndDivisor[1]);
+				} else {
+					return Double.parseDouble(value);
+				}
+			} else if (String[].class.equals(expectedType)) {
+				if (value == null)
+					return new String[0];
+				return value.split(",");
+			} else {
+				return value;
+			}
+		} catch (ParseException ex) {
+			ExifTool.log.warn("Invalid format, Tag:" + tagName);
+			return null;
+		} catch (NumberFormatException ex) {
+			ExifTool.log.warn("Invalid format, Tag:" + tagName);
+			return null;
+		}
+
 	}
 
 	/**
@@ -219,8 +300,19 @@ public enum Tag {
 	 * 
 	 * @return a hint for the native type of this tag's value.
 	 */
+	@Override
 	public Class<?> getType() {
 		return type;
+	}
+
+	@Override @Deprecated
+	public String getKey() {
+		return name;
+	}
+
+	@Override @Deprecated
+	public boolean isMapped() {
+		return true;
 	}
 
 	private String name;
