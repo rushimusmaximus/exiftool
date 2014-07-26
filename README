@@ -211,3 +211,9 @@ Contact
 -------
 If you have questions, comments or bug reports for this software please contact
 us at: software@thebuzzmedia.com
+
+
+Maven
+- create deliverables: mvn install -Prelease -DskipTests=true
+- release in svn: svn import -m "release" C:\Users\costin\.m2\repository\com https://raisercostin.googlecode.com/svn/maven2/com --force
+- current release: 2.3.0 - at http://raisercostin.googlecode.com/svn/maven2/com/thebuzzmedia/exiftool/exiftool-lib/2.3.0/
