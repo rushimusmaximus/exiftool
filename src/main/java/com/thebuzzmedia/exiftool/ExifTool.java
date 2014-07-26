@@ -713,6 +713,7 @@ public class ExifTool {
 		return args;
 
 	}
+
 	/**
 	 * extract image metadata to exiftool's internal xml format.
 	 * 
@@ -1328,8 +1329,7 @@ public class ExifTool {
 		// actually binary data, but what are we doing to do here??? Just use to
 		// save to file...
 		THUMBNAIL_IMAGE("ThumbnailImage", String.class),
-		THUMBNAIL_PHOTOSHOP("PhotoshopThumbnail", String.class),
-	;
+		THUMBNAIL_PHOTOSHOP("PhotoshopThumbnail", String.class), ;
 
 		/**
 		 * Used to get the {@link Tag} identified by the given, case-sensitive,
