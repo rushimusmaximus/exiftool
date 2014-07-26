@@ -6,9 +6,6 @@ import java.io.IOException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.thebuzzmedia.exiftool.ExifTool.Feature;
-import com.thebuzzmedia.exiftool.ExifTool.Tag;
-
 public class Benchmark {
 
 	public static final int ITERATIONS = 25;

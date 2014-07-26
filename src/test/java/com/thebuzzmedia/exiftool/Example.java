@@ -7,9 +7,6 @@ import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.thebuzzmedia.exiftool.ExifTool.Feature;
-import com.thebuzzmedia.exiftool.ExifTool.Format;
-
 public class Example {
 
 	private static Logger log = LoggerFactory.getLogger(Example.class);
@@ -27,9 +24,9 @@ public class Example {
 		// list all first-class tags
 		for (File f : images) {
 			log.info("\n[{}]", f.getName());
-			Map<ExifTool.Tag, String> metadata = tool.getImageMeta(f,
-					Format.HUMAN_READABLE, ExifTool.Tag.values());
-			for (ExifTool.Tag key : metadata.keySet()) {
+			Map<Tag, String> metadata = tool.getImageMeta(f,
+					Format.HUMAN_READABLE, Tag.values());
+			for (Tag key : metadata.keySet()) {
 				log.info(String.format("\t\t%s: %s", key.getName(),
 						metadata.get(key)));
 			}
@@ -39,9 +36,9 @@ public class Example {
 		// list all XMP, IPTC and XMP tags
 		File f = new File(TEST_FILES_PATH
 				+ "/kureckjones_jett_075_02-cropped.tif");
-		for (ExifTool.TagGroup tagGroup : new ExifTool.TagGroup[] {
-				ExifTool.TagGroup.EXIF, ExifTool.TagGroup.IPTC,
-				ExifTool.TagGroup.XMP }) {
+		for (TagGroup tagGroup : new TagGroup[] {
+				TagGroup.EXIF, TagGroup.IPTC,
+				TagGroup.XMP }) {
 			Map<String, String> metadata = tool.getImageMeta(f,
 					Format.HUMAN_READABLE, tagGroup);
 			log.info(tagGroup.getName());
