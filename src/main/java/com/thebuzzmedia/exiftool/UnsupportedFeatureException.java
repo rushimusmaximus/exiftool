@@ -18,7 +18,7 @@ public class UnsupportedFeatureException extends RuntimeException {
 				"Use of feature ["
 						+ feature
 						+ "] requires version "
-						+ feature.version
+						+ feature.getVersion()
 						+ " or higher of the native ExifTool program. The version of ExifTool referenced by the system property 'exiftool.path' is not high enough. You can either upgrade the install of ExifTool or avoid using this feature to workaround this exception.");
 	}
 

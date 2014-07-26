@@ -13,9 +13,9 @@ public class Sidecar {
 	/**
 	 * 
 	 */
-	private final ExifTool exifTool;
+	private final ExifToolNew2 exifTool;
 
-	public Sidecar(ExifTool exifTool, Feature feature) {
+	public Sidecar(ExifToolNew2 exifTool, Feature feature) {
 		this.exifTool = exifTool;
 
 	}
@@ -52,9 +52,8 @@ public class Sidecar {
 
 		long startTime = System.currentTimeMillis();
 
-		if (ExifTool.DEBUG)
-			ExifTool.log("Writing %s tags to image: %s", xmp.getAbsolutePath(),
-					file.getAbsolutePath());
+		ExifTool.log("Writing %s tags to image: %s", xmp.getAbsolutePath(),
+				file.getAbsolutePath());
 
 		long exifToolCallElapsedTime = 0;
 
@@ -82,14 +81,14 @@ public class Sidecar {
 			if (this.exifTool.streams == null) {
 				ExifTool.log("\tStarting daemon ExifTool process and creating read/write streams (this only happens once)...");
 
-				this.exifTool.args.add(ExifTool.EXIF_TOOL_PATH);
+				this.exifTool.args.add(exifTool.EXIF_TOOL_PATH);
 				this.exifTool.args.add("-stay_open");
 				this.exifTool.args.add("True");
 				this.exifTool.args.add("-@");
 				this.exifTool.args.add("-");
 
 				// Begin the persistent ExifTool process.
-				this.exifTool.streams = ExifTool
+				this.exifTool.streams = exifTool
 						.startExifToolProcess(this.exifTool.args);
 			}
 
@@ -132,7 +131,7 @@ public class Sidecar {
 			 * Since we are not using a stayOpen process, we need to setup the
 			 * execution arguments completely each time.
 			 */
-			this.exifTool.args.add(ExifTool.EXIF_TOOL_PATH);
+			this.exifTool.args.add(exifTool.EXIF_TOOL_PATH);
 
 			this.exifTool.args.add("-tagsfromfile"); // compact output
 
@@ -147,7 +146,7 @@ public class Sidecar {
 			this.exifTool.args.add(xmp.getAbsolutePath());
 
 			// Run the ExifTool with our args.
-			this.exifTool.streams = ExifTool
+			this.exifTool.streams = exifTool
 					.startExifToolProcess(this.exifTool.args);
 
 			// Begin tracking the duration ExifTool takes to respond.
@@ -187,10 +186,8 @@ public class Sidecar {
 		if (!stayOpen)
 			this.exifTool.streams.close();
 
-		if (ExifTool.DEBUG)
-			ExifTool.log("\tImage Meta Processed in %d ms [write %s tags]",
-					(System.currentTimeMillis() - startTime),
-					xmp.getAbsolutePath());
+		ExifTool.log("\tImage Meta Processed in %d ms [write %s tags]",
+				(System.currentTimeMillis() - startTime), xmp.getAbsolutePath());
 
 	}
 

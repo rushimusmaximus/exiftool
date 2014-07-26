@@ -12,9 +12,9 @@ import java.util.TimerTask;
  * @since 1.1
  */
 class CleanupTimerTask extends TimerTask {
-	private ExifTool owner;
+	private ExifToolNew2 owner;
 
-	public CleanupTimerTask(ExifTool owner) throws IllegalArgumentException {
+	public CleanupTimerTask(ExifToolNew2 owner) throws IllegalArgumentException {
 		if (owner == null)
 			throw new IllegalArgumentException(
 					"owner cannot be null and must refer to the ExifTool instance creating this task.");
@@ -24,7 +24,7 @@ class CleanupTimerTask extends TimerTask {
 
 	@Override
 	public void run() {
-		ExifTool.log("\tAuto cleanup task running...");
+		ExifTool.log.info("\tAuto cleanup task running...");
 		owner.close();
 	}
 }

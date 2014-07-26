@@ -1,9 +1,12 @@
 target
 dist
 bin
-
 /.project
-
-/.classpath
-
 /.settings
+/.classpath
+.idea/workspace.xml
+workspace.xml
+*.iml
+.idea
+out
+
