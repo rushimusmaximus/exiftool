@@ -901,7 +901,7 @@ public class ExifTool {
       if ( errReader.hasLines() ) {
         for(String error : errReader.takeLines()) {
           if ( error.toLowerCase().startsWith("error") ) {
-            throw new IOException(error);
+            throw new ExifError(error);
           }
         }
       }
