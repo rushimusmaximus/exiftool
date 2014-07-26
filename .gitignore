@@ -4,6 +4,7 @@ bin
 /.project
 /.settings
 /.classpath
+.idea/workspace.xml
+workspace.xml
 *.iml
 .idea
-
