@@ -10,6 +10,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.regex.Pattern;
 
 // ================================================================================
 /**
@@ -17,15 +18,15 @@ import java.util.concurrent.locks.ReentrantLock;
  * modes. This is the actual process, with streams for reading and writing data.
  */
 public final class ExifProcess {
-	private final ReentrantLock closeLock = new ReentrantLock(false);
-	private final boolean keepAlive;
-	private final Process process;
-	private final BufferedReader reader;
-	private final OutputStreamWriter writer;
-	private volatile boolean closed = false;
+	/**
+	 * Compiled {@link Pattern} of ": " used to split compact output from
+	 * ExifTool evenly into name/value pairs.
+	 */
+	private static final Pattern TAG_VALUE_PATTERN = Pattern
+			.compile("\\s*:\\s*");
 
 	public static VersionNumber readVersion(String exifCmd) {
-		ExifProcess process = _execute(false, Arrays.asList(exifCmd, "-ver"));
+		ExifProcess process = new ExifProcess(false, Arrays.asList(exifCmd, "-ver"));
 		try {
 			return new VersionNumber(process.readLine());
 		} catch (IOException ex) {
@@ -72,6 +73,13 @@ public final class ExifProcess {
 		return _execute(true, args);
 	}
 
+	private final ReentrantLock closeLock = new ReentrantLock(false);
+	private final boolean keepAlive;
+	private final Process process;
+	private final BufferedReader reader;
+	private final OutputStreamWriter writer;
+	private final LineReaderThread errReader;
+	private volatile boolean closed = false;
 
 	public ExifProcess(boolean keepAlive, List<String> args) {
 		this.keepAlive = keepAlive;
@@ -82,6 +90,10 @@ public final class ExifProcess {
 			this.reader = new BufferedReader(new InputStreamReader(
 					process.getInputStream()));
 			this.writer = new OutputStreamWriter(process.getOutputStream());
+			this.errReader = new LineReaderThread("exif-process-err-reader",
+					new BufferedReader(new InputStreamReader(
+							process.getErrorStream())));
+			errReader.start();
 			ExifTool.log.debug("\tSuccessful");
 		} catch (Exception e) {
 			String message = "Unable to start external ExifTool process using the execution arguments: "
@@ -99,6 +111,9 @@ public final class ExifProcess {
 	}
 
 	public synchronized Map<String, String> sendArgs(List<String> args) throws IOException {
+		if (!keepAlive) {
+			throw new IOException("Not KeepAlive Process");
+		}
 		StringBuilder builder = new StringBuilder();
 		for (String arg : args) {
 			builder.append(arg).append("\n");
@@ -131,8 +146,7 @@ public final class ExifProcess {
 		while ((line = reader.readLine()) != null) {
 			if (closed)
 				throw new IOException(ExifTool.STREAM_CLOSED_MESSAGE);
-			String[] pair = ExifTool.TAG_VALUE_PATTERN.split(line, 2);
-
+			String[] pair = TAG_VALUE_PATTERN.split(line, 2);
 			if (pair.length == 2) {
 				resultMap.put(pair[0], pair[1]);
 				ExifTool.log.debug(String.format(
@@ -148,6 +162,13 @@ public final class ExifProcess {
 			 */
 			if (keepAlive && line.equals("{ready}")) {
 				break;
+			}
+		}
+		if (errReader.hasLines()) {
+			for (String error : errReader.takeLines()) {
+				if (error.toLowerCase().startsWith("error")) {
+					throw new ExifError(error);
+				}
 			}
 		}
 		return resultMap;
@@ -208,6 +229,14 @@ public final class ExifProcess {
 					try {
 						ExifTool.log.debug("Closing Write stream...");
 						writer.close();
+						ExifTool.log.debug("\tSuccessful");
+					} catch (Exception e) {
+						// no-op, just try to close it.
+					}
+
+					try {
+						ExifTool.log.debug("Closing Error stream...");
+						errReader.close();
 						ExifTool.log.debug("\tSuccessful");
 					} catch (Exception e) {
 						// no-op, just try to close it.

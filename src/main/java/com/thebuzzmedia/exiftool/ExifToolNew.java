@@ -265,15 +265,10 @@ public class ExifToolNew {
 	 */
 	static final String CLEANUP_THREAD_NAME = "ExifTool Cleanup Thread";
 
-	/**
-	 * Compiled {@link Pattern} of ": " used to split compact output from
-	 * ExifTool evenly into name/value pairs.
-	 */
-	static final Pattern TAG_VALUE_PATTERN = Pattern.compile("\\s*:\\s*");
 	static final String STREAM_CLOSED_MESSAGE = "Stream closed";
-	static final String EXIF_DATE_FORMAT = "yyyy:MM:dd HH:mm:ss";
+	private static final String EXIF_DATE_FORMAT = "yyyy:MM:dd HH:mm:ss";
 
-	static Logger log = LoggerFactory.getLogger(ExifTool.class);
+	static final Logger log = LoggerFactory.getLogger(ExifTool.class);
 
 	private final Map<Feature, Boolean> featureSupportedMap = new HashMap<Feature, Boolean>();
 	private final Set<Feature> featureEnabledSet = EnumSet
@@ -644,6 +639,9 @@ public class ExifToolNew {
 			throw new IllegalArgumentException(
 					"image cannot be null and must be a valid stream of image data.");
 		}
+		if (!image.exists())
+			throw new FileNotFoundException(String.format(
+					"File \"%s\" does not exits", image.getAbsolutePath()));
 		if (values == null || values.isEmpty()) {
 			throw new IllegalArgumentException(
 					"values cannot be null and must contain 1 or more tag to value mappings");
@@ -682,6 +680,39 @@ public class ExifToolNew {
 			log.debug(String.format(
 					"Image Meta Processed in %d ms [added %d tags]",
 					(System.currentTimeMillis() - startTime), values.size()));
+		}
+	}
+	public void rebuildMetadata(File file) throws IOException {
+		rebuildMetadata(getWriteOptions(), file);
+	}
+
+	/**
+	 * Rewrite all the the metadata tags in a JPEG image. This will not work for
+	 * TIFF files. Use this when the image has some corrupt tags.
+	 * 
+	 * @link http://www.sno.phy.queensu.ca/~phil/exiftool/faq.html#Q20
+	 */
+	public void rebuildMetadata(WriteOptions options, File file)
+			throws IOException {
+		if (file == null)
+			throw new NullPointerException("File is null");
+		if (!file.exists())
+			throw new FileNotFoundException(String.format(
+					"File \"%s\" does not exits", file.getAbsolutePath()));
+		if (!file.canWrite())
+			throw new SecurityException(String.format(
+					"File \"%s\" cannot be written to", file.getAbsolutePath()));
+
+		List<String> args = Arrays.asList("-all=", "-tagsfromfile", "@",
+				"-all:all", "-unsafe", file.getAbsolutePath());
+		try {
+			exifProxy.execute(options.runTimeoutMills, args);
+		} finally {
+			if (options.deleteBackupFile) {
+				File origBackup = new File(file.getAbsolutePath() + "_original");
+				if (origBackup.exists())
+					origBackup.delete();
+			}
 		}
 	}
 
