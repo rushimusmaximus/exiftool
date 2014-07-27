@@ -201,23 +201,29 @@ them.
 	Just remember to be consistent.
 	
 
-Reference
----------
+## Reference
 ExifTool by Phil Harvey - http://www.sno.phy.queensu.ca/~phil/exiftool/
 imgscalr - http://www.thebuzzmedia.com/software/imgscalr-java-image-scaling-library/
 
 
-Contact
--------
+## Contact
 If you have questions, comments or bug reports for this software please contact
 us at: software@thebuzzmedia.com
 
 
-Maven
-- current release: 2.3.1 - at http://raisercostin.googlecode.com/svn/maven2/com/thebuzzmedia/exiftool/exiftool-lib/2.3.1/
-- create deliverables: mvn install -Prelease -DskipTests=true
+## Maven
+- current release: 2.3.1
+- at `http://raisercostin.googlecode.com/svn/maven2/com/thebuzzmedia/exiftool/exiftool-lib/2.3.1/`
+- create deliverables:
+	`mvn install -Prelease -DskipTests=true`
 - release in svn: 
-    svn import -m "release" C:\Users\costin\.m2\repository\com https://raisercostin.googlecode.com/svn/maven2/com --force
+	`svn import -m "release" C:\Users\costin\.m2\repository\com https://raisercostin.googlecode.com/svn/maven2/com --force`
 - release in svn subsequent releases: 
-    svn import -m "release 2.3.1" C:\Users\costin\.m2\repository\com\thebuzzmedia\exiftool\exiftool-lib\2.3.1 https://raisercostin.googlecode.com/svn/maven2/com/thebuzzmedia/ex
+	`svn import -m "release 2.3.1" C:\Users\costin\.m2\repository\com\thebuzzmedia\exiftool\exiftool-lib\2.3.1 https://raisercostin.googlecode.com/svn/maven2/com/thebuzzmedia/ex`
 iftool/exiftool-lib/2.3.1 --force
+
+## Sbt Configuration
+build.sbt
+
+	resolvers += "raisercostin" at "https://raisercostin.googlecode.com/svn/maven2"
+	libraryDependencies += "com.thebuzzmedia.exiftool" % "exiftool-lib" % "2.3.1"
