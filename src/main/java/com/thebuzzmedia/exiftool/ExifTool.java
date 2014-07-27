@@ -913,8 +913,7 @@ public class ExifTool implements ExifToolService, AutoCloseable {
 	@Override
 	public Map<Object, Object> getImageMeta2(File image, MetadataTag... tags)
 			throws IllegalArgumentException, SecurityException, IOException {
-		// TODO Auto-generated method stub
-		return null;
+		return (Map)getImageMeta(image, tags);
 	}
 
 	@Override
