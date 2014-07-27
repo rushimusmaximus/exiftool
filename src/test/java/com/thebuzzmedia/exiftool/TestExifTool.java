@@ -232,7 +232,8 @@ public class TestExifTool {
 	public void testWriteTagStringNonDaemon() throws Exception {
 		try (ExifToolService tool = new ExifTool()) {
 			URL url = getClass().getResource("/nexus-s-electric-cars.jpg");
-			Path imageFile = Paths.get(url.toURI());
+			Path imageFile = Paths.get("target","nexus-s-electric-cars-tochange.jpg");
+			Files.copy(Paths.get(url.toURI()),imageFile, StandardCopyOption.REPLACE_EXISTING);
 
 			// Check the value is correct at the start
 			Map<MetadataTag, String> metadata = tool.getImageMeta(
@@ -256,12 +257,12 @@ public class TestExifTool {
 			// Finally copy the source file back over so the next test run is
 			// not
 			// affected by the change
-			URL backup_url = getClass().getResource(
-					"/nexus-s-electric-cars.jpg_original");
-			Path backupFile = Paths.get(backup_url.toURI());
-
-			Files.move(backupFile, imageFile,
-					StandardCopyOption.REPLACE_EXISTING);
+//			URL backup_url = getClass().getResource(
+//					"/nexus-s-electric-cars.jpg_original");
+//			Path backupFile = Paths.get(backup_url.toURI());
+//
+//			Files.move(backupFile, imageFile,
+//					StandardCopyOption.REPLACE_EXISTING);
 		}
 	}
 
@@ -269,7 +270,8 @@ public class TestExifTool {
 	public void testWriteTagString() throws Exception {
 		ExifToolService tool = new ExifTool(Feature.STAY_OPEN);
 			URL url = getClass().getResource("/nexus-s-electric-cars.jpg");
-			Path imageFile = Paths.get(url.toURI());
+			Path imageFile = Paths.get("target","nexus-s-electric-cars-tochange.jpg");
+			Files.copy(Paths.get(url.toURI()),imageFile, StandardCopyOption.REPLACE_EXISTING);
 
 			// Check the value is correct at the start
 			Map<MetadataTag, String> metadata = tool.getImageMeta(
@@ -293,19 +295,20 @@ public class TestExifTool {
 			// Finally copy the source file back over so the next test run is
 			// not
 			// affected by the change
-			URL backup_url = getClass().getResource(
-					"/nexus-s-electric-cars.jpg_original");
-			Path backupFile = Paths.get(backup_url.toURI());
-			Files.move(backupFile, imageFile,
-					StandardCopyOption.REPLACE_EXISTING);
-		
+//			URL backup_url = getClass().getResource(
+//					"/nexus-s-electric-cars.jpg_original");
+//			Path backupFile = Paths.get(backup_url.toURI());
+//			Files.move(backupFile, imageFile,
+//					StandardCopyOption.REPLACE_EXISTING);
+//		
 	}
 
 	@Test
 	public void testWriteTagStringInvalidformat() throws Exception {
 		try (ExifToolService tool = new ExifTool(Feature.STAY_OPEN)) {
 			URL url = getClass().getResource("/nexus-s-electric-cars.jpg");
-			Path imageFile = Paths.get(url.toURI());
+			Path imageFile = Paths.get("target","nexus-s-electric-cars-tochange.jpg");
+			Files.copy(Paths.get(url.toURI()),imageFile, StandardCopyOption.REPLACE_EXISTING);
 
 			// Check the value is correct at the start
 			Map<MetadataTag, String> metadata = tool.getImageMeta(
@@ -330,14 +333,14 @@ public class TestExifTool {
 			// Finally copy the source file back over so the next test run is
 			// not
 			// affected by the change
-			URL backup_url = getClass().getResource(
-					"/nexus-s-electric-cars.jpg_original");
-			// might not exist
-			if (backup_url != null) {
-				Path backupFile = Paths.get(backup_url.toURI());
-				Files.move(backupFile, imageFile,
-						StandardCopyOption.REPLACE_EXISTING);
-			}
+//			URL backup_url = getClass().getResource(
+//					"/nexus-s-electric-cars.jpg_original");
+//			// might not exist
+//			if (backup_url != null) {
+//				Path backupFile = Paths.get(backup_url.toURI());
+//				Files.move(backupFile, imageFile,
+//						StandardCopyOption.REPLACE_EXISTING);
+//			}
 		}
 	}
 
@@ -345,7 +348,8 @@ public class TestExifTool {
 	public void testWriteTagNumberNonDaemon() throws Exception {
 		try (ExifToolService tool = new ExifTool()) {
 			URL url = getClass().getResource("/nexus-s-electric-cars.jpg");
-			Path imageFile = Paths.get(url.toURI());
+			Path imageFile = Paths.get("target","nexus-s-electric-cars-tochange.jpg");
+			Files.copy(Paths.get(url.toURI()),imageFile, StandardCopyOption.REPLACE_EXISTING);
 
 			// Test what orientation value is at the start
 			Map<MetadataTag, String> metadata = tool.getImageMeta(
@@ -368,12 +372,12 @@ public class TestExifTool {
 			// Finally copy the source file back over so the next test run is
 			// not
 			// affected by the change
-			URL backup_url = getClass().getResource(
-					"/nexus-s-electric-cars.jpg_original");
-			Path backupFile = Paths.get(backup_url.toURI());
-
-			Files.move(backupFile, imageFile,
-					StandardCopyOption.REPLACE_EXISTING);
+//			URL backup_url = getClass().getResource(
+//					"/nexus-s-electric-cars.jpg_original");
+//			Path backupFile = Paths.get(backup_url.toURI());
+//
+//			Files.move(backupFile, imageFile,
+//					StandardCopyOption.REPLACE_EXISTING);
 		}
 	}
 
@@ -381,7 +385,8 @@ public class TestExifTool {
 	public void testWriteTagNumber() throws Exception {
 		try (ExifToolService tool = new ExifTool(Feature.STAY_OPEN)) {
 			URL url = getClass().getResource("/nexus-s-electric-cars.jpg");
-			Path imageFile = Paths.get(url.toURI());
+			Path imageFile = Paths.get("target","nexus-s-electric-cars-tochange.jpg");
+			Files.copy(Paths.get(url.toURI()),imageFile, StandardCopyOption.REPLACE_EXISTING);
 
 			// Test what orientation value is at the start
 			Map<MetadataTag, String> metadata = tool.getImageMeta(
@@ -404,12 +409,12 @@ public class TestExifTool {
 			// Finally copy the source file back over so the next test run is
 			// not
 			// affected by the change
-			URL backup_url = getClass().getResource(
-					"/nexus-s-electric-cars.jpg_original");
-			Path backupFile = Paths.get(backup_url.toURI());
-
-			Files.move(backupFile, imageFile,
-					StandardCopyOption.REPLACE_EXISTING);
+//			URL backup_url = getClass().getResource(
+//					"/nexus-s-electric-cars.jpg_original");
+//			Path backupFile = Paths.get(backup_url.toURI());
+//
+//			Files.move(backupFile, imageFile,
+//					StandardCopyOption.REPLACE_EXISTING);
 		}
 	}
 
@@ -417,7 +422,8 @@ public class TestExifTool {
 	public void testWriteMulipleTag() throws Exception {
 		try (ExifToolService tool = new ExifTool(Feature.STAY_OPEN)) {
 		URL url = getClass().getResource("/nexus-s-electric-cars.jpg");
-		Path imageFile = Paths.get(url.toURI());
+		Path imageFile = Paths.get("target","nexus-s-electric-cars-tochange.jpg");
+		Files.copy(Paths.get(url.toURI()),imageFile, StandardCopyOption.REPLACE_EXISTING);
 
 		// Test what orientation value is at the start
 		Map<MetadataTag, String> metadata = tool.getImageMeta(
@@ -446,11 +452,11 @@ public class TestExifTool {
 
 		// Finally copy the source file back over so the next test run is not
 		// affected by the change
-		URL backup_url = getClass().getResource(
-				"/nexus-s-electric-cars.jpg_original");
-		Path backupFile = Paths.get(backup_url.toURI());
-
-		Files.move(backupFile, imageFile, StandardCopyOption.REPLACE_EXISTING);
+//		URL backup_url = getClass().getResource(
+//				"/nexus-s-electric-cars.jpg_original");
+//		Path backupFile = Paths.get(backup_url.toURI());
+//
+//		Files.move(backupFile, imageFile, StandardCopyOption.REPLACE_EXISTING);
 		}
 	}
 
@@ -458,7 +464,8 @@ public class TestExifTool {
 	public void testWriteMulipleTagNonDaemon() throws Exception {
 		try (ExifToolService tool = new ExifTool()) {
 		URL url = getClass().getResource("/nexus-s-electric-cars.jpg");
-		Path imageFile = Paths.get(url.toURI());
+		Path imageFile = Paths.get("target","nexus-s-electric-cars-tochange.jpg");
+		Files.copy(Paths.get(url.toURI()),imageFile, StandardCopyOption.REPLACE_EXISTING);
 
 		// Test what orientation value is at the start
 		Map<MetadataTag, String> metadata = tool.getImageMeta(
@@ -487,11 +494,11 @@ public class TestExifTool {
 
 		// Finally copy the source file back over so the next test run is not
 		// affected by the change
-		URL backup_url = getClass().getResource(
-				"/nexus-s-electric-cars.jpg_original");
-		Path backupFile = Paths.get(backup_url.toURI());
-
-		Files.move(backupFile, imageFile, StandardCopyOption.REPLACE_EXISTING);
+//		URL backup_url = getClass().getResource(
+//				"/nexus-s-electric-cars.jpg_original");
+//		Path backupFile = Paths.get(backup_url.toURI());
+//
+//		Files.move(backupFile, imageFile, StandardCopyOption.REPLACE_EXISTING);
 		}
 	}
 
@@ -499,7 +506,8 @@ public class TestExifTool {
 	public void testWriteMultipleTagNonDaemon2() throws Exception {
 		try (ExifToolService tool = new ExifToolNew()) {
 		URL url = getClass().getResource("/nexus-s-electric-cars.jpg");
-		Path imageFile = Paths.get(url.toURI());
+		Path imageFile = Paths.get("target","nexus-s-electric-cars-tochange.jpg");
+		Files.copy(Paths.get(url.toURI()),imageFile, StandardCopyOption.REPLACE_EXISTING);
 
 		// Test what orientation value is at the start
 		Map<MetadataTag, String> metadata = tool.getImageMeta(
@@ -529,11 +537,11 @@ public class TestExifTool {
 
 		// Finally copy the source file back over so the next test run is not
 		// affected by the change
-		URL backup_url = getClass().getResource(
-				"/nexus-s-electric-cars.jpg_original");
-		Path backupFile = Paths.get(backup_url.toURI());
-
-		Files.move(backupFile, imageFile, StandardCopyOption.REPLACE_EXISTING);
+//		URL backup_url = getClass().getResource(
+//				"/nexus-s-electric-cars.jpg_original");
+//		Path backupFile = Paths.get(backup_url.toURI());
+//
+//		Files.move(backupFile, imageFile, StandardCopyOption.REPLACE_EXISTING);
 		}
 	}
 
@@ -543,8 +551,10 @@ public class TestExifTool {
 				.withNumericOutput(true).withConvertTypes(true),
 				Feature.MWG_MODULE)){
 		URL url = getClass().getResource("/nexus-s-electric-cars.jpg");
-		File imageFile = Paths.get(url.toURI()).toFile();
-		try {
+		Path imagePath = Paths.get("target","nexus-s-electric-cars-tochange.jpg");
+		Files.copy(Paths.get(url.toURI()),imagePath, StandardCopyOption.REPLACE_EXISTING);
+		File imageFile = imagePath.toFile();
+//		try {
 			// Test what orientation value is at the start
 			SimpleDateFormat formatter = new SimpleDateFormat(
 					"yyyy:MM:dd hh:mm:ss");
@@ -584,15 +594,15 @@ public class TestExifTool {
 			// Finally copy the source file back over so the next test run is
 			// not affected by the change
 
-		} finally {
-			URL backup_url = getClass().getResource(
-					"/nexus-s-electric-cars.jpg_original");
-			if (backup_url != null) {
-				Path backupFile = Paths.get(backup_url.toURI());
-				Files.move(backupFile, imageFile.toPath(),
-						StandardCopyOption.REPLACE_EXISTING);
-			}
-		}
+//		} finally {
+//			URL backup_url = getClass().getResource(
+//					"/nexus-s-electric-cars.jpg_original");
+//			if (backup_url != null) {
+//				Path backupFile = Paths.get(backup_url.toURI());
+//				Files.move(backupFile, imageFile.toPath(),
+//						StandardCopyOption.REPLACE_EXISTING);
+//			}
+		
 		}
 	}
 
