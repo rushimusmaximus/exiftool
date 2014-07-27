@@ -224,7 +224,7 @@ public class ExifToolNew {
 	 * the directory that <code>new File(".").getAbsolutePath()</code> points at
 	 * during runtime.
 	 */
-	public static final String ENV_EXIF_TOOL_PATH = "exiftool.path";
+	private static final String ENV_EXIF_TOOL_PATH = "exiftool.path";
 	/**
 	 * Interval (in milliseconds) of inactivity before the cleanup thread wakes
 	 * up and cleans up the daemon ExifTool process and the read/write streams
@@ -252,8 +252,8 @@ public class ExifToolNew {
 	 * <p/>
 	 * Default value is zero, no inactivity timeout.
 	 */
-	public static final String ENV_EXIF_TOOL_PROCESSCLEANUPDELAY = "exiftool.processCleanupDelay";
-	public static final long DEFAULT_PROCESS_CLEANUP_DELAY = 0;
+	private static final String ENV_EXIF_TOOL_PROCESSCLEANUPDELAY = "exiftool.processCleanupDelay";
+	private static final long DEFAULT_PROCESS_CLEANUP_DELAY = 0;
 
 	/**
 	 * Name used to identify the (optional) cleanup {@link Thread}.
@@ -264,12 +264,12 @@ public class ExifToolNew {
 	 * <p/>
 	 * Default value is "<code>ExifTool Cleanup Thread</code>".
 	 */
-	static final String CLEANUP_THREAD_NAME = "ExifTool Cleanup Thread";
+	private static final String CLEANUP_THREAD_NAME = "ExifTool Cleanup Thread";
 
-	static final String STREAM_CLOSED_MESSAGE = "Stream closed";
+	private static final String STREAM_CLOSED_MESSAGE = "Stream closed";
 	static final String EXIF_DATE_FORMAT = "yyyy:MM:dd HH:mm:ss";
 
-	static final Logger log = LoggerFactory.getLogger(ExifTool.class);
+	private static final Logger log = LoggerFactory.getLogger(ExifTool.class);
 
 	private final Map<Feature, Boolean> featureSupportedMap = new HashMap<Feature, Boolean>();
 	private final Set<Feature> featureEnabledSet = EnumSet

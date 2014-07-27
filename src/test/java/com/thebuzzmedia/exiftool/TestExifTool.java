@@ -136,9 +136,8 @@ public class TestExifTool {
 
 	@Test
 	public void testProcessTimeout() throws Exception {
-		final ExifTool tool = new ExifTool(Feature.STAY_OPEN);
+		final ExifTool tool = new ExifTool(1,Feature.STAY_OPEN);
 		try {
-			tool.setRunTimeout(1);
 			runTests(tool, "will fail");
 			fail("should have failed");
 		} catch (IOException ex) {
@@ -161,7 +160,7 @@ public class TestExifTool {
 		imageFile = new File(url.toURI());
 		metadata = tool.getImageMeta(imageFile, Format.HUMAN_READABLE,
 				Tag.values());
-		assertEquals(25, metadata.size());
+		assertEquals(31, metadata.size());
 
 		keys = metadata.keySet();
 

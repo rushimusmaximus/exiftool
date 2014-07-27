@@ -304,7 +304,12 @@ public class ExifTool {
 	private TimerTask currentCleanupTask = null;
 	private AtomicBoolean shuttingDown = new AtomicBoolean(false);
 	private volatile ExifProcess process;
-	private int timeoutWhenKeepAlive = 0;
+	/**
+	 * Limits the amount of time (in mills) an exif operation can take. Setting
+	 * value to greater than 0 to enable.
+	 */
+	private final int timeoutWhenKeepAlive;
+	private static final int DEFAULT_TIMEOUT_WHEN_KEEP_ALIVE = 0;
 
 	public ExifTool() {
 		this((Feature[]) null);
@@ -316,24 +321,30 @@ public class ExifTool {
 	 * processCleanupDelay is optional. If not found, the default is used.
 	 */
 	public ExifTool(Feature... features) {
-		this(System.getProperty(ENV_EXIF_TOOL_PATH, "exiftool"), Long.getLong(
-				ENV_EXIF_TOOL_PROCESSCLEANUPDELAY,
-				DEFAULT_PROCESS_CLEANUP_DELAY), features);
+		this(DEFAULT_TIMEOUT_WHEN_KEEP_ALIVE,features);
 	}
 
+	public ExifTool(int timeoutWhenKeepAliveInMillis, Feature... features) {
+		this(System.getProperty(ENV_EXIF_TOOL_PATH, "exiftool"), Long.getLong(
+				ENV_EXIF_TOOL_PROCESSCLEANUPDELAY,
+				DEFAULT_PROCESS_CLEANUP_DELAY), timeoutWhenKeepAliveInMillis, features);
+	}
+
+
 	public ExifTool(String exifToolPath) {
-		this(exifToolPath, DEFAULT_PROCESS_CLEANUP_DELAY, (Feature[]) null);
+		this(exifToolPath, DEFAULT_PROCESS_CLEANUP_DELAY, DEFAULT_TIMEOUT_WHEN_KEEP_ALIVE, (Feature[]) null);
 	}
 
 	public ExifTool(String exifToolPath, Feature... features) {
-		this(exifToolPath, DEFAULT_PROCESS_CLEANUP_DELAY, features);
+		this(exifToolPath, DEFAULT_PROCESS_CLEANUP_DELAY, DEFAULT_TIMEOUT_WHEN_KEEP_ALIVE, features);
 	}
 
-	public ExifTool(String exifCmd, long processCleanupDelay,
+	public ExifTool(String exifCmd, long processCleanupDelay, int timeoutWhenKeepAliveInMillis, 
 			Feature... features) {
 		this.exifCmd = exifCmd;
 		this.processCleanupDelay = processCleanupDelay;
 		this.exifVersion = ExifProcess.readVersion(exifCmd);
+		this.timeoutWhenKeepAlive = timeoutWhenKeepAliveInMillis;
 		if (features != null && features.length > 0) {
 			for (Feature feature : features) {
 				if (!feature.isSupported(exifVersion)) {
@@ -353,15 +364,6 @@ public class ExifTool {
 		} else {
 			cleanupTimer = null;
 		}
-	}
-
-	/**
-	 * Limits the amount of time (in mills) an exif operation can take. Setting
-	 * value to greater than 0 to enable.
-	 */
-	public ExifTool setRunTimeout(int mills) {
-		timeoutWhenKeepAlive = mills;
-		return this;
 	}
 
 	/**
