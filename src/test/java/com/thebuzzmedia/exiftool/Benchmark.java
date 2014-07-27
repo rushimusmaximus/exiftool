@@ -27,8 +27,8 @@ public class Benchmark {
 				+ (tags.length * images.length * ITERATIONS)
 				+ " total operations.\n");
 
-		ExifTool tool = new ExifTool();
-		ExifTool toolSO = new ExifTool(Feature.STAY_OPEN);
+		ExifToolService tool = new ExifTool();
+		ExifToolService toolSO = new ExifTool(Feature.STAY_OPEN);
 
 		/*
 		 * -stay_open False
@@ -62,7 +62,7 @@ public class Benchmark {
 		toolSO.close();
 	}
 
-	private static long run(ExifTool tool, File[] images, Tag[] tags)
+	private static long run(ExifToolService tool, File[] images, Tag[] tags)
 			throws IllegalArgumentException, SecurityException, IOException {
 		long startTime = System.currentTimeMillis();
 

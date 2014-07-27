@@ -17,16 +17,16 @@ public class Example {
 
 		// System.setProperty(ExifTool.ENV_EXIF_TOOL_PATH,
 		// "D:\\Tools\\exiftool.exe");
-		ExifTool tool = new ExifTool(Feature.STAY_OPEN);
+		ExifToolService tool = new ExifTool(Feature.STAY_OPEN);
 
 		File[] images = new File(TEST_FILES_PATH).listFiles();
 
 		// list all first-class tags
 		for (File f : images) {
 			log.info("\n[{}]", f.getName());
-			Map<Tag, String> metadata = tool.getImageMeta(f,
+			Map<MetadataTag, String> metadata = tool.getImageMeta(f,
 					Format.HUMAN_READABLE, Tag.values());
-			for (Tag key : metadata.keySet()) {
+			for (MetadataTag key : metadata.keySet()) {
 				log.info(String.format("\t\t%s: %s", key.getKey(),
 						metadata.get(key)));
 			}

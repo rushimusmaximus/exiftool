@@ -197,7 +197,7 @@ import org.slf4j.LoggerFactory;
  * @author Riyad Kalla (software@thebuzzmedia.com)
  * @since 1.1
  */
-public class ExifToolNew {
+public class ExifToolNew implements ExifToolService {
 
 	/**
 	 * If ExifTool is on your system path and running the command "exiftool"
@@ -252,8 +252,8 @@ public class ExifToolNew {
 	 * <p/>
 	 * Default value is zero, no inactivity timeout.
 	 */
-	private static final String ENV_EXIF_TOOL_PROCESSCLEANUPDELAY = "exiftool.processCleanupDelay";
-	private static final long DEFAULT_PROCESS_CLEANUP_DELAY = 0;
+	static final String ENV_EXIF_TOOL_PROCESSCLEANUPDELAY = "exiftool.processCleanupDelay";
+	static final long DEFAULT_PROCESS_CLEANUP_DELAY = 0;
 
 	/**
 	 * Name used to identify the (optional) cleanup {@link Thread}.
@@ -274,7 +274,7 @@ public class ExifToolNew {
 	private final Map<Feature, Boolean> featureSupportedMap = new HashMap<Feature, Boolean>();
 	private final Set<Feature> featureEnabledSet = EnumSet
 			.noneOf(Feature.class);
-	private ReadOptions defReadOptions = new ReadOptions();
+	private final ReadOptions defReadOptions;
 	private WriteOptions defWriteOptions = new WriteOptions();
 	private final VersionNumber exifVersion;
 	private final ExifProxy exifProxy;
@@ -289,25 +289,30 @@ public class ExifToolNew {
 	 * processCleanupDelay is optional. If not found, the default is used.
 	 */
 	public ExifToolNew(Feature... features) {
+		this(new ReadOptions(), features);
+	}
+
+	public ExifToolNew(ReadOptions readOptions, Feature...features) {
 		this(System.getProperty(ENV_EXIF_TOOL_PATH, "exiftool"), Long.getLong(
 				ENV_EXIF_TOOL_PROCESSCLEANUPDELAY,
-				DEFAULT_PROCESS_CLEANUP_DELAY), features);
+				DEFAULT_PROCESS_CLEANUP_DELAY), readOptions, features);
 	}
 
 	/**
 	 * Pass in the absolute path to the ExifTool executable on the host system.
 	 */
 	public ExifToolNew(String exifToolPath) {
-		this(exifToolPath, DEFAULT_PROCESS_CLEANUP_DELAY);
+		this(exifToolPath, DEFAULT_PROCESS_CLEANUP_DELAY, new ReadOptions());
 	}
 
 	public ExifToolNew(String exifToolPath, Feature... features) {
-		this(exifToolPath, DEFAULT_PROCESS_CLEANUP_DELAY, features);
+		this(exifToolPath, DEFAULT_PROCESS_CLEANUP_DELAY, new ReadOptions(), features);
 	}
 
 	public ExifToolNew(String exifCmd, long processCleanupDelay,
-			Feature... features) {
+			ReadOptions readOptions, Feature... features) {
 		this.exifVersion = ExifProcess.readVersion(exifCmd);
+		this.defReadOptions = readOptions;
 		if (features != null && features.length > 0) {
 			for (Feature feature : features) {
 				if (!feature.isSupported(exifVersion)) {
@@ -330,16 +335,16 @@ public class ExifToolNew {
 			exifProxy = new SingleUseExifProxy(exifCmd, baseArgs);
 		}
 	}
-
-	/**
-	 * Limits the amount of time (in mills) an exif operation can take. Setting
-	 * value to greater than 0 to enable.
-	 */
-	public ExifToolNew setRunTimeout(long mills) {
-		defReadOptions = defReadOptions.withRunTimeoutMills(mills);
-		defWriteOptions = defWriteOptions.withRunTimeoutMills(mills);
-		return this;
-	}
+//
+//	/**
+//	 * Limits the amount of time (in mills) an exif operation can take. Setting
+//	 * value to greater than 0 to enable.
+//	 */
+//	public ExifToolNew setRunTimeout(long mills) {
+//		defReadOptions = defReadOptions.withRunTimeoutMills(mills);
+//		defWriteOptions = defWriteOptions.withRunTimeoutMills(mills);
+//		return this;
+//	}
 
 	/**
 	 * Used to determine if the given {@link Feature} is supported by the
@@ -478,11 +483,6 @@ public class ExifToolNew {
 		return defReadOptions;
 	}
 
-	public ExifToolNew setReadOptions(ReadOptions options) {
-		defReadOptions = options;
-		return this;
-	}
-
 	public WriteOptions getWriteOptions() {
 		return defWriteOptions;
 	}
@@ -492,12 +492,12 @@ public class ExifToolNew {
 		return this;
 	}
 
-	public Map<Tag, String> getImageMeta(File image, Tag... tags)
+	public Map<MetadataTag, String> getImageMeta(File image, Tag... tags)
 			throws IllegalArgumentException, SecurityException, IOException {
 		return getImageMeta(image, Format.NUMERIC, tags);
 	}
 
-	public Map<Tag, String> getImageMeta(File image, Format format, Tag... tags)
+	public Map<MetadataTag, String> getImageMeta(File image, Format format, Tag... tags)
 			throws IllegalArgumentException, SecurityException, IOException {
 
 		String[] stringTags = new String[tags.length];
@@ -683,6 +683,7 @@ public class ExifToolNew {
 					(System.currentTimeMillis() - startTime), values.size()));
 		}
 	}
+
 	public void rebuildMetadata(File file) throws IOException {
 		rebuildMetadata(getWriteOptions(), file);
 	}
@@ -797,6 +798,46 @@ public class ExifToolNew {
 		return new CustomTag(name, String.class);
 	}
 
-	// ================================================================================
+	@Override
+	public String getImageMetadataXml(File input, boolean includeBinary)
+			throws IOException {
+		throw new RuntimeException("Not implemented.");
+	}
 
+	@Override
+	public void getImageMetadataXml(File input, File output,
+			boolean includeBinary) throws IOException {
+		throw new RuntimeException("Not implemented.");
+	}
+
+	@Override
+	public String extractImageIccProfile(File input, File output)
+			throws IOException {
+		throw new RuntimeException("Not implemented.");
+	}
+
+	@Override
+	public File extractThumbnail(File input, Tag tag) throws IOException {
+		throw new RuntimeException("Not implemented.");
+	}
+
+	@Override
+	public Map<MetadataTag, String> getImageMeta(File image,
+			MetadataTag... tags) throws IllegalArgumentException,
+			SecurityException, IOException {
+		throw new RuntimeException("Not implemented.");
+	}
+
+	@Override
+	public Map<Object, Object> getImageMeta2(File image, MetadataTag... tags)
+			throws IllegalArgumentException, SecurityException, IOException {
+		throw new RuntimeException("Not implemented.");
+	}
+
+	@Override
+	public Map<MetadataTag, String> getImageMeta(File image, Format format,
+			MetadataTag... tags) throws IllegalArgumentException,
+			SecurityException, IOException {
+		throw new RuntimeException("Not implemented.");
+	}
 }

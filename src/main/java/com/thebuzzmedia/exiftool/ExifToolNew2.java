@@ -206,7 +206,7 @@ import java.util.regex.Pattern;
  * @author Riyad Kalla (software@thebuzzmedia.com)
  * @since 1.1
  */
-public class ExifToolNew2 {
+public class ExifToolNew2 implements ExifToolService {
 	/**
 	 * Flag used to indicate if debugging output has been enabled by setting the
 	 * "<code>exiftool.debug</code>" system property to <code>true</code>. This
@@ -374,7 +374,9 @@ public class ExifToolNew2 {
 	 *             if any exception occurs while attempting to start the
 	 *             external ExifTool process to verify feature support.
 	 */
-	public static boolean isFeatureSupported(Feature feature)
+
+	@Override
+	public boolean isFeatureSupported(Feature feature)
 			throws IllegalArgumentException, RuntimeException {
 		if (feature == null)
 			throw new IllegalArgumentException("feature cannot be null");
@@ -492,7 +494,8 @@ public class ExifToolNew2 {
 			}
 
 			// Ensure the version found is >= the required version.
-			if (ver != null && ver.compareTo(feature.getVersion().toString()) >= 0) {
+			if (ver != null
+					&& ver.compareTo(feature.getVersion().toString()) >= 0) {
 				supported = Boolean.TRUE;
 				log("\t\tFound ExifTool version %s, feature %s is SUPPORTED.",
 						ver, feature);
@@ -749,7 +752,7 @@ public class ExifToolNew2 {
 		 * reused a multitude of times later in this method to figure out where
 		 * to branch to.
 		 */
-		boolean stayOpen = featureSet.contains(Feature.STAY_OPEN);
+		boolean stayOpen = isStayOpen();
 
 		// Clear process args
 		args.clear();
@@ -848,7 +851,8 @@ public class ExifToolNew2 {
 				 */
 				if (tag != null) {
 					resultMap.put(tag, pair[1]);
-					log("\t\tRead Tag [name=%s, value=%s]", tag.getKey(), pair[1]);
+					log("\t\tRead Tag [name=%s, value=%s]", tag.getKey(),
+							pair[1]);
 				}
 			}
 
@@ -989,8 +993,8 @@ public class ExifToolNew2 {
 			args.add("-S"); // compact output
 
 			for (Entry<Tag, String> entry : tags.entrySet())
-				args.add("-" + entry.getKey().getKey() + "='" + entry.getValue()
-						+ "'");
+				args.add("-" + entry.getKey().getKey() + "='"
+						+ entry.getValue() + "'");
 
 			args.add(image.getAbsolutePath());
 
@@ -1059,5 +1063,111 @@ public class ExifToolNew2 {
 				PROCESS_CLEANUP_DELAY, PROCESS_CLEANUP_DELAY);
 
 		log("\t\tSuccessful");
+	}
+
+	@Override
+	public void startup() {
+		resetCleanupTask();
+	}
+
+	@Override
+	public void shutdown() {
+		shutdownCleanupTask();
+	}
+
+	@Override
+	public boolean isStayOpen() {
+		return featureSet.contains(Feature.STAY_OPEN);
+	}
+
+	@Override
+	public Map<String, String> getImageMeta(File image, Format format,
+			TagGroup... tags) throws IllegalArgumentException,
+			SecurityException, IOException {
+		return getImageMeta(image, format, tags);
+	}
+
+	@Override
+	public <T> void addImageMetadata(File image, Map<T, Object> values)
+			throws IOException {
+		setImageMeta(image, (Map) values);
+	}
+
+	@Override
+	public String getImageMetadataXml(File input, boolean includeBinary)
+			throws IOException {
+		throw new RuntimeException("Not implemented.");
+	}
+
+	@Override
+	public void getImageMetadataXml(File input, File output,
+			boolean includeBinary) throws IOException {
+		throw new RuntimeException("Not implemented.");
+	}
+
+	@Override
+	public String extractImageIccProfile(File input, File output)
+			throws IOException {
+		throw new RuntimeException("Not implemented.");
+	}
+
+	@Override
+	public File extractThumbnail(File input, Tag tag) throws IOException {
+		throw new RuntimeException("Not implemented.");
+	}
+
+	@Override
+	public Map<String, String> getImageMeta(File file, Format format,
+			boolean supressDuplicates, String... tags) throws IOException {
+		throw new RuntimeException("Not implemented.");
+	}
+
+	@Override
+	public Map<MetadataTag, String> getImageMeta(File image,
+			MetadataTag... tags) throws IllegalArgumentException,
+			SecurityException, IOException {
+		throw new RuntimeException("Not implemented.");
+	}
+
+	@Override
+	public Map<Object, Object> getImageMeta2(File image, MetadataTag... tags)
+			throws IllegalArgumentException, SecurityException, IOException {
+		throw new RuntimeException("Not implemented.");
+	}
+
+	@Override
+	public Map<MetadataTag, String> getImageMeta(File image, Format format,
+			MetadataTag... tags) throws IllegalArgumentException,
+			SecurityException, IOException {
+		throw new RuntimeException("Not implemented.");
+	}
+
+	@Override
+	public void rebuildMetadata(File file) throws IOException {
+		throw new RuntimeException("Not implemented.");
+	}
+
+	@Override
+	public void rebuildMetadata(WriteOptions options, File file)
+			throws IOException {
+		throw new RuntimeException("Not implemented.");
+	}
+
+	@Override
+	public Map<Object, Object> readMetadata(File file, Object... tags)
+			throws IOException {
+		throw new RuntimeException("Not implemented.");
+	}
+
+	@Override
+	public Map<Object, Object> readMetadata(ReadOptions options, File file,
+			Object... tags) throws IOException {
+		throw new RuntimeException("Not implemented.");
+	}
+
+	@Override
+	public <T> void writeMetadata(WriteOptions options, File image,
+			Map<T, Object> values) throws IOException {
+		throw new RuntimeException("Not implemented.");
 	}
 }

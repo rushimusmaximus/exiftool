@@ -151,7 +151,7 @@ public enum Tag implements MetadataTag {
 
 		for (int i = 0; i < values.length; i++) {
 			Tag tag = values[i];
-			TAG_LOOKUP_MAP.put(tag.getName(), tag);
+			TAG_LOOKUP_MAP.put(tag.getKey(), tag);
 		}
 	}
 
@@ -168,14 +168,14 @@ public enum Tag implements MetadataTag {
 	public static Tag forName(String name) {
 		return TAG_LOOKUP_MAP.get(name);
 	}
-	public static Map<Tag, String> toTagMap(Map<String, String> values) {
+	public static Map<MetadataTag, String> toTagMap(Map<String, String> values) {
 		return mapByTag(values);
 	}
-	private static Map<Tag, String> mapByTag(Map<String, String> stringMap) {
-		Map<Tag, String> tagMap = new HashMap<Tag, String>(Tag.values().length);
+	private static Map<MetadataTag, String> mapByTag(Map<String, String> stringMap) {
+		Map<MetadataTag, String> tagMap = new HashMap<MetadataTag, String>(Tag.values().length);
 		for (Tag tag : Tag.values()) {
-			if (stringMap.containsKey(tag.getName())) {
-				tagMap.put(tag, stringMap.get(tag.getName()));
+			if (stringMap.containsKey(tag.getKey())) {
+				tagMap.put(tag, stringMap.get(tag.getKey()));
 			}
 		}
 		return tagMap;
@@ -350,11 +350,6 @@ public enum Tag implements MetadataTag {
 
 	}
 
-	/**
-	 * Used to get the name of the tag (e.g. "Orientation", "ISO", etc.).
-	 * 
-	 * @return the name of the tag (e.g. "Orientation", "ISO", etc.).
-	 */
 	@Deprecated
 	public String getName() {
 		return getKey();
@@ -373,6 +368,11 @@ public enum Tag implements MetadataTag {
 		return type;
 	}
 
+	/**
+	 * Used to get the name of the tag (e.g. "Orientation", "ISO", etc.).
+	 * 
+	 * @return the name of the tag (e.g. "Orientation", "ISO", etc.).
+	 */
 	@Override
 	public String getKey() {
 		return key;

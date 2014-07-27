@@ -210,11 +210,11 @@ import org.slf4j.LoggerFactory;
  * @author Riyad Kalla (software@thebuzzmedia.com)
  * @since 1.1
  */
-public class ExifTool {
+public class ExifTool implements ExifToolService {
 
-	public static final String ENV_EXIF_TOOL_PATH = "exiftool.path";
-	public static final String ENV_EXIF_TOOL_PROCESSCLEANUPDELAY = "exiftool.processCleanupDelay";
-	public static final long DEFAULT_PROCESS_CLEANUP_DELAY = 0;
+	private static final String ENV_EXIF_TOOL_PATH = "exiftool.path";
+	private static final String ENV_EXIF_TOOL_PROCESSCLEANUPDELAY = "exiftool.processCleanupDelay";
+	private static final long DEFAULT_PROCESS_CLEANUP_DELAY = 0;
 
 	/**
 	 * Name used to identify the (optional) cleanup {@link Thread}.
@@ -321,26 +321,28 @@ public class ExifTool {
 	 * processCleanupDelay is optional. If not found, the default is used.
 	 */
 	public ExifTool(Feature... features) {
-		this(DEFAULT_TIMEOUT_WHEN_KEEP_ALIVE,features);
+		this(DEFAULT_TIMEOUT_WHEN_KEEP_ALIVE, features);
 	}
 
 	public ExifTool(int timeoutWhenKeepAliveInMillis, Feature... features) {
 		this(System.getProperty(ENV_EXIF_TOOL_PATH, "exiftool"), Long.getLong(
 				ENV_EXIF_TOOL_PROCESSCLEANUPDELAY,
-				DEFAULT_PROCESS_CLEANUP_DELAY), timeoutWhenKeepAliveInMillis, features);
+				DEFAULT_PROCESS_CLEANUP_DELAY), timeoutWhenKeepAliveInMillis,
+				features);
 	}
 
-
 	public ExifTool(String exifToolPath) {
-		this(exifToolPath, DEFAULT_PROCESS_CLEANUP_DELAY, DEFAULT_TIMEOUT_WHEN_KEEP_ALIVE, (Feature[]) null);
+		this(exifToolPath, DEFAULT_PROCESS_CLEANUP_DELAY,
+				DEFAULT_TIMEOUT_WHEN_KEEP_ALIVE, (Feature[]) null);
 	}
 
 	public ExifTool(String exifToolPath, Feature... features) {
-		this(exifToolPath, DEFAULT_PROCESS_CLEANUP_DELAY, DEFAULT_TIMEOUT_WHEN_KEEP_ALIVE, features);
+		this(exifToolPath, DEFAULT_PROCESS_CLEANUP_DELAY,
+				DEFAULT_TIMEOUT_WHEN_KEEP_ALIVE, features);
 	}
 
-	public ExifTool(String exifCmd, long processCleanupDelay, int timeoutWhenKeepAliveInMillis, 
-			Feature... features) {
+	public ExifTool(String exifCmd, long processCleanupDelay,
+			int timeoutWhenKeepAliveInMillis, Feature... features) {
 		this.exifCmd = exifCmd;
 		this.processCleanupDelay = processCleanupDelay;
 		this.exifVersion = ExifProcess.readVersion(exifCmd);
@@ -392,6 +394,7 @@ public class ExifTool {
 	 *             if any exception occurs while attempting to start the
 	 *             external ExifTool process to verify feature support.
 	 */
+	@Override
 	public boolean isFeatureSupported(Feature feature) throws RuntimeException {
 		if (feature == null) {
 			throw new IllegalArgumentException("feature cannot be null");
@@ -419,6 +422,7 @@ public class ExifTool {
 	 * enabled. This method has no effect if the stay open feature is not
 	 * enabled.
 	 */
+	@Override
 	public void startup() {
 		if (featureSet.contains(Feature.STAY_OPEN)) {
 			shuttingDown.set(false);
@@ -457,6 +461,7 @@ public class ExifTool {
 	 * This is same as {@link #close()}, added for consistency with
 	 * {@link #startup()}
 	 */
+	@Override
 	public void shutdown() {
 		close();
 	}
@@ -477,6 +482,7 @@ public class ExifTool {
 	 * Calling this method on an instance of this class without
 	 * {@link Feature#STAY_OPEN} support enabled has no effect.
 	 */
+	@Override
 	public synchronized void close() {
 		shuttingDown.set(true);
 		if (process != null) {
@@ -488,6 +494,7 @@ public class ExifTool {
 		}
 	}
 
+	@Override
 	public boolean isStayOpen() {
 		return featureSet.contains(Feature.STAY_OPEN);
 	}
@@ -506,6 +513,7 @@ public class ExifTool {
 	 *         {@link Feature#STAY_OPEN} feature, otherwise returns
 	 *         <code>false</code>.
 	 */
+	@Override
 	public boolean isRunning() {
 		return process != null && !process.isClosed();
 	}
@@ -530,6 +538,7 @@ public class ExifTool {
 	 * @throws IllegalArgumentException
 	 *             if <code>feature</code> is <code>null</code>.
 	 */
+	@Override
 	public boolean isFeatureEnabled(Feature feature)
 			throws IllegalArgumentException {
 		if (feature == null) {
@@ -538,25 +547,27 @@ public class ExifTool {
 		return featureSet.contains(feature);
 	}
 
-	public Map<Tag, String> getImageMeta(File image, Tag... tags)
+	@Override
+	public Map<MetadataTag, String> getImageMeta(File image, MetadataTag... tags)
 			throws IllegalArgumentException, SecurityException, IOException {
-
 		return getImageMeta(image, Format.NUMERIC, tags);
 	}
 
-	public Map<Tag, String> getImageMeta(File image, Format format, Tag... tags)
+	@Override
+	public Map<MetadataTag, String> getImageMeta(File image, Format format, MetadataTag... tags)
 			throws IllegalArgumentException, SecurityException, IOException {
 
 		String[] stringTags = new String[tags.length];
 		int i = 0;
-		for (Tag tag : tags) {
-			stringTags[i++] = tag.getName();
+		for (MetadataTag tag : tags) {
+			stringTags[i++] = tag.getKey();
 		}
 		Map<String, String> result = getImageMeta(image, format, true,
 				stringTags);
 		return Tag.toTagMap(result);
 	}
 
+	@Override
 	public Map<String, String> getImageMeta(File image, Format format,
 			TagGroup... tags) throws IllegalArgumentException,
 			SecurityException, IOException {
@@ -568,7 +579,7 @@ public class ExifTool {
 		return getImageMeta(image, format, false, stringTags);
 	}
 
-	private Map<String, String> getImageMeta(final File image,
+	public Map<String, String> getImageMeta(final File image,
 			final Format format, final boolean suppressDuplicates,
 			final String... tags) throws IllegalArgumentException,
 			SecurityException, IOException {
@@ -635,8 +646,11 @@ public class ExifTool {
 		return resultMap;
 	}
 
-	public void addImageMetadata(File image, Map<Tag, Object> values)
+	@Override
+	public <T> void addImageMetadata(File image, Map<T, Object> values)
 			throws IOException {
+		// public void addImageMetadata(File image, Map<Tag, Object> values)
+		// throws IOException {
 
 		final boolean stayOpen = featureSet.contains(Feature.STAY_OPEN);
 
@@ -680,17 +694,18 @@ public class ExifTool {
 		}
 	}
 
-	private List<String> createCommandList(String filename,
-			Map<Tag, Object> values) {
+	private <T> List<String> createCommandList(String filename,
+			Map<T, Object> values) {
 
 		List<String> args = new ArrayList<String>(64);
 
-		for (Map.Entry<Tag, Object> entry : values.entrySet()) {
-			Tag tag = entry.getKey();
+		for (Map.Entry<T, Object> entry : values.entrySet()) {
+			//works only for Tags
+			Tag tag = (Tag)entry.getKey();
 			Object value = entry.getValue();
 
 			StringBuilder arg = new StringBuilder();
-			arg.append("-").append(tag.getName());
+			arg.append("-").append(tag.getKey());
 			if (value instanceof Number) {
 				arg.append("#");
 			}
@@ -720,6 +735,7 @@ public class ExifTool {
 	 * @throws IOException
 	 *             Signals that an I/O exception has occurred.
 	 */
+	@Override
 	public String getImageMetadataXml(File input, boolean includeBinary)
 			throws IOException {
 		List<String> args = new ArrayList<String>();
@@ -741,6 +757,7 @@ public class ExifTool {
 	 * @throws IOException
 	 *             Signals that an I/O exception has occurred.
 	 */
+	@Override
 	public void getImageMetadataXml(File input, File output,
 			boolean includeBinary) throws IOException {
 
@@ -763,6 +780,7 @@ public class ExifTool {
 	 * @throws IOException
 	 *             Signals that an I/O exception has occurred.
 	 */
+	@Override
 	public String extractImageIccProfile(File input, File output)
 			throws IOException {
 
@@ -790,13 +808,14 @@ public class ExifTool {
 	 * @throws IOException
 	 *             Signals that an I/O exception has occurred.
 	 */
+	@Override
 	public File extractThumbnail(File input, Tag tag) throws IOException {
 
 		List<String> args = new ArrayList<String>();
 		String suffix = ".thumb.jpg";
 		String thumbname = FilenameUtils.getBaseName(input.getName()) + suffix;
 
-		args.add("-" + tag.getName());
+		args.add("-" + tag.getKey());
 		args.add(input.getAbsolutePath());
 		args.add("-b");
 		args.add("-w");
@@ -885,5 +904,41 @@ public class ExifTool {
 	 */
 	protected static void log(String message, Object... params) {
 		log.debug(message, params);
+	}
+
+	@Override
+	public Map<Object, Object> getImageMeta2(File image, MetadataTag... tags)
+			throws IllegalArgumentException, SecurityException, IOException {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public void rebuildMetadata(File file) throws IOException {
+		throw new RuntimeException("Not implemented.");
+	}
+
+	@Override
+	public void rebuildMetadata(WriteOptions options, File file)
+			throws IOException {
+		throw new RuntimeException("Not implemented.");
+	}
+
+	@Override
+	public Map<Object, Object> readMetadata(File file, Object... tags)
+			throws IOException {
+		throw new RuntimeException("Not implemented.");
+	}
+
+	@Override
+	public Map<Object, Object> readMetadata(ReadOptions options, File file,
+			Object... tags) throws IOException {
+		throw new RuntimeException("Not implemented.");
+	}
+
+	@Override
+	public <T> void writeMetadata(WriteOptions options, File image,
+			Map<T, Object> values) throws IOException {
+		throw new RuntimeException("Not implemented.");
 	}
 }

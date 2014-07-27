@@ -23,8 +23,8 @@ public class KeepAliveExifProxy implements ExifProxy {
 
 	public KeepAliveExifProxy(String exifCmd, List<String> baseArgs) {
 		inactivityTimeout = Long.getLong(
-				ExifTool.ENV_EXIF_TOOL_PROCESSCLEANUPDELAY,
-				ExifTool.DEFAULT_PROCESS_CLEANUP_DELAY);
+				ExifToolNew.ENV_EXIF_TOOL_PROCESSCLEANUPDELAY,
+				ExifToolNew.DEFAULT_PROCESS_CLEANUP_DELAY);
 		startupArgs = new ArrayList<String>(baseArgs.size() + 5);
 		startupArgs.add(exifCmd);
 		startupArgs.addAll(Arrays.asList("-stay_open", "True"));
