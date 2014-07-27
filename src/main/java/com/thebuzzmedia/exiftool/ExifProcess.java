@@ -4,11 +4,17 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.TreeMap;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.regex.Pattern;
 
@@ -18,6 +24,30 @@ import java.util.regex.Pattern;
  * modes. This is the actual process, with streams for reading and writing data.
  */
 public final class ExifProcess {
+	private static class Pair<P1,P2>{
+		final P1 _1;
+		final P2 _2;
+		public Pair(P1 _1, P2 _2){
+			this._1 = _1;
+			this._2 = _2;
+		}
+		@Override
+		public String toString() {
+			return "Pair("+_1+","+_2+")";
+		}
+	}
+	private static final Map<String,Pair<String,ExifProcess>> all = Collections.synchronizedMap(new TreeMap<String,Pair<String,ExifProcess>>());
+	static{
+		Runtime.getRuntime().addShutdownHook(new Thread() {
+			public void run() {
+				ExifTool.log.info("Close all remaining processes:" + all.keySet());
+				for(Entry<String, Pair<String, ExifProcess>> item : all.entrySet()){
+					ExifTool.log.info("Close leaked process " + item);
+					item.getValue()._2.close();
+				}
+			}
+		});
+	}
 	/**
 	 * Compiled {@link Pattern} of ": " used to split compact output from
 	 * ExifTool evenly into name/value pairs.
@@ -26,7 +56,8 @@ public final class ExifProcess {
 			.compile("\\s*:\\s*");
 
 	public static VersionNumber readVersion(String exifCmd) {
-		ExifProcess process = new ExifProcess(false, Arrays.asList(exifCmd, "-ver"));
+		ExifProcess process = new ExifProcess(false, Arrays.asList(exifCmd,
+				"-ver"));
 		try {
 			return new VersionNumber(process.readLine());
 		} catch (IOException ex) {
@@ -38,7 +69,7 @@ public final class ExifProcess {
 	}
 
 	public static ExifProcess _execute(boolean keepAlive, List<String> args) {
-		return new ExifProcess(keepAlive,args);
+		return new ExifProcess(keepAlive, args);
 	}
 
 	public static Map<String, String> executeToResults(String exifCmd,
@@ -68,8 +99,8 @@ public final class ExifProcess {
 	}
 
 	public static ExifProcess startup(String exifCmd) {
-		List<String> args = Arrays.asList(exifCmd, "-stay_open", "True",
-				"-@", "-");
+		List<String> args = Arrays.asList(exifCmd, "-stay_open", "True", "-@",
+				"-");
 		return _execute(true, args);
 	}
 
@@ -87,6 +118,7 @@ public final class ExifProcess {
 				"Attempting to start ExifTool process using args: %s", args));
 		try {
 			this.process = new ProcessBuilder(args).start();
+			all.put(process.toString(), new Pair<String, ExifProcess>(toString(new RuntimeException("start of "+process)),this));
 			this.reader = new BufferedReader(new InputStreamReader(
 					process.getInputStream()));
 			this.writer = new OutputStreamWriter(process.getOutputStream());
@@ -94,7 +126,7 @@ public final class ExifProcess {
 					new BufferedReader(new InputStreamReader(
 							process.getErrorStream())));
 			errReader.start();
-			ExifTool.log.debug("\tSuccessful");
+			ExifTool.log.debug("\tSuccessful " + process + " started.");
 		} catch (Exception e) {
 			String message = "Unable to start external ExifTool process using the execution arguments: "
 					+ args
@@ -106,11 +138,20 @@ public final class ExifProcess {
 			throw new RuntimeException(message, e);
 		}
 	}
-	public synchronized Map<String, String> sendToRunning(List<String> args) throws IOException {
+
+	private String toString(Throwable throwable) {
+		StringWriter sw = new StringWriter();
+		throwable.printStackTrace(new PrintWriter(sw));
+		return sw.getBuffer().toString();
+	}
+
+	public synchronized Map<String, String> sendToRunning(List<String> args)
+			throws IOException {
 		return sendArgs(args);
 	}
 
-	public synchronized Map<String, String> sendArgs(List<String> args) throws IOException {
+	public synchronized Map<String, String> sendArgs(List<String> args)
+			throws IOException {
 		if (!keepAlive) {
 			throw new IOException("Not KeepAlive Process");
 		}
@@ -155,10 +196,10 @@ public final class ExifProcess {
 
 			/*
 			 * When using a persistent ExifTool process, it terminates its
-			 * output to us with a "{ready}" clause on a new line, we need
-			 * to look for it and break from this loop when we see it
-			 * otherwise this process will hang indefinitely blocking on the
-			 * input stream with no data to read.
+			 * output to us with a "{ready}" clause on a new line, we need to
+			 * look for it and break from this loop when we see it otherwise
+			 * this process will hang indefinitely blocking on the input stream
+			 * with no data to read.
 			 */
 			if (keepAlive && line.equals("{ready}")) {
 				break;
@@ -186,10 +227,10 @@ public final class ExifProcess {
 
 			/*
 			 * When using a persistent ExifTool process, it terminates its
-			 * output to us with a "{ready}" clause on a new line, we need
-			 * to look for it and break from this loop when we see it
-			 * otherwise this process will hang indefinitely blocking on the
-			 * input stream with no data to read.
+			 * output to us with a "{ready}" clause on a new line, we need to
+			 * look for it and break from this loop when we see it otherwise
+			 * this process will hang indefinitely blocking on the input stream
+			 * with no data to read.
 			 */
 			if (keepAlive && line.equals("{ready}")) {
 				break;
@@ -242,12 +283,17 @@ public final class ExifProcess {
 						// no-op, just try to close it.
 					}
 
-					ExifTool.log.debug("Read/Write streams successfully closed.");
+					ExifTool.log
+							.debug("Read/Write streams successfully closed.");
 
 					try {
+						ExifTool.log.debug("\tDestroy process " + process + "...");
 						process.destroy();
+						all.remove(process.toString());
+						ExifTool.log.debug("\tDestroy process " + process + " done => "+all.keySet());
 					} catch (Exception e) {
 						//
+						ExifTool.log.debug("", e);
 					}
 					// process = null;
 
@@ -256,5 +302,12 @@ public final class ExifProcess {
 				closeLock.unlock();
 			}
 		}
+	}
+
+	@Override
+	protected void finalize() throws Throwable {
+		ExifTool.log.debug("\tFinalize process " + process + ".");
+		close();
+		super.finalize();
 	}
 }

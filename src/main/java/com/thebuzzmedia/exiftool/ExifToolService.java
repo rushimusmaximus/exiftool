@@ -4,7 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Map;
 
-public interface ExifToolService {
+public interface ExifToolService extends AutoCloseable{
 
 	/**
 	 * Used to determine if the given {@link Feature} is supported by the
@@ -113,18 +113,18 @@ public interface ExifToolService {
 
 	Map<String, String> getImageMeta(File file, Format format,
 			boolean supressDuplicates, String... tags) throws IOException;
-	Map<MetadataTag, String> getImageMeta(File image, MetadataTag... tags)
+	Map<MetadataTag, String> getImageMeta(File file, MetadataTag... tags)
 			throws IllegalArgumentException, SecurityException, IOException;
 	
-	Map<Object, Object> getImageMeta2(File image, MetadataTag... tags)
+	Map<Object, Object> getImageMeta2(File file, MetadataTag... tags)
 			throws IllegalArgumentException, SecurityException, IOException;
-	Map<MetadataTag, String> getImageMeta(File image, Format format, MetadataTag... tags)
+	Map<MetadataTag, String> getImageMeta(File file, Format format, MetadataTag... tags)
 			throws IllegalArgumentException, SecurityException, IOException;
-	Map<String, String> getImageMeta(File image, Format format,
+	Map<String, String> getImageMeta(File file, Format format,
 			TagGroup... tags) throws IllegalArgumentException,
 			SecurityException, IOException;
 
-	public <T> void addImageMetadata(File image, Map<T, Object> values)
+	public <T> void addImageMetadata(File file, Map<T, Object> values)
 			throws IOException;
 
 	/**
@@ -205,6 +205,6 @@ public interface ExifToolService {
 	 * Takes a map of tags (either (@link Tag) or Strings for keys) and
 	 * replaces/appends them to the metadata.
 	 */
-	<T> void writeMetadata(WriteOptions options, File image,
+	<T> void writeMetadata(WriteOptions options, File file,
 			Map<T, Object> values) throws IOException;
 }

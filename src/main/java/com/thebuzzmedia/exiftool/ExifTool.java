@@ -16,6 +16,7 @@
 
 package com.thebuzzmedia.exiftool;
 
+import java.io.Closeable;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -210,7 +211,7 @@ import org.slf4j.LoggerFactory;
  * @author Riyad Kalla (software@thebuzzmedia.com)
  * @since 1.1
  */
-public class ExifTool implements ExifToolService {
+public class ExifTool implements ExifToolService, AutoCloseable {
 
 	private static final String ENV_EXIF_TOOL_PATH = "exiftool.path";
 	private static final String ENV_EXIF_TOOL_PROCESSCLEANUPDELAY = "exiftool.processCleanupDelay";
@@ -940,5 +941,11 @@ public class ExifTool implements ExifToolService {
 	public <T> void writeMetadata(WriteOptions options, File image,
 			Map<T, Object> values) throws IOException {
 		throw new RuntimeException("Not implemented.");
+	}
+	@Override
+	protected void finalize() throws Throwable {
+		log.info("ExifTool not used anymore shutdown the exiftool process...");
+		shutdown();
+		super.finalize();
 	}
 }

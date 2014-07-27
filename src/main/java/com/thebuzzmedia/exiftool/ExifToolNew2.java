@@ -1170,4 +1170,10 @@ public class ExifToolNew2 implements ExifToolService {
 			Map<T, Object> values) throws IOException {
 		throw new RuntimeException("Not implemented.");
 	}
+	@Override
+	protected void finalize() throws Throwable {
+		ExifTool.log.info("ExifTool not used anymore shutdown the exiftool process...");
+		shutdown();
+		super.finalize();
+	}
 }

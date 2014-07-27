@@ -292,7 +292,7 @@ public class ExifToolNew implements ExifToolService {
 		this(new ReadOptions(), features);
 	}
 
-	public ExifToolNew(ReadOptions readOptions, Feature...features) {
+	public ExifToolNew(ReadOptions readOptions, Feature... features) {
 		this(System.getProperty(ENV_EXIF_TOOL_PATH, "exiftool"), Long.getLong(
 				ENV_EXIF_TOOL_PROCESSCLEANUPDELAY,
 				DEFAULT_PROCESS_CLEANUP_DELAY), readOptions, features);
@@ -306,7 +306,8 @@ public class ExifToolNew implements ExifToolService {
 	}
 
 	public ExifToolNew(String exifToolPath, Feature... features) {
-		this(exifToolPath, DEFAULT_PROCESS_CLEANUP_DELAY, new ReadOptions(), features);
+		this(exifToolPath, DEFAULT_PROCESS_CLEANUP_DELAY, new ReadOptions(),
+				features);
 	}
 
 	public ExifToolNew(String exifCmd, long processCleanupDelay,
@@ -335,16 +336,18 @@ public class ExifToolNew implements ExifToolService {
 			exifProxy = new SingleUseExifProxy(exifCmd, baseArgs);
 		}
 	}
-//
-//	/**
-//	 * Limits the amount of time (in mills) an exif operation can take. Setting
-//	 * value to greater than 0 to enable.
-//	 */
-//	public ExifToolNew setRunTimeout(long mills) {
-//		defReadOptions = defReadOptions.withRunTimeoutMills(mills);
-//		defWriteOptions = defWriteOptions.withRunTimeoutMills(mills);
-//		return this;
-//	}
+
+	//
+	// /**
+	// * Limits the amount of time (in mills) an exif operation can take.
+	// Setting
+	// * value to greater than 0 to enable.
+	// */
+	// public ExifToolNew setRunTimeout(long mills) {
+	// defReadOptions = defReadOptions.withRunTimeoutMills(mills);
+	// defWriteOptions = defWriteOptions.withRunTimeoutMills(mills);
+	// return this;
+	// }
 
 	/**
 	 * Used to determine if the given {@link Feature} is supported by the
@@ -497,8 +500,9 @@ public class ExifToolNew implements ExifToolService {
 		return getImageMeta(image, Format.NUMERIC, tags);
 	}
 
-	public Map<MetadataTag, String> getImageMeta(File image, Format format, Tag... tags)
-			throws IllegalArgumentException, SecurityException, IOException {
+	public Map<MetadataTag, String> getImageMeta(File image, Format format,
+			Tag... tags) throws IllegalArgumentException, SecurityException,
+			IOException {
 
 		String[] stringTags = new String[tags.length];
 		int i = 0;
@@ -547,11 +551,8 @@ public class ExifToolNew implements ExifToolService {
 		return readMetadata(defReadOptions, file, tags);
 	}
 
-	/**
-	 * Reads metadata from the file.
-	 */
-	public Map<Object, Object> readMetadata(ReadOptions options, File file,
-			Object... tags) throws IOException {
+	public Map<Object, Object> readMetadata(ReadOptions options,
+			File file, Object... tags) throws IOException {
 		if (file == null) {
 			throw new IllegalArgumentException(
 					"file cannot be null and must be a valid stream of image data.");
@@ -604,7 +605,7 @@ public class ExifToolNew implements ExifToolService {
 				Object value = options.convertTypes ? Tag.deserialize(
 						metaTag.getKey(), input, metaTag.getType()) : input;
 				// maps with tag passed in, as caller expects to fetch
-				metadata.put(tag, value);
+				metadata.put(metaTag, value);
 			}
 		}
 		for (Map.Entry<String, String> entry : resultMap.entrySet()) {
@@ -829,15 +830,23 @@ public class ExifToolNew implements ExifToolService {
 	}
 
 	@Override
-	public Map<Object, Object> getImageMeta2(File image, MetadataTag... tags)
+	public Map<Object, Object> getImageMeta2(File file, MetadataTag... tags)
 			throws IllegalArgumentException, SecurityException, IOException {
-		throw new RuntimeException("Not implemented.");
+		return readMetadata(file, tags);
 	}
 
 	@Override
-	public Map<MetadataTag, String> getImageMeta(File image, Format format,
+	public Map<MetadataTag, String> getImageMeta(File file, Format format,
 			MetadataTag... tags) throws IllegalArgumentException,
 			SecurityException, IOException {
-		throw new RuntimeException("Not implemented.");
+		Map<?,?> result = readMetadata(file, tags);
+		//since meta tags are passed we will have a proper Map result 
+		return (Map)result;
+	}
+	@Override
+	protected void finalize() throws Throwable {
+		log.info("ExifTool not used anymore shutdown the exiftool process...");
+		shutdown();
+		super.finalize();
 	}
 }
