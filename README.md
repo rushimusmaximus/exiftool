@@ -212,18 +212,17 @@ us at: software@thebuzzmedia.com
 
 
 ## Maven
-- current release: 2.3.1
-- at `http://raisercostin.googlecode.com/svn/maven2/com/thebuzzmedia/exiftool/exiftool-lib/2.3.1/`
+- current release: 2.3.2
+- at `http://raisercostin.googlecode.com/svn/maven2/com/thebuzzmedia/exiftool/exiftool-lib/`
 - create deliverables:
 	`mvn install -Prelease -DskipTests=true`
 - release in svn: 
 	`svn import -m "release" C:\Users\costin\.m2\repository\com https://raisercostin.googlecode.com/svn/maven2/com --force`
 - release in svn subsequent releases: 
-	`svn import -m "release 2.3.1" C:\Users\costin\.m2\repository\com\thebuzzmedia\exiftool\exiftool-lib\2.3.1 https://raisercostin.googlecode.com/svn/maven2/com/thebuzzmedia/ex`
-iftool/exiftool-lib/2.3.1 --force
+	`svn import -m "release 2.3.1" C:\Users\costin\.m2\repository\com\thebuzzmedia\exiftool\exiftool-lib\2.3.1 https://raisercostin.googlecode.com/svn/maven2/com/thebuzzmedia/exiftool/exiftool-lib/2.3.1 --force`
 
 ## Sbt Configuration
 build.sbt
 
 	resolvers += "raisercostin" at "https://raisercostin.googlecode.com/svn/maven2"
-	libraryDependencies += "com.thebuzzmedia.exiftool" % "exiftool-lib" % "2.3.1"
+	libraryDependencies += "com.thebuzzmedia.exiftool" % "exiftool-lib" % "2.3.2"
