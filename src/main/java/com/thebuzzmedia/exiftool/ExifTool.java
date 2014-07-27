@@ -653,8 +653,6 @@ public class ExifTool implements ExifToolService, AutoCloseable {
 		// public void addImageMetadata(File image, Map<Tag, Object> values)
 		// throws IOException {
 
-		final boolean stayOpen = featureSet.contains(Feature.STAY_OPEN);
-
 		if (image == null) {
 			throw new IllegalArgumentException(
 					"image cannot be null and must be a valid stream of image data.");
@@ -673,19 +671,10 @@ public class ExifTool implements ExifToolService, AutoCloseable {
 
 		log.info("Adding Tags {} to {}", values, image.getAbsolutePath());
 
-		Map<String, String> resultMap;
-		if (stayOpen) {
-			log.debug("Using ExifTool in daemon mode (-stay_open True)...");
-			resultMap = processStayOpen(createCommandList(
-					image.getAbsolutePath(), values));
-		} else {
-			log.debug("Using ExifTool in non-daemon mode (-stay_open False)...");
-			resultMap = ExifProcess.executeToResults(exifCmd,
-					createCommandList(image.getAbsolutePath(), values));
-		}
-
 		// start process
 		long startTime = System.currentTimeMillis();
+
+		execute(null, image, values);
 
 		// Print out how long the call to external ExifTool process took.
 		if (log.isDebugEnabled()) {
@@ -695,8 +684,22 @@ public class ExifTool implements ExifToolService, AutoCloseable {
 		}
 	}
 
+	private <T> void execute(WriteOptions options, File image, Map<T, Object> values) throws IOException {
+		final boolean stayOpen = featureSet.contains(Feature.STAY_OPEN);
+		Map<String, String> resultMap;
+		if (stayOpen) {
+			log.debug("Using ExifTool in daemon mode (-stay_open True)...");
+			resultMap = processStayOpen(createCommandList(
+					image.getAbsolutePath(), values,stayOpen));
+		} else {
+			log.debug("Using ExifTool in non-daemon mode (-stay_open False)...");
+			resultMap = ExifProcess.executeToResults(exifCmd,
+					createCommandList(image.getAbsolutePath(), values,stayOpen));
+		}
+	}
+
 	private <T> List<String> createCommandList(String filename,
-			Map<T, Object> values) {
+			Map<T, Object> values, boolean stayOpen) {
 
 		List<String> args = new ArrayList<String>(64);
 
@@ -712,11 +715,11 @@ public class ExifTool implements ExifToolService, AutoCloseable {
 			}
 			arg.append("=");
 			if (value != null) {
-				if (value instanceof String) {
-					arg.append("\"").append(value.toString()).append("\"");
-				} else {
+//				if (value instanceof String && !stayOpen) {
+//					arg.append("\"").append(value.toString()).append("\"");
+//				} else {
 					arg.append(value.toString());
-				}
+//				}
 			}
 			args.add(arg.toString());
 

@@ -80,9 +80,18 @@ public final class ExifProcess {
 		ExifProcess process = _execute(false, newArgs);
 		try {
 			return process.readResponse();
+		}catch(Throwable e){
+			throw new RuntimeException(String.format("When executing %s we got %s",toCmd(newArgs),e.getMessage()),e);
 		} finally {
 			process.close();
 		}
+	}
+	private static String toCmd(List<String> args){
+		StringBuilder sb = new StringBuilder();
+		for(String arg:args){
+			sb.append(arg).append(" ");
+		}
+		return sb.toString();
 	}
 
 	public static String executeToString(String exifCmd, List<String> args)

@@ -655,17 +655,29 @@ public class ExifToolNew implements ExifToolService {
 							+ image.getAbsolutePath()
 							+ "], ensure that the image exists at the given path and that the executing Java process has permissions to write to it.");
 		}
-
 		log.info("Adding Tags {} to {}", values, image.getAbsolutePath());
 
+		// start process
+		long startTime = System.currentTimeMillis();
+		execute(options, image, values);
+
+		// Print out how long the call to external ExifTool process took.
+		if (log.isDebugEnabled()) {
+			log.debug(String.format(
+					"Image Meta Processed in %d ms [added %d tags]",
+					(System.currentTimeMillis() - startTime), values.size()));
+		}
+	}
+
+	private <T> void execute(WriteOptions options, File image,
+			Map<T, Object> values) throws IOException {
 		List<String> args = new ArrayList<String>(values.size() + 3);
 		for (Map.Entry<?, Object> entry : values.entrySet()) {
 			args.addAll(serializeToArgs(entry.getKey(), entry.getValue()));
 		}
 		args.add(image.getAbsolutePath());
+		System.out.println(args.toString());
 
-		// start process
-		long startTime = System.currentTimeMillis();
 		try {
 			exifProxy.execute(options.runTimeoutMills, args);
 		} finally {
@@ -675,13 +687,6 @@ public class ExifToolNew implements ExifToolService {
 				if (origBackup.exists())
 					origBackup.delete();
 			}
-		}
-
-		// Print out how long the call to external ExifTool process took.
-		if (log.isDebugEnabled()) {
-			log.debug(String.format(
-					"Image Meta Processed in %d ms [added %d tags]",
-					(System.currentTimeMillis() - startTime), values.size()));
 		}
 	}
 
