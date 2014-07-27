@@ -153,8 +153,25 @@ public interface ExifToolService extends AutoCloseable {
 	Map<String, String> getImageMeta(File file, Format format, TagGroup... tags)
 			throws IllegalArgumentException, SecurityException, IOException;
 
+	Map<Object, Object> readMetadata(File file, Object... tags)
+			throws IOException;
+
+	/**
+	 * Reads metadata from the file.
+	 */
+	Map<Object, Object> readMetadata(ReadOptions options, File file,
+			Object... tags) throws IOException;
+
+	
 	public <T> void addImageMetadata(File file, Map<T, Object> values)
 			throws IOException;
+
+	/**
+	 * Takes a map of tags (either (@link Tag) or Strings for keys) and
+	 * replaces/appends them to the metadata.
+	 */
+	<T> void writeMetadata(WriteOptions options, File file,
+			Map<T, Object> values) throws IOException;
 
 	/**
 	 * extract image metadata to exiftool's internal xml format.
@@ -220,20 +237,4 @@ public interface ExifToolService extends AutoCloseable {
 	 * @link http://www.sno.phy.queensu.ca/~phil/exiftool/faq.html#Q20
 	 */
 	void rebuildMetadata(WriteOptions options, File file) throws IOException;
-
-	Map<Object, Object> readMetadata(File file, Object... tags)
-			throws IOException;
-
-	/**
-	 * Reads metadata from the file.
-	 */
-	Map<Object, Object> readMetadata(ReadOptions options, File file,
-			Object... tags) throws IOException;
-
-	/**
-	 * Takes a map of tags (either (@link Tag) or Strings for keys) and
-	 * replaces/appends them to the metadata.
-	 */
-	<T> void writeMetadata(WriteOptions options, File file,
-			Map<T, Object> values) throws IOException;
 }

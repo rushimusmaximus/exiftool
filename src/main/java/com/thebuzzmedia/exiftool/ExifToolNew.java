@@ -562,9 +562,17 @@ public class ExifToolNew implements ExifToolService {
 			throws IOException {
 		return readMetadata(defReadOptions, file, tags);
 	}
-
 	public Map<Object, Object> readMetadata(ReadOptions options,
 			File file, Object... tags) throws IOException {
+		if (tags == null) {
+			tags = new TagGroup[0];
+		}
+		Map<String, String> resultMap = getImageMeta(options, file, tags);
+		return convertToMetadataTags(options, resultMap, tags);
+	}
+
+	private Map<String, String> getImageMeta(ReadOptions options, File file,
+			Object... tags) throws IOException {
 		if (file == null) {
 			throw new IllegalArgumentException(
 					"file cannot be null and must be a valid stream of image data.");
@@ -574,9 +582,6 @@ public class ExifToolNew implements ExifToolService {
 					"Unable to read the given image ["
 							+ file.getAbsolutePath()
 							+ "], ensure that the image exists at the given path and that the executing Java process has permissions to read it.");
-		}
-		if (tags == null) {
-			tags = new TagGroup[0];
 		}
 
 		List<String> args = new ArrayList<String>(tags.length + 2);
@@ -600,7 +605,11 @@ public class ExifToolNew implements ExifToolService {
 
 		Map<String, String> resultMap = exifProxy.execute(
 				options.runTimeoutMills, args);
+		return resultMap;
+	}
 
+	public static Map<Object, Object> convertToMetadataTags(ReadOptions options,
+			Map<String, String> resultMap, Object... tags) {
 		Map<Object, Object> metadata = new HashMap<Object, Object>(
 				resultMap.size());
 
@@ -632,7 +641,8 @@ public class ExifToolNew implements ExifToolService {
 				MetadataTag metaTag = toTag(entry.getKey());
 				Object value = Tag.deserialize(metaTag.getKey(),
 						entry.getValue(), metaTag.getType());
-				metadata.put(entry.getKey(), value);
+				//metadata.put(entry.getKey(), value);
+				metadata.put(metaTag, value);
 			} else {
 				metadata.put(entry.getKey(), entry.getValue());
 

@@ -567,7 +567,10 @@ public class ExifTool implements ExifToolService, AutoCloseable {
 		}
 		Map<String, String> result = getImageMeta(image, format, true,
 				stringTags);
-		return Tag.toTagMap(result);
+		ReadOptions readOptions = new ReadOptions().withConvertTypes(true).withNumericOutput(format.equals(Format.NUMERIC));
+		return (Map)ExifToolNew.convertToMetadataTags(readOptions,result,tags);
+		//map only known values?
+		//return Tag.toTagMap(result);
 	}
 
 	@Override
