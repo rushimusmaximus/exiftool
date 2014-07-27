@@ -136,6 +136,7 @@ public interface ExifToolService extends AutoCloseable {
 	 */
 	boolean isFeatureEnabled(Feature feature) throws IllegalArgumentException;
 
+	/** If no tags are given return all tags.*/
 	Map<String, String> getImageMeta(File file, Format format,
 			boolean supressDuplicates, String... tags) throws IOException;
 

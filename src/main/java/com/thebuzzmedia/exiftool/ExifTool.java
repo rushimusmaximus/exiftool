@@ -557,7 +557,9 @@ public class ExifTool implements ExifToolService, AutoCloseable {
 	@Override
 	public Map<MetadataTag, String> getImageMeta(File image, Format format, MetadataTag... tags)
 			throws IllegalArgumentException, SecurityException, IOException {
-
+		if (tags == null) {
+			tags = new MetadataTag[0];
+		}
 		String[] stringTags = new String[tags.length];
 		int i = 0;
 		for (MetadataTag tag : tags) {
@@ -572,6 +574,9 @@ public class ExifTool implements ExifToolService, AutoCloseable {
 	public Map<String, String> getImageMeta(File image, Format format,
 			TagGroup... tags) throws IllegalArgumentException,
 			SecurityException, IOException {
+		if (tags == null) {
+			tags = new TagGroup[0];
+		}
 		String[] stringTags = new String[tags.length];
 		int i = 0;
 		for (TagGroup tag : tags) {
@@ -582,7 +587,7 @@ public class ExifTool implements ExifToolService, AutoCloseable {
 
 	public Map<String, String> getImageMeta(final File image,
 			final Format format, final boolean suppressDuplicates,
-			final String... tags) throws IllegalArgumentException,
+			String... tags) throws IllegalArgumentException,
 			SecurityException, IOException {
 
 		// Validate input and create Arg Array
@@ -597,10 +602,8 @@ public class ExifTool implements ExifToolService, AutoCloseable {
 			args.add("-a"); // suppress duplicates
 		}
 		args.add("-S"); // compact output
-
-		if (tags == null || tags.length == 0) {
-			throw new IllegalArgumentException(
-					"tags cannot be null and must contain 1 or more Tag to query the image for.");
+		if (tags == null) {
+			tags = new String[0];
 		}
 		for (String tag : tags) {
 			args.add("-" + tag);

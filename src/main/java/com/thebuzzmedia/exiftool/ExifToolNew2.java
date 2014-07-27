@@ -733,7 +733,9 @@ public class ExifToolNew2 implements ExifToolService {
 							+ "], ensure that the image exists at the given path and that the executing Java process has permissions to read it.");
 
 		long startTime = System.currentTimeMillis();
-
+		if (tags == null) {
+			tags = new MetadataTag[0];
+		}
 		/*
 		 * Create a result map big enough to hold results for each of the tags
 		 * and avoid collisions while inserting.

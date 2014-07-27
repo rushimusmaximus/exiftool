@@ -510,7 +510,9 @@ public class ExifToolNew implements ExifToolService {
 	public Map<MetadataTag, String> getImageMeta(File image, Format format,
 			Tag... tags) throws IllegalArgumentException, SecurityException,
 			IOException {
-
+		if (tags == null) {
+			tags = new Tag[0];
+		}
 		String[] stringTags = new String[tags.length];
 		int i = 0;
 		for (Tag tag : tags) {
@@ -524,6 +526,9 @@ public class ExifToolNew implements ExifToolService {
 	public Map<String, String> getImageMeta(File image, Format format,
 			TagGroup... tags) throws IllegalArgumentException,
 			SecurityException, IOException {
+		if (tags == null) {
+			tags = new TagGroup[0];
+		}
 		String[] stringTags = new String[tags.length];
 		int i = 0;
 		for (TagGroup tag : tags) {
@@ -569,6 +574,9 @@ public class ExifToolNew implements ExifToolService {
 					"Unable to read the given image ["
 							+ file.getAbsolutePath()
 							+ "], ensure that the image exists at the given path and that the executing Java process has permissions to read it.");
+		}
+		if (tags == null) {
+			tags = new TagGroup[0];
 		}
 
 		List<String> args = new ArrayList<String>(tags.length + 2);
