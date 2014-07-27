@@ -426,7 +426,7 @@ public class ExifToolNew2 implements ExifToolService {
 	 */
 	protected static void log(String message, Object... params) {
 		if (DEBUG)
-			System.out.printf(LOG_PREFIX + message + '\n', params);
+			ExifTool.log.debug(LOG_PREFIX + message + '\n', params);
 	}
 
 	/**
@@ -711,12 +711,12 @@ public class ExifToolNew2 implements ExifToolService {
 		return featureSet.contains(feature);
 	}
 
-	public Map<Tag, String> getImageMeta(File image, Tag... tags)
+	private Map<MetadataTag, String> getImageMeta2(File image, Tag... tags)
 			throws IllegalArgumentException, SecurityException, IOException {
-		return getImageMeta(image, Format.NUMERIC, tags);
+		return getImageMeta2(image, Format.NUMERIC, tags);
 	}
 
-	public Map<Tag, String> getImageMeta(File image, Format format, Tag... tags)
+	private Map<MetadataTag, String> getImageMeta2(File image, Format format, MetadataTag... tags)
 			throws IllegalArgumentException, SecurityException, IOException {
 		if (image == null)
 			throw new IllegalArgumentException(
@@ -738,7 +738,7 @@ public class ExifToolNew2 implements ExifToolService {
 		 * Create a result map big enough to hold results for each of the tags
 		 * and avoid collisions while inserting.
 		 */
-		Map<Tag, String> resultMap = new HashMap<Tag, String>(tags.length * 3);
+		Map<MetadataTag, String> resultMap = new HashMap<MetadataTag, String>(tags.length * 3);
 
 		if (DEBUG)
 			log("Querying %d tags from image: %s", tags.length,
@@ -1084,7 +1084,8 @@ public class ExifToolNew2 implements ExifToolService {
 	public Map<String, String> getImageMeta(File image, Format format,
 			TagGroup... tags) throws IllegalArgumentException,
 			SecurityException, IOException {
-		return getImageMeta(image, format, tags);
+		//return getImageMeta2(image, format, tags);
+		throw new RuntimeException("Not implemented.");
 	}
 
 	@Override
@@ -1093,79 +1094,79 @@ public class ExifToolNew2 implements ExifToolService {
 		setImageMeta(image, (Map) values);
 	}
 
-	@Override
+	@Override @Deprecated
 	public String getImageMetadataXml(File input, boolean includeBinary)
 			throws IOException {
 		throw new RuntimeException("Not implemented.");
 	}
 
-	@Override
+	@Override @Deprecated
 	public void getImageMetadataXml(File input, File output,
 			boolean includeBinary) throws IOException {
 		throw new RuntimeException("Not implemented.");
 	}
 
-	@Override
+	@Override @Deprecated
 	public String extractImageIccProfile(File input, File output)
 			throws IOException {
 		throw new RuntimeException("Not implemented.");
 	}
 
-	@Override
+	@Override @Deprecated
 	public File extractThumbnail(File input, Tag tag) throws IOException {
 		throw new RuntimeException("Not implemented.");
 	}
 
-	@Override
+	@Override @Deprecated
 	public Map<String, String> getImageMeta(File file, Format format,
 			boolean supressDuplicates, String... tags) throws IOException {
 		throw new RuntimeException("Not implemented.");
 	}
 
-	@Override
+	@Override @Deprecated
 	public Map<MetadataTag, String> getImageMeta(File image,
 			MetadataTag... tags) throws IllegalArgumentException,
 			SecurityException, IOException {
 		throw new RuntimeException("Not implemented.");
 	}
 
-	@Override
+	@Override @Deprecated
 	public Map<Object, Object> getImageMeta2(File image, MetadataTag... tags)
 			throws IllegalArgumentException, SecurityException, IOException {
 		throw new RuntimeException("Not implemented.");
 	}
 
-	@Override
+	@Override @Deprecated
 	public Map<MetadataTag, String> getImageMeta(File image, Format format,
 			MetadataTag... tags) throws IllegalArgumentException,
 			SecurityException, IOException {
-		throw new RuntimeException("Not implemented.");
+		return getImageMeta2(image, format, tags);
 	}
 
-	@Override
+	@Override @Deprecated
 	public void rebuildMetadata(File file) throws IOException {
 		throw new RuntimeException("Not implemented.");
 	}
 
-	@Override
+	@Override @Deprecated
 	public void rebuildMetadata(WriteOptions options, File file)
 			throws IOException {
 		throw new RuntimeException("Not implemented.");
 	}
 
-	@Override
+	@Override @Deprecated
 	public Map<Object, Object> readMetadata(File file, Object... tags)
 			throws IOException {
 		throw new RuntimeException("Not implemented.");
 	}
 
-	@Override
+	@Override @Deprecated
 	public Map<Object, Object> readMetadata(ReadOptions options, File file,
 			Object... tags) throws IOException {
 		throw new RuntimeException("Not implemented.");
 	}
 
-	@Override
+	@Override @Deprecated
 	public <T> void writeMetadata(WriteOptions options, File image,
 			Map<T, Object> values) throws IOException {
 		throw new RuntimeException("Not implemented.");

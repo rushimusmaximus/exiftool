@@ -33,21 +33,33 @@ import org.slf4j.LoggerFactory;
  */
 
 public class TestExifTool {
-
 	private static final String TEST_FILES_PATH = "src/test/resources";
 	private static Logger log = LoggerFactory.getLogger(TestExifTool.class);
+	private static ExifToolService create(Feature... features){
+		return ExifToolService.Factory.create(features);
+		//return new ExifToolNew2(features);
+		//return new ExifToolNew(features);
+	}
+	private static ExifToolService create(int timeoutWhenKeepAliveInMillis, Feature... features){
+		return ExifToolService.Factory.create(timeoutWhenKeepAliveInMillis, features);
+		//return new ExifToolNew(timeoutWhenKeepAliveInMillis, features);
+		//return new ExifToolNew2(timeoutWhenKeepAliveInMillis, features);
+	}
+	private ExifToolService create(ReadOptions readOptions,Feature...features) {
+		return ExifToolService.Factory.create(readOptions, features);
+	}
 
 	@Test
 	public void testSingleTool() throws Exception {
-		try (ExifToolService tool = new ExifTool(Feature.STAY_OPEN)) {
+		try (ExifToolService tool = create(Feature.STAY_OPEN)) {
 			assertTrue(runTests(tool, ""));
 		}
 
-		try (ExifToolService tool = new ExifTool(Feature.STAY_OPEN)) {
+		try (ExifToolService tool = create(Feature.STAY_OPEN)) {
 			assertTrue(runTests(tool, ""));
 		}
 
-		try (ExifToolService tool = new ExifTool(Feature.STAY_OPEN)) {
+		try (ExifToolService tool = create(Feature.STAY_OPEN)) {
 			tool.startup();
 			assertTrue(runTests(tool, ""));
 		}
@@ -65,7 +77,7 @@ public class TestExifTool {
 				@Override
 				public void run() {
 					log.info(getName() + ": starting");
-					try (ExifToolService tool = new ExifTool(Feature.STAY_OPEN)) {
+					try (ExifToolService tool = create(Feature.STAY_OPEN)) {
 						runTests(tool, getName());
 						log.info(getName() + ": finished");
 					} catch (IOException e) {
@@ -89,7 +101,7 @@ public class TestExifTool {
 
 	@Test
 	public void testManyThreadsOneTool() throws Exception {
-		try (ExifToolService tool = new ExifTool(Feature.STAY_OPEN)) {
+		try (ExifToolService tool = create(Feature.STAY_OPEN)) {
 			Thread[] threads = new Thread[20];
 			for (int i = 0; i < threads.length; i++) {
 				final String label = "run " + i;
@@ -121,9 +133,11 @@ public class TestExifTool {
 
 	@Test
 	public void testProcessTimeout() throws Exception {
-		try (ExifToolService tool = new ExifTool(1, Feature.STAY_OPEN)) {
+		try (ExifToolService tool = create(1, Feature.STAY_OPEN)) {
+			long start = System.currentTimeMillis();
 			runTests(tool, "will fail");
-			fail("should have failed");
+			long end = System.currentTimeMillis();
+			fail("should have failed. passed "+(end-start)+" miliseconds.");
 		} catch (IOException ex) {
 			;
 		}
@@ -186,7 +200,7 @@ public class TestExifTool {
 
 	@Test
 	public void testGroupTags() throws Exception {
-		try (ExifToolService tool = new ExifTool(Feature.STAY_OPEN)) {
+		try (ExifToolService tool = create(Feature.STAY_OPEN)) {
 			Map<String, String> metadata;
 
 			URL url = getClass().getResource("/iptc_test-photoshop.jpg");
@@ -230,7 +244,7 @@ public class TestExifTool {
 
 	@Test
 	public void testWriteTagStringNonDaemon() throws Exception {
-		try (ExifToolService tool = new ExifTool()) {
+		try (ExifToolService tool = create()) {
 			URL url = getClass().getResource("/nexus-s-electric-cars.jpg");
 			Path imageFile = Paths.get("target","nexus-s-electric-cars-tochange.jpg");
 			Files.copy(Paths.get(url.toURI()),imageFile, StandardCopyOption.REPLACE_EXISTING);
@@ -268,7 +282,7 @@ public class TestExifTool {
 
 	@Test
 	public void testWriteTagString() throws Exception {
-		ExifToolService tool = new ExifTool(Feature.STAY_OPEN);
+		ExifToolService tool = create(Feature.STAY_OPEN);
 			URL url = getClass().getResource("/nexus-s-electric-cars.jpg");
 			Path imageFile = Paths.get("target","nexus-s-electric-cars-tochange.jpg");
 			Files.copy(Paths.get(url.toURI()),imageFile, StandardCopyOption.REPLACE_EXISTING);
@@ -305,7 +319,7 @@ public class TestExifTool {
 
 	@Test
 	public void testWriteTagStringInvalidformat() throws Exception {
-		try (ExifToolService tool = new ExifTool(Feature.STAY_OPEN)) {
+		try (ExifToolService tool = create(Feature.STAY_OPEN)) {
 			URL url = getClass().getResource("/nexus-s-electric-cars.jpg");
 			Path imageFile = Paths.get("target","nexus-s-electric-cars-tochange.jpg");
 			Files.copy(Paths.get(url.toURI()),imageFile, StandardCopyOption.REPLACE_EXISTING);
@@ -346,7 +360,7 @@ public class TestExifTool {
 
 	@Test
 	public void testWriteTagNumberNonDaemon() throws Exception {
-		try (ExifToolService tool = new ExifTool()) {
+		try (ExifToolService tool = create()) {
 			URL url = getClass().getResource("/nexus-s-electric-cars.jpg");
 			Path imageFile = Paths.get("target","nexus-s-electric-cars-tochange.jpg");
 			Files.copy(Paths.get(url.toURI()),imageFile, StandardCopyOption.REPLACE_EXISTING);
@@ -383,7 +397,7 @@ public class TestExifTool {
 
 	@Test
 	public void testWriteTagNumber() throws Exception {
-		try (ExifToolService tool = new ExifTool(Feature.STAY_OPEN)) {
+		try (ExifToolService tool = create(Feature.STAY_OPEN)) {
 			URL url = getClass().getResource("/nexus-s-electric-cars.jpg");
 			Path imageFile = Paths.get("target","nexus-s-electric-cars-tochange.jpg");
 			Files.copy(Paths.get(url.toURI()),imageFile, StandardCopyOption.REPLACE_EXISTING);
@@ -420,7 +434,7 @@ public class TestExifTool {
 
 	@Test
 	public void testWriteMulipleTag() throws Exception {
-		try (ExifToolService tool = new ExifTool(Feature.STAY_OPEN)) {
+		try (ExifToolService tool = create(Feature.STAY_OPEN)) {
 		URL url = getClass().getResource("/nexus-s-electric-cars.jpg");
 		Path imageFile = Paths.get("target","nexus-s-electric-cars-tochange.jpg");
 		Files.copy(Paths.get(url.toURI()),imageFile, StandardCopyOption.REPLACE_EXISTING);
@@ -462,7 +476,7 @@ public class TestExifTool {
 
 	@Test
 	public void testWriteMulipleTagNonDaemon() throws Exception {
-		try (ExifToolService tool = new ExifTool()) {
+		try (ExifToolService tool = create()) {
 		URL url = getClass().getResource("/nexus-s-electric-cars.jpg");
 		Path imageFile = Paths.get("target","nexus-s-electric-cars-tochange.jpg");
 		Files.copy(Paths.get(url.toURI()),imageFile, StandardCopyOption.REPLACE_EXISTING);
@@ -504,7 +518,7 @@ public class TestExifTool {
 
 	@Test
 	public void testWriteMultipleTagNonDaemon2() throws Exception {
-		try (ExifToolService tool = new ExifToolNew()) {
+		try (ExifToolService tool = create()) {
 		URL url = getClass().getResource("/nexus-s-electric-cars.jpg");
 		Path imageFile = Paths.get("target","nexus-s-electric-cars-tochange.jpg");
 		Files.copy(Paths.get(url.toURI()),imageFile, StandardCopyOption.REPLACE_EXISTING);
@@ -547,7 +561,7 @@ public class TestExifTool {
 
 	@Test
 	public void testWritingWithImplicitTypes() throws Exception {
-		try (ExifToolService tool = new ExifToolNew(new ReadOptions()
+		try (ExifToolService tool = create(new ReadOptions()
 				.withNumericOutput(true).withConvertTypes(true),
 				Feature.MWG_MODULE)){
 		URL url = getClass().getResource("/nexus-s-electric-cars.jpg");

@@ -4,7 +4,32 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Map;
 
-public interface ExifToolService extends AutoCloseable{
+public interface ExifToolService extends AutoCloseable {
+	/**
+	 * Factory method with "best" ExifToolService implementation.
+	 * 
+	 * @author raisercostin
+	 */
+	public static class Factory {
+		public static ExifToolService create(Feature... features) {
+			return new ExifTool(features);
+			// return new ExifToolNew2(features);
+			// return new ExifToolNew(features);
+		}
+
+		public static ExifToolService create(int timeoutWhenKeepAliveInMillis,
+				Feature... features) {
+			return new ExifTool(timeoutWhenKeepAliveInMillis, features);
+			// return new ExifToolNew(timeoutWhenKeepAliveInMillis, features);
+			// return new ExifToolNew2(timeoutWhenKeepAliveInMillis, features);
+		}
+
+		public static ExifToolService create(ReadOptions readOptions,
+				Feature... features) {
+			//ignore readOptions
+			return new ExifTool(features);
+		}
+	}
 
 	/**
 	 * Used to determine if the given {@link Feature} is supported by the
@@ -113,16 +138,19 @@ public interface ExifToolService extends AutoCloseable{
 
 	Map<String, String> getImageMeta(File file, Format format,
 			boolean supressDuplicates, String... tags) throws IOException;
+
 	Map<MetadataTag, String> getImageMeta(File file, MetadataTag... tags)
 			throws IllegalArgumentException, SecurityException, IOException;
-	
+
 	Map<Object, Object> getImageMeta2(File file, MetadataTag... tags)
 			throws IllegalArgumentException, SecurityException, IOException;
-	Map<MetadataTag, String> getImageMeta(File file, Format format, MetadataTag... tags)
-			throws IllegalArgumentException, SecurityException, IOException;
-	Map<String, String> getImageMeta(File file, Format format,
-			TagGroup... tags) throws IllegalArgumentException,
+
+	Map<MetadataTag, String> getImageMeta(File file, Format format,
+			MetadataTag... tags) throws IllegalArgumentException,
 			SecurityException, IOException;
+
+	Map<String, String> getImageMeta(File file, Format format, TagGroup... tags)
+			throws IllegalArgumentException, SecurityException, IOException;
 
 	public <T> void addImageMetadata(File file, Map<T, Object> values)
 			throws IOException;

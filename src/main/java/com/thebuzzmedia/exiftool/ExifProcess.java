@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -41,7 +42,7 @@ public final class ExifProcess {
 		Runtime.getRuntime().addShutdownHook(new Thread() {
 			public void run() {
 				ExifTool.log.info("Close all remaining processes:" + all.keySet());
-				for(Entry<String, Pair<String, ExifProcess>> item : all.entrySet()){
+				for(Entry<String, Pair<String, ExifProcess>> item : new HashSet<Entry<String, Pair<String, ExifProcess>>>(all.entrySet())){
 					ExifTool.log.info("Close leaked process " + item);
 					item.getValue()._2.close();
 				}

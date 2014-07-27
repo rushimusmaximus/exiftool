@@ -291,11 +291,16 @@ public class ExifToolNew implements ExifToolService {
 	public ExifToolNew(Feature... features) {
 		this(new ReadOptions(), features);
 	}
-
+	public ExifToolNew(long cleanupDelayInMillis, Feature... features) {
+		this(new ReadOptions(), cleanupDelayInMillis, features);
+	}
 	public ExifToolNew(ReadOptions readOptions, Feature... features) {
-		this(System.getProperty(ENV_EXIF_TOOL_PATH, "exiftool"), Long.getLong(
+		this(readOptions,Long.getLong(
 				ENV_EXIF_TOOL_PROCESSCLEANUPDELAY,
-				DEFAULT_PROCESS_CLEANUP_DELAY), readOptions, features);
+				DEFAULT_PROCESS_CLEANUP_DELAY), features);
+	}
+	public ExifToolNew(ReadOptions readOptions, long cleanupDelayInMillis, Feature... features) {
+		this(System.getProperty(ENV_EXIF_TOOL_PATH, "exiftool"), cleanupDelayInMillis, readOptions, features);
 	}
 
 	/**
@@ -329,10 +334,12 @@ public class ExifToolNew implements ExifToolService {
 			baseArgs.addAll(Arrays.asList("-use", "MWG"));
 		}
 		if (featureEnabledSet.contains(Feature.STAY_OPEN)) {
-			KeepAliveExifProxy proxy = new KeepAliveExifProxy(exifCmd, baseArgs);
-			proxy.setInactiveTimeout(processCleanupDelay);
+			KeepAliveExifProxy proxy = new KeepAliveExifProxy(exifCmd, baseArgs,processCleanupDelay);
 			exifProxy = proxy;
 		} else {
+			if(processCleanupDelay!=0){
+				throw new RuntimeException("The processCleanupDelay parameter should be 0 if no stay_open parameter is used. Was "+processCleanupDelay);
+			}
 			exifProxy = new SingleUseExifProxy(exifCmd, baseArgs);
 		}
 	}
@@ -676,7 +683,6 @@ public class ExifToolNew implements ExifToolService {
 			args.addAll(serializeToArgs(entry.getKey(), entry.getValue()));
 		}
 		args.add(image.getAbsolutePath());
-		System.out.println(args.toString());
 
 		try {
 			exifProxy.execute(options.runTimeoutMills, args);

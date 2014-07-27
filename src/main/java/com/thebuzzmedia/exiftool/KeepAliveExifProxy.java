@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Manages an external exif process in keep alive mode.
@@ -17,39 +18,46 @@ public class KeepAliveExifProxy implements ExifProxy {
 	private final AtomicBoolean shuttingDown = new AtomicBoolean(false);
 	private final Timer cleanupTimer = new Timer(ExifTool.CLEANUP_THREAD_NAME,
 			true);
-	private long inactivityTimeout = 0;
+	private final long inactivityTimeout;
 	private volatile long lastRunStart = 0;
 	private volatile ExifProcess process;
 
 	public KeepAliveExifProxy(String exifCmd, List<String> baseArgs) {
-		inactivityTimeout = Long.getLong(
+		this(exifCmd, baseArgs, Long.getLong(
 				ExifToolNew.ENV_EXIF_TOOL_PROCESSCLEANUPDELAY,
-				ExifToolNew.DEFAULT_PROCESS_CLEANUP_DELAY);
+				ExifToolNew.DEFAULT_PROCESS_CLEANUP_DELAY));
+	}
+
+	public KeepAliveExifProxy(String exifCmd, List<String> baseArgs,
+			long inactivityTimeoutParam) {
+		this.inactivityTimeout = inactivityTimeoutParam;
 		startupArgs = new ArrayList<String>(baseArgs.size() + 5);
 		startupArgs.add(exifCmd);
 		startupArgs.addAll(Arrays.asList("-stay_open", "True"));
 		startupArgs.addAll(baseArgs);
 		startupArgs.addAll(Arrays.asList("-@", "-"));
 		// runs every minute to check if process has been inactive too long
-		cleanupTimer.schedule(new TimerTask() {
-			@Override
-			public void run() {
-				if (process != null && lastRunStart > 0
-						&& inactivityTimeout > 0) {
-					if ((System.currentTimeMillis() - lastRunStart) > inactivityTimeout) {
-						synchronized (this) {
-							if (process != null) {
-								process.close();
+		if (inactivityTimeout != 0) {
+			cleanupTimer.schedule(new TimerTask() {
+				@Override
+				public void run() {
+					if (process != null && lastRunStart > 0
+							&& inactivityTimeout > 0) {
+						if ((System.currentTimeMillis() - lastRunStart) > inactivityTimeout) {
+							synchronized (this) {
+								if (process != null) {
+									process.close();
+								}
 							}
 						}
+					} else if (lastRunStart == 0) {
+						shutdown();
 					}
 				}
-			}
-		}, 60 * 1000); // every minute
-	}
-
-	public void setInactiveTimeout(long mills) {
-		this.inactivityTimeout = mills;
+			}, inactivityTimeout
+			// 60 * 1000// every minute
+			);
+		}
 	}
 
 	@Override
