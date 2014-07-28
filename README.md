@@ -18,5 +18,6 @@ ExifTool is a Java integration library for [Phil Harvey's (perl) ExifTool](http:
     data.put(ExifTool.MwgTag.KEYWORDS, new String[]{"portrait", "nature", "flower"});
     tool.writeMetadata(imageFile, data);
 
+See the included unit tests for more examples.
 
 ExifTool was originally developed by [The Buzz Media](http://www.thebuzzmedia.com/software/exiftool-enhanced-java-integration-for-exiftool/ "Read more about the description and goals of the original project"). This repository is forked from the [original project](https://github.com/thebuzzmedia/exiftool) for use with [DF Studio](www.dfstudio.com "DF Studio is a cloud-based photo storage solution for professional and enterprise photography management and workflow, with features for organization, collaboration, storage and delivery of photographic assets.").
