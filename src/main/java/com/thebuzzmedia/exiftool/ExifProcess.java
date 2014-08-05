@@ -180,7 +180,6 @@ public final class ExifProcess {
 			throw new IOException(ExifTool.STREAM_CLOSED_MESSAGE);
 		writer.write(message);
 		writer.flush();
-		System.out.println(message);
 	}
 
 	public synchronized String readLine() throws IOException {

@@ -620,16 +620,43 @@ public class TestExifTool {
 		}
 	}
 
+	@Test(expected=ExifError.class)
+	public void testReadingUtf8NamesWithStayOpen() throws Exception {
+		try (ExifToolService tool = create(
+				new ReadOptions().withNumericOutput(true)
+						.withConvertTypes(true), Feature.STAY_OPEN)) {
+			URL url = getClass().getResource(
+					"/20140502_152336_Östliche Zubringerstraße.png");
+			File imageFile = new File(url.toURI());
+			System.out.println(imageFile.getAbsolutePath());
+			Map<MetadataTag, String> metadata = tool.getImageMeta(imageFile);
+		}
+	}
+
 	@Test
-	public void testReadingUtf8Names() throws Exception {
-		try (ExifToolService tool = create(new ReadOptions()
-				.withNumericOutput(true).withConvertTypes(true),
-				Feature.MWG_MODULE)){
-		URL url = getClass().getResource("/20140502_152336_Östliche Zubringerstraße.png");
-		File imageFile = new File(url.toURI());
-		System.out.println(imageFile.getAbsolutePath());
-		Map<MetadataTag,String> metadata = tool.getImageMeta(imageFile);
-		assertEquals("", metadata.toString());
+	public void testReadingUtf8NamesWithoutStayOpen() throws Exception {
+		try (ExifToolService tool = create(
+				new ReadOptions().withNumericOutput(true)
+						.withConvertTypes(true))) {
+			URL url = getClass().getResource(
+					"/20140502_152336_Östliche Zubringerstraße.png");
+			File imageFile = new File(url.toURI());
+			System.out.println(imageFile.getAbsolutePath());
+			Map<MetadataTag, String> metadata = tool.getImageMeta(imageFile);
+			assertEquals(19, metadata.size());
+		}
+	}
+	@Test
+	public void testReadingUtf8NamesWithStayOpenAndWindows() throws Exception {
+		try (ExifToolService tool = create(
+				new ReadOptions().withNumericOutput(true)
+						.withConvertTypes(true), Feature.STAY_OPEN,Feature.WINDOWS)) {
+			URL url = getClass().getResource(
+					"/20140502_152336_Östliche Zubringerstraße.png");
+			File imageFile = new File(url.toURI());
+			System.out.println(imageFile.getAbsolutePath());
+			Map<MetadataTag, String> metadata = tool.getImageMeta(imageFile);
+			assertEquals(19, metadata.size());
 		}
 	}
 }
