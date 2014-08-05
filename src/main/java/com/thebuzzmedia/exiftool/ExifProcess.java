@@ -7,6 +7,7 @@ import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.lang.reflect.InvocationTargetException;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -58,7 +59,7 @@ public final class ExifProcess {
 
 	public static VersionNumber readVersion(String exifCmd) {
 		ExifProcess process = new ExifProcess(false, Arrays.asList(exifCmd,
-				"-ver"));
+				"-ver"),Charset.defaultCharset());
 		try {
 			return new VersionNumber(process.readLine());
 		} catch (IOException ex) {
@@ -69,16 +70,16 @@ public final class ExifProcess {
 		}
 	}
 
-	public static ExifProcess _execute(boolean keepAlive, List<String> args) {
-		return new ExifProcess(keepAlive, args);
+	public static ExifProcess _execute(boolean keepAlive, List<String> args, Charset charset) {
+		return new ExifProcess(keepAlive, args,charset);
 	}
 
 	public static Map<String, String> executeToResults(String exifCmd,
-			List<String> args) throws IOException {
+			List<String> args, Charset charset) throws IOException {
 		List<String> newArgs = new ArrayList<String>(args.size() + 1);
 		newArgs.add(exifCmd);
 		newArgs.addAll(args);
-		ExifProcess process = _execute(false, newArgs);
+		ExifProcess process = _execute(false, newArgs,charset);
 		try {
 			return process.readResponse();
 		}catch(Throwable e){
@@ -95,12 +96,12 @@ public final class ExifProcess {
 		return sb.toString();
 	}
 
-	public static String executeToString(String exifCmd, List<String> args)
+	public static String executeToString(String exifCmd, List<String> args, Charset charset)
 			throws IOException {
 		List<String> newArgs = new ArrayList<String>(args.size() + 1);
 		newArgs.add(exifCmd);
 		newArgs.addAll(args);
-		ExifProcess process = _execute(false, newArgs);
+		ExifProcess process = _execute(false, newArgs,charset);
 		try {
 			return process.readResponseString();
 		} finally {
@@ -108,10 +109,10 @@ public final class ExifProcess {
 		}
 	}
 
-	public static ExifProcess startup(String exifCmd) {
+	public static ExifProcess startup(String exifCmd, Charset charset) {
 		List<String> args = Arrays.asList(exifCmd, "-stay_open", "True", "-@",
 				"-");
-		return _execute(true, args);
+		return _execute(true, args,charset);
 	}
 
 	private final ReentrantLock closeLock = new ReentrantLock(false);
@@ -122,7 +123,7 @@ public final class ExifProcess {
 	private final LineReaderThread errReader;
 	private volatile boolean closed = false;
 
-	public ExifProcess(boolean keepAlive, List<String> args) {
+	public ExifProcess(boolean keepAlive, List<String> args, Charset charset) {
 		this.keepAlive = keepAlive;
 		ExifTool.log.debug(String.format(
 				"Attempting to start ExifTool process using args: %s", args));
@@ -131,7 +132,7 @@ public final class ExifProcess {
 			all.put(process.toString(), new Pair<String, ExifProcess>(toString(new RuntimeException("start of "+process)),this));
 			this.reader = new BufferedReader(new InputStreamReader(
 					process.getInputStream()));
-			this.writer = new OutputStreamWriter(process.getOutputStream());
+			this.writer = new OutputStreamWriter(process.getOutputStream(),charset);
 			this.errReader = new LineReaderThread("exif-process-err-reader",
 					new BufferedReader(new InputStreamReader(
 							process.getErrorStream())));
@@ -179,6 +180,7 @@ public final class ExifProcess {
 			throw new IOException(ExifTool.STREAM_CLOSED_MESSAGE);
 		writer.write(message);
 		writer.flush();
+		System.out.println(message);
 	}
 
 	public synchronized String readLine() throws IOException {
@@ -216,11 +218,14 @@ public final class ExifProcess {
 			}
 		}
 		if (errReader.hasLines()) {
+			StringBuffer sb = new StringBuffer();
 			for (String error : errReader.takeLines()) {
 				if (error.toLowerCase().startsWith("error")) {
 					throw new ExifError(error);
 				}
+				sb.append(error);
 			}
+			throw new ExifError(sb.toString());
 		}
 		return resultMap;
 	}

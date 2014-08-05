@@ -1,6 +1,7 @@
 package com.thebuzzmedia.exiftool;
 
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -11,11 +12,13 @@ public class SingleUseExifProxy implements ExifProxy {
 	private final Timer cleanupTimer = new Timer(ExifTool.CLEANUP_THREAD_NAME,
 			true);
 	private final List<String> baseArgs;
+	private final Charset charset;
 
-	public SingleUseExifProxy(String exifCmd, List<String> defaultArgs) {
+	public SingleUseExifProxy(String exifCmd, List<String> defaultArgs, Charset charset) {
 		this.baseArgs = new ArrayList<String>(defaultArgs.size() + 1);
 		this.baseArgs.add(exifCmd);
 		this.baseArgs.addAll(defaultArgs);
+		this.charset = charset;
 	}
 
 	@Override
@@ -25,7 +28,7 @@ public class SingleUseExifProxy implements ExifProxy {
 				+ args.size());
 		newArgs.addAll(baseArgs);
 		newArgs.addAll(args);
-		final ExifProcess process = new ExifProcess(false, newArgs);
+		final ExifProcess process = new ExifProcess(false, newArgs,charset);
 		TimerTask attemptTimer = null;
 		if (runTimeoutMills > 0) {
 			attemptTimer = new TimerTask() {

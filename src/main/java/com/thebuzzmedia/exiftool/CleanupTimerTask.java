@@ -2,6 +2,10 @@ package com.thebuzzmedia.exiftool;
 
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.Vector;
+import java.util.List;
+import java.io.IOException;
+
 
 /**
  * Class used to represent the {@link TimerTask} used by the internal auto
@@ -27,4 +31,42 @@ class CleanupTimerTask extends TimerTask {
 		ExifTool.log.info("\tAuto cleanup task running...");
 		owner.close();
 	}
+    public static class RecruitTest {
+
+      private List<String> getTokens(char[] sentence) throws IllegalArgumentException {
+        if (sentence == null) throw new IllegalArgumentException ("Sentence argument should not be null.");
+        List<String> tokens = new Vector();
+        StringBuffer tmp = new StringBuffer();
+        for (int i = 0; i < sentence.length; i++) {
+          if (sentence[i] != ' ') {
+            tmp.append(sentence[i]);
+          }
+          else {
+        	    if(tmp.length()>0){
+            tokens.add(tmp.toString());
+        	    }
+            tmp = new StringBuffer("");
+          }
+        }
+    if(tmp.length()>0){
+        tokens.add(tmp.toString());
+    }
+        return tokens;
+      }
+
+      public static void main(String[] args) {
+        RecruitTest rt = new RecruitTest();
+        char[] myString = {' ','h','e','l','l','o',' ','w','o','r','l','d',' ','a'};
+        List<String> result = rt.getTokens(myString);
+        System.out.println("Number of words: " + result.size());
+        for (String token: result){
+          System.out.println(token);
+        }
+      }
+
+    }
+    public static void main(String[] args) {
+		RecruitTest.main(args);
+	}
+
 }

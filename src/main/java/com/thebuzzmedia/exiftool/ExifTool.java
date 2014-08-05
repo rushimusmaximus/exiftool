@@ -13,16 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.thebuzzmedia.exiftool;
 
 import java.io.Closeable;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -38,9 +42,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Class used to provide a Java-like interface to Phil Harvey's excellent,
- * Perl-based <a
+ * Provide a Java-like interface to Phil Harvey's excellent, Perl-based <a
  * href="http://www.sno.phy.queensu.ca/~phil/exiftool">ExifTool</a>.
+ * <p/>
+ * Initial work done by "Riyad Kalla" software@thebuzzmedia.com.
  * <p/>
  * There are a number of other basic Java wrappers to ExifTool available online,
  * but most of them only abstract out the actual Java-external-process execution
@@ -66,10 +71,10 @@ import org.slf4j.LoggerFactory;
  * {@link #getImageMeta(File, Format, Tag...)} with a list of {@link Tag}s you
  * want to pull values for from the given image.
  * <p/>
- * In this default mode, calls to <code>getImageMeta</code> will automatically
- * start an external ExifTool process to handle the request. After ExifTool has
- * parsed the tag values from the file, the external process exits and this
- * class parses the result before returning it to the caller.
+ * In this default mode methods will automatically start an external ExifTool
+ * process to handle the request. After ExifTool has parsed the tag values from
+ * the file, the external process exits and this class parses the result before
+ * returning it to the caller.
  * <p/>
  * Results from calls to <code>getImageMeta</code> are returned in a {@link Map}
  * with the {@link Tag} values as the keys and {@link String} values for every
@@ -305,6 +310,7 @@ public class ExifTool implements ExifToolService, AutoCloseable {
 	private TimerTask currentCleanupTask = null;
 	private AtomicBoolean shuttingDown = new AtomicBoolean(false);
 	private volatile ExifProcess process;
+	private final Charset charset;
 	/**
 	 * Limits the amount of time (in mills) an exif operation can take. Setting
 	 * value to greater than 0 to enable.
@@ -367,6 +373,7 @@ public class ExifTool implements ExifToolService, AutoCloseable {
 		} else {
 			cleanupTimer = null;
 		}
+		charset = computeDefaultCharset(Arrays.asList(features));
 	}
 
 	/**
@@ -436,7 +443,7 @@ public class ExifTool implements ExifToolService, AutoCloseable {
 			synchronized (this) {
 				if (process == null || process.isClosed()) {
 					log.debug("Starting daemon ExifTool process and creating read/write streams (this only happens once)...");
-					process = ExifProcess.startup(exifCmd);
+					process = ExifProcess.startup(exifCmd,charset);
 				}
 			}
 		}
@@ -639,7 +646,7 @@ public class ExifTool implements ExifToolService, AutoCloseable {
 			resultMap = processStayOpen(args);
 		} else {
 			log.debug("Using ExifTool in non-daemon mode (-stay_open False)...");
-			resultMap = ExifProcess.executeToResults(exifCmd, args);
+			resultMap = ExifProcess.executeToResults(exifCmd, args,charset);
 		}
 
 		// Print out how long the call to external ExifTool process took.
@@ -700,7 +707,7 @@ public class ExifTool implements ExifToolService, AutoCloseable {
 		} else {
 			log.debug("Using ExifTool in non-daemon mode (-stay_open False)...");
 			resultMap = ExifProcess.executeToResults(exifCmd,
-					createCommandList(image.getAbsolutePath(), values,stayOpen));
+					createCommandList(image.getAbsolutePath(), values,stayOpen),charset);
 		}
 	}
 
@@ -754,7 +761,7 @@ public class ExifTool implements ExifToolService, AutoCloseable {
 			args.add("-b");
 		args.add(input.getAbsolutePath());
 
-		return ExifProcess.executeToString(exifCmd, args);
+		return ExifProcess.executeToString(exifCmd, args,charset);
 	}
 
 	/**
@@ -801,7 +808,7 @@ public class ExifTool implements ExifToolService, AutoCloseable {
 		args.add("-o");
 		args.add(output.getAbsolutePath());
 
-		return ExifProcess.executeToString(exifCmd, args);
+		return ExifProcess.executeToString(exifCmd, args,charset);
 	}
 
 	/**
@@ -830,7 +837,7 @@ public class ExifTool implements ExifToolService, AutoCloseable {
 		args.add("-b");
 		args.add("-w");
 		args.add(suffix);
-		String result = ExifProcess.executeToString(exifCmd, args);
+		String result = ExifProcess.executeToString(exifCmd, args,charset);
 		File thumbnail = new File(input.getParent() + File.separator
 				+ thumbname);
 		if (!thumbnail.exists())
@@ -955,5 +962,11 @@ public class ExifTool implements ExifToolService, AutoCloseable {
 		log.info("ExifTool not used anymore shutdown the exiftool process...");
 		shutdown();
 		super.finalize();
+	}
+
+	public static Charset computeDefaultCharset(Collection<Feature> features) {
+		if(features.contains(Feature.WINDOWS))
+			return Charset.forName("windows-1252");
+		return Charset.defaultCharset();
 	}
 }

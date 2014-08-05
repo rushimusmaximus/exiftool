@@ -33,7 +33,12 @@ public enum Feature {
 	 *      href="http://www.sno.phy.queensu.ca/~phil/exiftool/TagNames/MWG.html">ExifTool
 	 *      MWG Docs</a> !! Note these version numbers are not correct
 	 */
-	MWG_MODULE(8, 36), ;
+	MWG_MODULE(8, 36),
+	/**
+	 * Enable charset windows-1252 to be able to properly pass file names in windows with keep alive
+	 */
+	WINDOWS(8, 36),
+	;
 
 	private VersionNumber requireVersion;
 

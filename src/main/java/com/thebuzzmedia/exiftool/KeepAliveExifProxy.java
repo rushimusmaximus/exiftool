@@ -1,6 +1,7 @@
 package com.thebuzzmedia.exiftool;
 
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -21,21 +22,23 @@ public class KeepAliveExifProxy implements ExifProxy {
 	private final long inactivityTimeout;
 	private volatile long lastRunStart = 0;
 	private volatile ExifProcess process;
+	private final Charset charset;
 
-	public KeepAliveExifProxy(String exifCmd, List<String> baseArgs) {
+	public KeepAliveExifProxy(String exifCmd, List<String> baseArgs, Charset charset) {
 		this(exifCmd, baseArgs, Long.getLong(
 				ExifToolNew.ENV_EXIF_TOOL_PROCESSCLEANUPDELAY,
-				ExifToolNew.DEFAULT_PROCESS_CLEANUP_DELAY));
+				ExifToolNew.DEFAULT_PROCESS_CLEANUP_DELAY),charset);
 	}
 
 	public KeepAliveExifProxy(String exifCmd, List<String> baseArgs,
-			long inactivityTimeoutParam) {
+			long inactivityTimeoutParam, Charset charset) {
 		this.inactivityTimeout = inactivityTimeoutParam;
 		startupArgs = new ArrayList<String>(baseArgs.size() + 5);
 		startupArgs.add(exifCmd);
 		startupArgs.addAll(Arrays.asList("-stay_open", "True"));
 		startupArgs.addAll(baseArgs);
 		startupArgs.addAll(Arrays.asList("-@", "-"));
+		this.charset = charset;
 		// runs every minute to check if process has been inactive too long
 		if (inactivityTimeout != 0) {
 			cleanupTimer.schedule(new TimerTask() {
@@ -68,7 +71,7 @@ public class KeepAliveExifProxy implements ExifProxy {
 				if (process == null || process.isClosed()) {
 					ExifTool.log
 							.debug("Starting daemon ExifTool process and creating read/write streams (this only happens once)...");
-					process = new ExifProcess(true, startupArgs);
+					process = new ExifProcess(true, startupArgs,charset);
 				}
 			}
 		}
@@ -86,7 +89,7 @@ public class KeepAliveExifProxy implements ExifProxy {
 					if (process == null || process.isClosed()) {
 						ExifTool.log
 								.debug("Starting daemon ExifTool process and creating read/write streams (this only happens once)...");
-						process = new ExifProcess(true, startupArgs);
+						process = new ExifProcess(true, startupArgs,charset);
 					}
 				}
 			}

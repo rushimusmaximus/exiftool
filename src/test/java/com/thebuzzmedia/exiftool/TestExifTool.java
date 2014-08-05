@@ -620,5 +620,16 @@ public class TestExifTool {
 		}
 	}
 
-	// todo TEST automatic daemon restart by killing perl process
+	@Test
+	public void testReadingUtf8Names() throws Exception {
+		try (ExifToolService tool = create(new ReadOptions()
+				.withNumericOutput(true).withConvertTypes(true),
+				Feature.MWG_MODULE)){
+		URL url = getClass().getResource("/20140502_152336_Östliche Zubringerstraße.png");
+		File imageFile = new File(url.toURI());
+		System.out.println(imageFile.getAbsolutePath());
+		Map<MetadataTag,String> metadata = tool.getImageMeta(imageFile);
+		assertEquals("", metadata.toString());
+		}
+	}
 }

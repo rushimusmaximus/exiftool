@@ -334,13 +334,13 @@ public class ExifToolNew implements ExifToolService {
 			baseArgs.addAll(Arrays.asList("-use", "MWG"));
 		}
 		if (featureEnabledSet.contains(Feature.STAY_OPEN)) {
-			KeepAliveExifProxy proxy = new KeepAliveExifProxy(exifCmd, baseArgs,processCleanupDelay);
+			KeepAliveExifProxy proxy = new KeepAliveExifProxy(exifCmd, baseArgs,processCleanupDelay,ExifTool.computeDefaultCharset(featureEnabledSet));
 			exifProxy = proxy;
 		} else {
 			if(processCleanupDelay!=0){
 				throw new RuntimeException("The processCleanupDelay parameter should be 0 if no stay_open parameter is used. Was "+processCleanupDelay);
 			}
-			exifProxy = new SingleUseExifProxy(exifCmd, baseArgs);
+			exifProxy = new SingleUseExifProxy(exifCmd, baseArgs,ExifTool.computeDefaultCharset(featureEnabledSet));
 		}
 	}
 
