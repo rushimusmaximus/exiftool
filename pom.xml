@@ -13,7 +13,16 @@
 			<name>Riyad Kalla</name>
 			<email>software@thebuzzmedia.com</email>
 		</developer>
+		<developer>
+			<name>raisercostin</name>
+			<email>raisercostin@gmail.com</email>
+		</developer>
 	</developers>
+	<scm>
+		<connection>scm:git:git@github.com:raisercostin/exiftool.git</connection>
+		<url>scm:git:git@github.com:raisercostin/exiftool.git</url>
+		<developerConnection>scm:git:git@github.com:raisercostin/exiftool.git</developerConnection>
+	</scm>
 	<build>
 		<plugins>
 			<plugin>
