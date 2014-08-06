@@ -23,6 +23,22 @@
 		<url>https://github.com/raisercostin/exiftool.git</url>
 		<tag>HEAD</tag>
 	</scm>
+	<distributionManagement>
+		<repository>
+			<id>exiftool.releases</id>
+			<url>svn:https://raisercostin.googlecode.com/svn/maven2/</url>
+		</repository>
+		<!--
+		<snapshotRepository>
+			<id>exiftool.snapshots</id>
+			<url>svn:https://raisercostin.googlecode.com/svn/maven2/snapshots/</url>
+		</snapshotRepository>
+		<site>
+			<id>exiftool.sites</id>
+			<url>svn:https://raisercostin.googlecode.com/svn/maven2/sites/${project.groupId}-${project.artifactId}-${project.version}</url>
+		</site>
+		-->
+	</distributionManagement>
 	<build>
 		<plugins>
 			<plugin>
