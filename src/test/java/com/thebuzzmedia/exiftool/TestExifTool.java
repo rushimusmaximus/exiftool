@@ -659,4 +659,17 @@ public class TestExifTool {
 			assertEquals(19, metadata.size());
 		}
 	}
+	@Test
+	public void testReadingUtf8NamesOnWindows() throws Exception {
+		try (ExifToolService tool = create(
+				new ReadOptions().withNumericOutput(true)
+						.withConvertTypes(true), Feature.STAY_OPEN,Feature.WINDOWS)) {
+			URL url = getClass().getResource(
+					"/20131231_230955_Strada Frumoasă.png");
+			File imageFile = new File(url.toURI());
+			System.out.println(imageFile.getAbsolutePath());
+			Map<MetadataTag, String> metadata = tool.getImageMeta(imageFile);
+			assertEquals(19, metadata.size());
+		}
+	}
 }

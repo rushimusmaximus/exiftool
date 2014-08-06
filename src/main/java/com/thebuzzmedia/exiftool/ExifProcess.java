@@ -81,7 +81,7 @@ public final class ExifProcess {
 		newArgs.addAll(args);
 		ExifProcess process = _execute(false, newArgs,charset);
 		try {
-			return process.readResponse();
+			return process.readResponse(args);
 		}catch(Throwable e){
 			throw new RuntimeException(String.format("When executing %s we got %s",toCmd(newArgs),e.getMessage()),e);
 		} finally {
@@ -172,7 +172,7 @@ public final class ExifProcess {
 		}
 		builder.append("-execute\n");
 		writeFlush(builder.toString());
-		return readResponse();
+		return readResponse(args);
 	}
 
 	public synchronized void writeFlush(String message) throws IOException {
@@ -188,7 +188,7 @@ public final class ExifProcess {
 		return reader.readLine();
 	}
 
-	public synchronized Map<String, String> readResponse() throws IOException {
+	public synchronized Map<String, String> readResponse(List<String> args) throws IOException {
 		if (closed)
 			throw new IOException(ExifTool.STREAM_CLOSED_MESSAGE);
 		ExifTool.log.debug("Reading response back from ExifTool...");
@@ -224,7 +224,13 @@ public final class ExifProcess {
 				}
 				sb.append(error);
 			}
-			throw new ExifError(sb.toString());
+			String result = sb.toString();
+			String message = result+". ["+resultMap.size()+"] tags for exiftool with args ["+args+"].";
+			if(result.contains("No matching files")){
+				throw new ExifError(message);
+			}else{
+				ExifTool.log.info(message);
+			}
 		}
 		return resultMap;
 	}

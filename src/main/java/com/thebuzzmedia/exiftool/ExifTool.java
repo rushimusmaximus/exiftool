@@ -41,6 +41,8 @@ import org.apache.commons.io.FilenameUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.base.CharMatcher;
+
 /**
  * Provide a Java-like interface to Phil Harvey's excellent, Perl-based <a
  * href="http://www.sno.phy.queensu.ca/~phil/exiftool">ExifTool</a>.
@@ -443,7 +445,7 @@ public class ExifTool implements ExifToolService, AutoCloseable {
 			synchronized (this) {
 				if (process == null || process.isClosed()) {
 					log.debug("Starting daemon ExifTool process and creating read/write streams (this only happens once)...");
-					process = ExifProcess.startup(exifCmd,charset);
+					process = ExifProcess.startup(exifCmd, charset);
 				}
 			}
 		}
@@ -556,14 +558,16 @@ public class ExifTool implements ExifToolService, AutoCloseable {
 	}
 
 	@Override
-	public Map<MetadataTag, String> getImageMeta(File image, MetadataTag... tags)
-			throws IllegalArgumentException, SecurityException, IOException {
+	public Map<MetadataTag, String> getImageMeta(File image,
+			MetadataTag... tags) throws IllegalArgumentException,
+			SecurityException, IOException {
 		return getImageMeta(image, Format.NUMERIC, tags);
 	}
 
 	@Override
-	public Map<MetadataTag, String> getImageMeta(File image, Format format, MetadataTag... tags)
-			throws IllegalArgumentException, SecurityException, IOException {
+	public Map<MetadataTag, String> getImageMeta(File image, Format format,
+			MetadataTag... tags) throws IllegalArgumentException,
+			SecurityException, IOException {
 		if (tags == null) {
 			tags = new MetadataTag[0];
 		}
@@ -574,10 +578,12 @@ public class ExifTool implements ExifToolService, AutoCloseable {
 		}
 		Map<String, String> result = getImageMeta(image, format, true,
 				stringTags);
-		ReadOptions readOptions = new ReadOptions().withConvertTypes(true).withNumericOutput(format.equals(Format.NUMERIC));
-		return (Map)ExifToolNew.convertToMetadataTags(readOptions,result,tags);
-		//map only known values?
-		//return Tag.toTagMap(result);
+		ReadOptions readOptions = new ReadOptions().withConvertTypes(true)
+				.withNumericOutput(format.equals(Format.NUMERIC));
+		return (Map) ExifToolNew.convertToMetadataTags(readOptions, result,
+				tags);
+		// map only known values?
+		// return Tag.toTagMap(result);
 	}
 
 	@Override
@@ -597,8 +603,8 @@ public class ExifTool implements ExifToolService, AutoCloseable {
 
 	public Map<String, String> getImageMeta(final File image,
 			final Format format, final boolean suppressDuplicates,
-			String... tags) throws IllegalArgumentException,
-			SecurityException, IOException {
+			String... tags) throws IllegalArgumentException, SecurityException,
+			IOException {
 
 		// Validate input and create Arg Array
 		final boolean stayOpen = featureSet.contains(Feature.STAY_OPEN);
@@ -628,7 +634,7 @@ public class ExifTool implements ExifToolService, AutoCloseable {
 							+ image.getAbsolutePath()
 							+ "], ensure that the image exists at the given path and that the executing Java process has permissions to read it.");
 		}
-		args.add(image.getAbsolutePath());
+		args.add(getAbsoluteFileName(image));
 
 		// start process
 		long startTime = System.currentTimeMillis();
@@ -646,7 +652,7 @@ public class ExifTool implements ExifToolService, AutoCloseable {
 			resultMap = processStayOpen(args);
 		} else {
 			log.debug("Using ExifTool in non-daemon mode (-stay_open False)...");
-			resultMap = ExifProcess.executeToResults(exifCmd, args,charset);
+			resultMap = ExifProcess.executeToResults(exifCmd, args, charset);
 		}
 
 		// Print out how long the call to external ExifTool process took.
@@ -658,6 +664,47 @@ public class ExifTool implements ExifToolService, AutoCloseable {
 		}
 
 		return resultMap;
+	}
+	public String getAbsoluteFileName(File file){
+		if(!CharMatcher.ASCII.matchesAllOf(file.getAbsolutePath()) && featureSet.contains(Feature.WINDOWS))
+			return getMSDOSName(file);
+		else
+			return file.getAbsolutePath();
+	}
+
+	/**
+	 * There is a bug that prevents exiftool to read unicode file names. We can get the windows filename if necessary with getMSDOSName
+	 * @link(http://perlmaven.com/unicode-filename-support-suggested-solution)
+	 * @link(http://stackoverflow.com/questions/18893284/how-to-get-short-filenames-in-windows-using-java)
+	 */
+	public static String getMSDOSName(File file) {
+		try {
+			String path = getAbsolutePath(file);
+			Process process = Runtime.getRuntime().exec(
+					"cmd /c for %I in (\""
+							+ file.getAbsolutePath()
+							+ "\") do @echo %~fsI");
+			process.waitFor();
+			byte[] data = new byte[65536];
+			int size = process.getInputStream().read(data);
+			if (size > 0)
+				path = new String(data, 0, size).replaceAll("\\r\\n", "");
+			return path;
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		} catch (InterruptedException e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	public static String getAbsolutePath(File file) throws IOException {
+		String path = file.getAbsolutePath();
+		if (file.exists() == false)
+			file = new File(path);
+		path = file.getCanonicalPath();
+		if (file.isDirectory() && (path.endsWith(File.separator) == false))
+			path += File.separator;
+		return path;
 	}
 
 	@Override
@@ -697,17 +744,21 @@ public class ExifTool implements ExifToolService, AutoCloseable {
 		}
 	}
 
-	private <T> void execute(WriteOptions options, File image, Map<T, Object> values) throws IOException {
+	private <T> void execute(WriteOptions options, File image,
+			Map<T, Object> values) throws IOException {
 		final boolean stayOpen = featureSet.contains(Feature.STAY_OPEN);
 		Map<String, String> resultMap;
 		if (stayOpen) {
 			log.debug("Using ExifTool in daemon mode (-stay_open True)...");
 			resultMap = processStayOpen(createCommandList(
-					image.getAbsolutePath(), values,stayOpen));
+					image.getAbsolutePath(), values, stayOpen));
 		} else {
 			log.debug("Using ExifTool in non-daemon mode (-stay_open False)...");
-			resultMap = ExifProcess.executeToResults(exifCmd,
-					createCommandList(image.getAbsolutePath(), values,stayOpen),charset);
+			resultMap = ExifProcess
+					.executeToResults(
+							exifCmd,
+							createCommandList(image.getAbsolutePath(), values,
+									stayOpen), charset);
 		}
 	}
 
@@ -717,8 +768,8 @@ public class ExifTool implements ExifToolService, AutoCloseable {
 		List<String> args = new ArrayList<String>(64);
 
 		for (Map.Entry<T, Object> entry : values.entrySet()) {
-			//works only for Tags
-			Tag tag = (Tag)entry.getKey();
+			// works only for Tags
+			Tag tag = (Tag) entry.getKey();
 			Object value = entry.getValue();
 
 			StringBuilder arg = new StringBuilder();
@@ -728,11 +779,11 @@ public class ExifTool implements ExifToolService, AutoCloseable {
 			}
 			arg.append("=");
 			if (value != null) {
-//				if (value instanceof String && !stayOpen) {
-//					arg.append("\"").append(value.toString()).append("\"");
-//				} else {
-					arg.append(value.toString());
-//				}
+				// if (value instanceof String && !stayOpen) {
+				// arg.append("\"").append(value.toString()).append("\"");
+				// } else {
+				arg.append(value.toString());
+				// }
 			}
 			args.add(arg.toString());
 
@@ -761,7 +812,7 @@ public class ExifTool implements ExifToolService, AutoCloseable {
 			args.add("-b");
 		args.add(input.getAbsolutePath());
 
-		return ExifProcess.executeToString(exifCmd, args,charset);
+		return ExifProcess.executeToString(exifCmd, args, charset);
 	}
 
 	/**
@@ -808,7 +859,7 @@ public class ExifTool implements ExifToolService, AutoCloseable {
 		args.add("-o");
 		args.add(output.getAbsolutePath());
 
-		return ExifProcess.executeToString(exifCmd, args,charset);
+		return ExifProcess.executeToString(exifCmd, args, charset);
 	}
 
 	/**
@@ -837,7 +888,7 @@ public class ExifTool implements ExifToolService, AutoCloseable {
 		args.add("-b");
 		args.add("-w");
 		args.add(suffix);
-		String result = ExifProcess.executeToString(exifCmd, args,charset);
+		String result = ExifProcess.executeToString(exifCmd, args, charset);
 		File thumbnail = new File(input.getParent() + File.separator
 				+ thumbname);
 		if (!thumbnail.exists())
@@ -926,7 +977,7 @@ public class ExifTool implements ExifToolService, AutoCloseable {
 	@Override
 	public Map<Object, Object> getImageMeta2(File image, MetadataTag... tags)
 			throws IllegalArgumentException, SecurityException, IOException {
-		return (Map)getImageMeta(image, tags);
+		return (Map) getImageMeta(image, tags);
 	}
 
 	@Override
@@ -957,6 +1008,7 @@ public class ExifTool implements ExifToolService, AutoCloseable {
 			Map<T, Object> values) throws IOException {
 		throw new RuntimeException("Not implemented.");
 	}
+
 	@Override
 	protected void finalize() throws Throwable {
 		log.info("ExifTool not used anymore shutdown the exiftool process...");
@@ -965,7 +1017,7 @@ public class ExifTool implements ExifToolService, AutoCloseable {
 	}
 
 	public static Charset computeDefaultCharset(Collection<Feature> features) {
-		if(features.contains(Feature.WINDOWS))
+		if (features.contains(Feature.WINDOWS))
 			return Charset.forName("windows-1252");
 		return Charset.defaultCharset();
 	}

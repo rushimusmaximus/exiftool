@@ -44,7 +44,7 @@ public class SingleUseExifProxy implements ExifProxy {
 			cleanupTimer.schedule(attemptTimer, runTimeoutMills);
 		}
 		try {
-			return process.readResponse();
+			return process.readResponse(args);
 		} finally {
 			process.close();
 			if (attemptTimer != null)
