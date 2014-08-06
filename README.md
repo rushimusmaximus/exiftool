@@ -221,16 +221,20 @@ us at: software@thebuzzmedia.com
 - release in svn subsequent releases: 
 	`svn import -m "release 2.3.1" C:\Users\costin\.m2\repository\com\thebuzzmedia\exiftool\exiftool-lib\2.3.1 https://raisercostin.googlecode.com/svn/maven2/com/thebuzzmedia/exiftool/exiftool-lib/2.3.1 --force`
 - release with standard maven process
-    mvn release:prepare -Prelease -DskipTests -Darguments="-DskipTests -Prelease"
-	mvn release:perform -Prelease -DskipTests -Darguments="-DskipTests -Prelease"
+
+	    mvn release:prepare -Prelease -DskipTests -Darguments="-DskipTests -Prelease"
+		mvn release:perform -Prelease -DskipTests -Darguments="-DskipTests -Prelease"
+
 - configure your ~/.m2/settings.xml as
-	<servers>
-	  <server>
-		<id>exiftool.releases</id>
-		<username>deployment</username>
-		<password>deployment123</password>
-	  </server>
-	</servers>
+
+		<servers>
+		  <server>
+			<id>exiftool.releases</id>
+			<username>deployment</username>
+			<password>deployment123</password>
+		  </server>
+		</servers>
+- see last release [https://raisercostin.googlecode.com/svn/maven2/com/thebuzzmedia/exiftool/exiftool-lib/](https://raisercostin.googlecode.com/svn/maven2/com/thebuzzmedia/exiftool/exiftool-lib/)
 
 ## Sbt Configuration
 build.sbt
