@@ -20,8 +20,8 @@
 	</developers>
 	<scm>
 		<!--https://github.com/raisercostin/exiftool.git-->
-		<connection>scm:git:git@github.com:raisercostin/exiftool.git</connection>
-		<developerConnection>scm:git:git@github.com:raisercostin/exiftool.git</developerConnection>
+		<connection>scm:git:https://github.com/raisercostin/exiftool.git</connection>
+		<developerConnection>scm:git:https://github.com/raisercostin/exiftool.git</developerConnection>
 		<url>https://github.com/raisercostin/exiftool.git</url>
 		<tag>HEAD</tag>
 	</scm>
