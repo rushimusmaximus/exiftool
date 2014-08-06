@@ -22,7 +22,7 @@
 		<!--https://github.com/raisercostin/exiftool.git-->
 		<connection>scm:git:git@github.com:raisercostin/exiftool.git</connection>
 		<developerConnection>scm:git:git@github.com:raisercostin/exiftool.git</developerConnection>
-		<url>git@github.com:raisercostin/exiftool.git</url>            
+		<url>https://github.com/raisercostin/exiftool.git</url>
 		<tag>HEAD</tag>
 	</scm>
 	<build>
