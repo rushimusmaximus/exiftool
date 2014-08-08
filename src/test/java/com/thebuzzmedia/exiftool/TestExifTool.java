@@ -153,7 +153,7 @@ public class TestExifTool {
     URL url = getClass().getResource("/kureckjones_jett_075_02-cropped.tif");
     imageFile = new File(url.toURI());
     metadata = tool.getImageMeta(imageFile, ExifTool.Format.HUMAN_READABLE, ExifTool.Tag.values());
-    assertEquals(22, metadata.size());
+    assertEquals(25, metadata.size());
 
     keys = metadata.keySet();
 
@@ -172,7 +172,7 @@ public class TestExifTool {
     url = getClass().getResource("/nexus-s-electric-cars.jpg");
     imageFile = new File(url.toURI());
     metadata = tool.getImageMeta(imageFile, ExifTool.Format.HUMAN_READABLE, ExifTool.Tag.values());
-    assertEquals(23, metadata.size());
+    assertEquals(22, metadata.size());
 
     keys = metadata.keySet();
     tag = ExifTool.Tag.IMAGE_WIDTH;
