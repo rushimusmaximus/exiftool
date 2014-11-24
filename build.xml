@@ -21,6 +21,7 @@ limitations under the License.
 	
 	<property name="version.major" value="1" />
 	<property name="version.minor" value="2" />
+        <property name="version.patch" value="1" />
 
 	<property name="name.file" value="exiftool-lib" />
 	<property name="name.file.javadoc" value="${name.file}-${version.major}.${version.minor}-javadoc.jar" />
@@ -57,7 +58,7 @@ limitations under the License.
 	</target>
 
 	<target name="jar" depends="compile">
-		<jar basedir="${dir.bin}" destfile="${dir.dist}/${name.file}-${version.major}.${version.minor}.jar" compress="no" />
+		<jar basedir="${dir.bin}" destfile="${dir.dist}/${name.file}-${version.major}.${version.minor}.${version.patch}.jar" compress="no" />
 	</target>
 
 	<target name="src">

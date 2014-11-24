@@ -753,7 +753,8 @@ public class ExifTool {
                 String.class), CREATOR("Creator", String.class), IPTC_KEYWORDS("Keywords",
                 String.class), COPYRIGHT_NOTICE("CopyrightNotice", String.class),
                 FILE_TYPE("FileType", String.class), AVG_BITRATE("AvgBitrate", String.class),
-                MIME_TYPE("MIMEType", String.class);
+                MIME_TYPE("MIMEType", String.class),COMMENTS("Comment", String.class),
+        ;
 
 		private static final Map<String, Tag> TAG_LOOKUP_MAP;
 
