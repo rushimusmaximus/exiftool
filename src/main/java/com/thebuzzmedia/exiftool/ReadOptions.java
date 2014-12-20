@@ -52,10 +52,10 @@ public class ReadOptions {
 	}
 
 	/**
-	 * Setting this to true will add the "-n" option causing the ExifTool to
+	 * Setting this to true will add the "-n" option causing the ExifToolNew3 to
 	 * output of some tags to change.
 	 * <p/>
-	 * ExifTool, via the <code>-n</code> command line arg, is capable of
+	 * ExifToolNew3, via the <code>-n</code> command line arg, is capable of
 	 * returning most values in their raw numeric form (e.g.
 	 * Aperture="2.8010323841") as well as a more human-readable/friendly format
 	 * (e.g. Aperture="2.8").
@@ -70,7 +70,7 @@ public class ReadOptions {
 	 * In order to see the types of values that are returned when human readable
 	 * is used (default), you can check the comprehensive <a href=
 	 * "http://www.sno.phy.queensu.ca/~phil/exiftool/TagNames/index.html">
-	 * ExifTool Tag Guide</a>.
+	 * ExifToolNew3 Tag Guide</a>.
 	 * <p/>
 	 * This makes sense with some values like Aperture that in numeric format
 	 * end up returning as 14-decimal-place, high precision values that are near
@@ -90,7 +90,7 @@ public class ReadOptions {
 
 	/**
 	 * If enabled will show tags which are duplicated between different tag
-	 * regions, relates to the "-a" option in ExifTool.
+	 * regions, relates to the "-a" option in ExifToolNew3.
 	 */
 	public ReadOptions withShowDuplicates(boolean enabled) {
 		return new ReadOptions(runTimeoutMills, convertTypes, numericOutput,

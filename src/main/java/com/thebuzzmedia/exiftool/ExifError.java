@@ -3,7 +3,7 @@ package com.thebuzzmedia.exiftool;
 import java.io.IOException;
 
 /**
- * Represents an error from the ExifTool
+ * Represents an error from the ExifToolNew3
  * 
  * @author msgile
  * @author $LastChangedBy$

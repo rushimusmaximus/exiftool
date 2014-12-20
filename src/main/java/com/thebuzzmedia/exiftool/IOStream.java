@@ -5,11 +5,11 @@ import java.io.OutputStreamWriter;
 
 /**
  * Simple class used to house the read/write streams used to communicate with an
- * external ExifTool process as well as the logic used to safely close the
+ * external ExifToolNew3 process as well as the logic used to safely close the
  * streams when no longer needed.
  * <p/>
  * This class is just a convenient way to group and manage the read/write
- * streams as opposed to making them dangling member variables off of ExifTool
+ * streams as opposed to making them dangling member variables off of ExifToolNew3
  * directly.
  * 
  * @author Riyad Kalla (software@thebuzzmedia.com)
@@ -26,17 +26,17 @@ class IOStream {
 
 	public void close() {
 		try {
-			ExifTool.log("\tClosing Read stream...");
+			ExifToolNew3.log("\tClosing Read stream...");
 			reader.close();
-			ExifTool.log("\t\tSuccessful");
+			ExifToolNew3.log("\t\tSuccessful");
 		} catch (Exception e) {
 			// no-op, just try to close it.
 		}
 
 		try {
-			ExifTool.log("\tClosing Write stream...");
+			ExifToolNew3.log("\tClosing Write stream...");
 			writer.close();
-			ExifTool.log("\t\tSuccessful");
+			ExifToolNew3.log("\t\tSuccessful");
 		} catch (Exception e) {
 			// no-op, just try to close it.
 		}
@@ -45,6 +45,6 @@ class IOStream {
 		reader = null;
 		writer = null;
 
-		ExifTool.log("\tRead/Write streams successfully closed.");
+		ExifToolNew3.log("\tRead/Write streams successfully closed.");
 	}
 }

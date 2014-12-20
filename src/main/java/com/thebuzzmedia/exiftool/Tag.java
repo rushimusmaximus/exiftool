@@ -10,30 +10,30 @@ import java.util.Map;
 /**
  * Enum used to pre-define a convenient list of tags that can be easily
  * extracted from images using this class with an external install of
- * ExifTool.
+ * ExifToolNew3.
  * <p/>
  * Each tag defined also includes a type hint for the parsed value
  * associated with it when the default {@link Format#NUMERIC} value format
  * is used.
  * <p/>
- * All replies from ExifTool are parsed as {@link String}s and using the
+ * All replies from ExifToolNew3 are parsed as {@link String}s and using the
  * type hint from each {@link Tag} can easily be converted to the correct
  * data format by using the provided {@link Tag#parseValue(String)} method.
  * <p/>
  * This class does not make an attempt at converting the value automatically
  * in case the caller decides they would prefer tag values returned in
  * {@link Format#HUMAN_READABLE} format and to avoid any compatibility
- * issues with future versions of ExifTool if a tag's return value is
+ * issues with future versions of ExifToolNew3 if a tag's return value is
  * changed. This approach to leaving returned tag values as strings until
  * the caller decides they want to parse them is a safer and more robust
  * approach.
  * <p/>
  * The types provided by each tag are merely a hint based on the <a
  * href="http://www.sno.phy.queensu.ca/~phil/exiftool/TagNames/index.html"
- * >ExifTool Tag Guide</a> by Phil Harvey; the caller is free to parse or
+ * >ExifToolNew3 Tag Guide</a> by Phil Harvey; the caller is free to parse or
  * process the returned {@link String} values any way they wish.
  * <h3>Tag Support</h3>
- * ExifTool is capable of parsing almost every tag known to man (1000+), but
+ * ExifToolNew3 is capable of parsing almost every tag known to man (1000+), but
  * this class makes an attempt at pre-defining a convenient list of the most
  * common tags for use.
  * <p/>
@@ -57,15 +57,18 @@ public enum Tag implements MetadataTag {
 	APERTURE("ApertureValue", Double.class),
 	ARTIST("Artist", String.class),
 	AUTHOR("XPAuthor", String.class),
+	AVG_BITRATE("AvgBitrate", String.class),
 	BODY_SERIAL_NUMBER("BodySerialNumber", String.class),
 	CAMERA_SERIAL_NUMBER("CameraSerialNumber", String.class),
 	CAPTION_ABSTRACT("Caption-Abstract", String.class),
 	COLOR_SPACE("ColorSpace", Integer.class),
 	COMMENT("XPComment", String.class),
+	COMMENTS("Comment", String.class),
+	CONTENT_CREATION_DATE("ContentCreateDate", Date.class),
 	CONTRAST("Contrast", Integer.class),
-	CREATE_DATE("CreateDate", Date.class),
 	COPYRIGHT("Copyright", String.class),
 	COPYRIGHT_NOTICE("CopyrightNotice", String.class),
+	CREATE_DATE("CreateDate", Date.class),
 	CREATION_DATE("CreationDate", Date.class),
 	CREATOR("Creator", String.class),
 	DATE_CREATED("DateCreated", Date.class),
@@ -110,6 +113,7 @@ public enum Tag implements MetadataTag {
 	LENS_SERIAL_NUMBER("LensSerialNumber", String.class),
 	MAKE("Make", String.class),
 	METERING_MODE("MeteringMode", Integer.class),
+	MIME_TYPE("MIMEType", String.class),
 	MODEL("Model", String.class),
 	OBJECT_NAME("ObjectName", String.class),
 	ORIENTATION("Orientation", Integer.class),
@@ -126,6 +130,7 @@ public enum Tag implements MetadataTag {
 	SOFTWARE("Software", String.class),
 	SOURCE_SERIAL_NUMBER("SourceSerialNumber", String.class),
 	SUB_SEC_TIME_ORIGINAL("SubSecTimeOriginal", Integer.class),
+	SUB_SEC_DATE_TIME_ORIGINAL("SubSecDateTimeOriginal", Date.class),
 	SUBJECT("XPSubject", String.class),
 	TITLE("XPTitle", String.class),
 	WHITE_BALANCE("WhiteBalance", Integer.class),
@@ -137,7 +142,8 @@ public enum Tag implements MetadataTag {
 	// actually binary data, but what are we doing to do here??? Just use to
 	// save to file...
 	THUMBNAIL_IMAGE("ThumbnailImage", String.class),
-	THUMBNAIL_PHOTOSHOP("PhotoshopThumbnail", String.class), ;
+	THUMBNAIL_PHOTOSHOP("PhotoshopThumbnail", String.class),
+	;
 
 	private static final Map<String, Tag> TAG_LOOKUP_MAP;
 
@@ -183,7 +189,7 @@ public enum Tag implements MetadataTag {
 
 	/**
 	 * Convenience method used to convert the given string Tag value
-	 * (returned from the external ExifTool process) into the type described
+	 * (returned from the external ExifToolNew3 process) into the type described
 	 * by the associated {@link Tag}.
 	 * 
 	 * @param <T>
@@ -341,10 +347,10 @@ public enum Tag implements MetadataTag {
 				return value;
 			}
 		} catch (ParseException ex) {
-			ExifTool.log.warn("Invalid format, Tag:" + tagName);
+			ExifToolNew3.log.warn("Invalid format, Tag:" + tagName);
 			return null;
 		} catch (NumberFormatException ex) {
-			ExifTool.log.warn("Invalid format, Tag:" + tagName);
+			ExifToolNew3.log.warn("Invalid format, Tag:" + tagName);
 			return null;
 		}
 
@@ -359,7 +365,7 @@ public enum Tag implements MetadataTag {
 	 * Used to get a hint for the native type of this tag's value as
 	 * specified by Phil Harvey's <a href=
 	 * "http://www.sno.phy.queensu.ca/~phil/exiftool/TagNames/index.html"
-	 * >ExifTool Tag Guide</a>.
+	 * >ExifToolNew3 Tag Guide</a>.
 	 * 
 	 * @return a hint for the native type of this tag's value.
 	 */

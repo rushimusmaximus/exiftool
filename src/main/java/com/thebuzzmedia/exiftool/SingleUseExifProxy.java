@@ -9,7 +9,7 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 public class SingleUseExifProxy implements ExifProxy {
-	private final Timer cleanupTimer = new Timer(ExifTool.CLEANUP_THREAD_NAME,
+	private final Timer cleanupTimer = new Timer(ExifToolNew3.CLEANUP_THREAD_NAME,
 			true);
 	private final List<String> baseArgs;
 	private final Charset charset;
@@ -35,7 +35,7 @@ public class SingleUseExifProxy implements ExifProxy {
 				@Override
 				public void run() {
 					if (!process.isClosed()) {
-						ExifTool.log.warn("Process ran too long closing, max "
+						ExifToolNew3.log.warn("Process ran too long closing, max "
 								+ runTimeoutMills + " mills");
 						process.close();
 					}

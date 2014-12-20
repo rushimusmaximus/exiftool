@@ -35,34 +35,34 @@ import java.util.regex.Pattern;
 /**
  * Class used to provide a Java-like interface to Phil Harvey's excellent,
  * Perl-based <a
- * href="http://www.sno.phy.queensu.ca/~phil/exiftool">ExifTool</a>.
+ * href="http://www.sno.phy.queensu.ca/~phil/exiftool">ExifToolNew3</a>.
  * <p/>
- * There are a number of other basic Java wrappers to ExifTool available online,
+ * There are a number of other basic Java wrappers to ExifToolNew3 available online,
  * but most of them only abstract out the actual Java-external-process execution
  * logic and do no additional work to make integration with the external
- * ExifTool any easier or intuitive from the perspective of the Java application
- * written to make use of ExifTool.
+ * ExifToolNew3 any easier or intuitive from the perspective of the Java application
+ * written to make use of ExifToolNew3.
  * <p/>
- * This class was written in order to make integration with ExifTool inside of a
+ * This class was written in order to make integration with ExifToolNew3 inside of a
  * Java application seamless and performant with the goal being that the
- * developer can treat ExifTool as if it were written in Java, garnering all of
+ * developer can treat ExifToolNew3 as if it were written in Java, garnering all of
  * the benefits with none of the added headache of managing an external native
  * process from Java.
  * <p/>
- * Phil Harvey's ExifTool is written in Perl and runs on all major platforms
+ * Phil Harvey's ExifToolNew3 is written in Perl and runs on all major platforms
  * (including Windows) so no portability issues are introduced into your
  * application by utilizing this class.
  * <h3>Usage</h3>
- * Assuming ExifTool is installed on the host system correctly and either in the
+ * Assuming ExifToolNew3 is installed on the host system correctly and either in the
  * system path or pointed to by {@link #EXIF_TOOL_PATH}, using this class to
- * communicate with ExifTool is as simple as creating an instance (
- * <code>ExifTool tool = new ExifTool()</code>) and then making calls to
+ * communicate with ExifToolNew3 is as simple as creating an instance (
+ * <code>ExifToolNew3 tool = new ExifToolNew3()</code>) and then making calls to
  * {@link #getImageMeta(File, Tag...)} or
  * {@link #getImageMeta(File, Format, Tag...)} with a list of {@link Tag}s you
  * want to pull values for from the given image.
  * <p/>
  * In this default mode, calls to <code>getImageMeta</code> will automatically
- * start an external ExifTool process to handle the request. After ExifTool has
+ * start an external ExifToolNew3 process to handle the request. After ExifToolNew3 has
  * parsed the tag values from the file, the external process exits and this
  * class parses the result before returning it to the caller.
  * <p/>
@@ -72,7 +72,7 @@ import java.util.regex.Pattern;
  * value found in the image are omitted from the result map.
  * <p/>
  * While each {@link Tag} provides a hint at which format the resulting value
- * for that tag is returned as from ExifTool (see {@link Tag#getType()}), that
+ * for that tag is returned as from ExifToolNew3 (see {@link Tag#getType()}), that
  * only applies to values returned with an output format of
  * {@link Format#NUMERIC} and it is ultimately up to the caller to decide how
  * best to parse or convert the returned values.
@@ -81,38 +81,38 @@ import java.util.regex.Pattern;
  * convenience method for parsing given <code>String</code> values according to
  * the Tag hint automatically for you if that is what you plan on doing,
  * otherwise feel free to handle the return values anyway you want.
- * <h3>ExifTool -stay_open Support</h3>
- * ExifTool <a href=
+ * <h3>ExifToolNew3 -stay_open Support</h3>
+ * ExifToolNew3 <a href=
  * "http://u88.n24.queensu.ca/exiftool/forum/index.php/topic,1402.msg12933.html#msg12933"
- * >8.36</a> added a new persistent-process feature that allows ExifTool to stay
+ * >8.36</a> added a new persistent-process feature that allows ExifToolNew3 to stay
  * running in a daemon mode and continue accepting commands via a file or stdin.
  * <p/>
  * This new mode is controlled via the <code>-stay_open True/False</code>
  * command line argument and in a busy system that is making thousands of calls
- * to ExifTool, can offer speed improvements of up to <strong>60x</strong> (yes,
+ * to ExifToolNew3, can offer speed improvements of up to <strong>60x</strong> (yes,
  * really that much).
  * <p/>
- * This feature was added to ExifTool shortly after user <a
+ * This feature was added to ExifToolNew3 shortly after user <a
  * href="http://www.christian-etter.de/?p=458">Christian Etter discovered</a>
- * the overhead for starting up a new Perl interpreter each time ExifTool is
+ * the overhead for starting up a new Perl interpreter each time ExifToolNew3 is
  * loaded accounts for roughly <a href=
  * "http://u88.n24.queensu.ca/exiftool/forum/index.php/topic,1402.msg6121.html#msg6121"
  * >98.4% of the total runtime</a>.
  * <p/>
- * Support for using ExifTool in daemon mode is enabled by passing
+ * Support for using ExifToolNew3 in daemon mode is enabled by passing
  * {@link Feature#STAY_OPEN} to the constructor of the class when creating an
  * instance of this class and then simply using the class as you normally would.
- * This class will manage a single ExifTool process running in daemon mode in
+ * This class will manage a single ExifToolNew3 process running in daemon mode in
  * the background to service all future calls to the class.
  * <p/>
- * Because this feature requires ExifTool 8.36 or later, this class will
- * actually verify support for the feature in the version of ExifTool pointed at
+ * Because this feature requires ExifToolNew3 8.36 or later, this class will
+ * actually verify support for the feature in the version of ExifToolNew3 pointed at
  * by {@link #EXIF_TOOL_PATH} before successfully instantiating the class and
  * will notify you via an {@link UnsupportedFeatureException} if the native
- * ExifTool doesn't support the requested feature.
+ * ExifToolNew3 doesn't support the requested feature.
  * <p/>
  * In the event of an {@link UnsupportedFeatureException}, the caller can either
- * upgrade the native ExifTool upgrade to the version required or simply avoid
+ * upgrade the native ExifToolNew3 upgrade to the version required or simply avoid
  * using that feature to work around the exception.
  * <h3>Automatic Resource Cleanup</h3>
  * When {@link Feature#STAY_OPEN} mode is used, there is the potential for
@@ -125,11 +125,11 @@ import java.util.regex.Pattern;
  * The inactivity period can be controlled by modifying the
  * {@link #PROCESS_CLEANUP_DELAY} system variable. A value of <code>0</code> or
  * less disabled the automatic cleanup process and requires you to cleanup
- * ExifTool instances on your own by calling {@link #close()} manually.
+ * ExifToolNew3 instances on your own by calling {@link #close()} manually.
  * <p/>
  * Any class activity by way of calls to <code>getImageMeta</code> will always
  * reset the inactivity timer, so in a busy system the cleanup thread could
- * potentially never run, leaving the original host ExifTool process running
+ * potentially never run, leaving the original host ExifToolNew3 process running
  * forever (which is fine).
  * <p/>
  * This design was chosen to help make using the class and not introducing
@@ -140,7 +140,7 @@ import java.util.regex.Pattern;
  * The only overhead incurred when opening the process back up is a 250-500ms
  * lag while launching the VM interpreter again on the first call (depending on
  * host machine speed and load).
- * <h3>Reusing a "closed" ExifTool Instance</h3>
+ * <h3>Reusing a "closed" ExifToolNew3 Instance</h3>
  * If you or the cleanup thread have called {@link #close()} on an instance of
  * this class, cleaning up the host process and read/write streams, the instance
  * of this class can still be safely used. Any followup calls to
@@ -150,7 +150,7 @@ import java.util.regex.Pattern;
  * This can be handy behavior to be aware of when writing scheduled processing
  * jobs that may wake up every hour and process thousands of pictures then go
  * back to sleep. In order for the process to execute as fast as possible, you
- * would want to use ExifTool in daemon mode (pass {@link Feature#STAY_OPEN} to
+ * would want to use ExifToolNew3 in daemon mode (pass {@link Feature#STAY_OPEN} to
  * the constructor of this class) and when done, instead of {@link #close()}-ing
  * the instance of this class and throwing it out, you can keep the reference
  * around and re-use it again when the job executes again an hour later.
@@ -175,20 +175,20 @@ import java.util.regex.Pattern;
  * in long running/high performance environments (e.g. web applications).
  * <h3>Thread Safety</h3>
  * Instances of this class are <strong>not</strong> Thread-safe. Both the
- * instance of this class and external ExifTool process maintain state specific
+ * instance of this class and external ExifToolNew3 process maintain state specific
  * to the current operation. Use of instances of this class need to be
  * synchronized using an external mechanism or in a highly threaded environment
  * (e.g. web application), instances of this class can be used along with
  * {@link ThreadLocal}s to ensure Thread-safe, highly parallel use.
- * <h3>Why ExifTool?</h3>
- * <a href="http://www.sno.phy.queensu.ca/~phil/exiftool">ExifTool</a> is
+ * <h3>Why ExifToolNew3?</h3>
+ * <a href="http://www.sno.phy.queensu.ca/~phil/exiftool">ExifToolNew3</a> is
  * written in Perl and requires an external process call from Java to make use
  * of.
  * <p/>
  * While this would normally preclude a piece of software from inclusion into
  * the imgscalr library (more complex integration), there is no other image
  * metadata piece of software available as robust, complete and well-tested as
- * ExifTool. In addition, ExifTool already runs on all major platforms
+ * ExifToolNew3. In addition, ExifToolNew3 already runs on all major platforms
  * (including Windows), so there was not a lack of portability introduced by
  * providing an integration for it.
  * <p/>
@@ -233,13 +233,13 @@ public class ExifToolNew2 implements ExifToolService {
 	public static final String LOG_PREFIX = "[exiftool] ";
 
 	/**
-	 * The absolute path to the ExifTool executable on the host system running
+	 * The absolute path to the ExifToolNew3 executable on the host system running
 	 * this class as defined by the "<code>exiftool.path</code>" system
 	 * property.
 	 * <p/>
-	 * If ExifTool is on your system path and running the command "exiftool"
+	 * If ExifToolNew3 is on your system path and running the command "exiftool"
 	 * successfully executes it, leaving this value unchanged will work fine on
-	 * any platform. If the ExifTool executable is named something else or not
+	 * any platform. If the ExifToolNew3 executable is named something else or not
 	 * in the system path, then this property will need to be set to point at it
 	 * before using this class.
 	 * <p/>
@@ -266,7 +266,7 @@ public class ExifToolNew2 implements ExifToolService {
 
 	/**
 	 * Interval (in milliseconds) of inactivity before the cleanup thread wakes
-	 * up and cleans up the daemon ExifTool process and the read/write streams
+	 * up and cleans up the daemon ExifToolNew3 process and the read/write streams
 	 * used to communicate with it when the {@link Feature#STAY_OPEN} feature is
 	 * used.
 	 * <p/>
@@ -286,7 +286,7 @@ public class ExifToolNew2 implements ExifToolService {
 	 * this class is loaded.
 	 * <p/>
 	 * Setting this value to 0 disables the automatic cleanup thread completely
-	 * and the caller will need to manually cleanup the external ExifTool
+	 * and the caller will need to manually cleanup the external ExifToolNew3
 	 * process and read/write streams by calling {@link #close()}.
 	 * <p/>
 	 * Default value is <code>600,000</code> (10 minutes).
@@ -301,20 +301,20 @@ public class ExifToolNew2 implements ExifToolService {
 	 * implementors making use of this class such that the resources this class
 	 * creates and uses (i.e. Threads) are readily identifiable in a running VM.
 	 * <p/>
-	 * Default value is "<code>ExifTool Cleanup Thread</code>".
+	 * Default value is "<code>ExifToolNew3 Cleanup Thread</code>".
 	 */
-	protected static final String CLEANUP_THREAD_NAME = "ExifTool Cleanup Thread";
+	protected static final String CLEANUP_THREAD_NAME = "ExifToolNew3 Cleanup Thread";
 
 	/**
 	 * Compiled {@link Pattern} of ": " used to split compact output from
-	 * ExifTool evenly into name/value pairs.
+	 * ExifToolNew3 evenly into name/value pairs.
 	 */
 	protected static final Pattern TAG_VALUE_PATTERN = Pattern.compile(": ");
 
 	/**
 	 * Map shared across all instances of this class that maintains the state of
 	 * {@link Feature}s and if they are supported or not (supported=true,
-	 * unsupported=false) by the underlying native ExifTool process being used
+	 * unsupported=false) by the underlying native ExifToolNew3 process being used
 	 * in conjunction with this class.
 	 * <p/>
 	 * If a {@link Feature} is missing from the map (has no <code>true</code> or
@@ -331,7 +331,7 @@ public class ExifToolNew2 implements ExifToolService {
 	protected static final Map<Feature, Boolean> FEATURE_SUPPORT_MAP = new HashMap<Feature, Boolean>();
 
 	/**
-	 * Static list of args used to execute ExifTool using the '-ver' flag in
+	 * Static list of args used to execute ExifToolNew3 using the '-ver' flag in
 	 * order to get it to print out its version number. Used by the
 	 * {@link #checkFeatureSupport(Feature...)} method to check all the required
 	 * feature versions.
@@ -349,30 +349,30 @@ public class ExifToolNew2 implements ExifToolService {
 
 	/**
 	 * Used to determine if the given {@link Feature} is supported by the
-	 * underlying native install of ExifTool pointed at by
+	 * underlying native install of ExifToolNew3 pointed at by
 	 * {@link #EXIF_TOOL_PATH}.
 	 * <p/>
 	 * If support for the given feature has not been checked for yet, this
-	 * method will automatically call out to ExifTool and ensure the requested
+	 * method will automatically call out to ExifToolNew3 and ensure the requested
 	 * feature is supported in the current local install.
 	 * <p/>
-	 * The external call to ExifTool to confirm feature support is only ever
+	 * The external call to ExifToolNew3 to confirm feature support is only ever
 	 * done once per JVM session and stored in a <code>static final</code>
 	 * {@link Map} that all instances of this class share.
 	 * 
 	 * @param feature
-	 *            The feature to check support for in the underlying ExifTool
+	 *            The feature to check support for in the underlying ExifToolNew3
 	 *            install.
 	 * 
 	 * @return <code>true</code> if support for the given {@link Feature} was
-	 *         confirmed to work with the currently installed ExifTool or
+	 *         confirmed to work with the currently installed ExifToolNew3 or
 	 *         <code>false</code> if it is not supported.
 	 * 
 	 * @throws IllegalArgumentException
 	 *             if <code>feature</code> is <code>null</code>.
 	 * @throws RuntimeException
 	 *             if any exception occurs while attempting to start the
-	 *             external ExifTool process to verify feature support.
+	 *             external ExifToolNew3 process to verify feature support.
 	 */
 
 	@Override
@@ -385,7 +385,7 @@ public class ExifToolNew2 implements ExifToolService {
 
 		/*
 		 * If there is no Boolean flag for the feature, support for it hasn't
-		 * been checked yet with the native ExifTool install, so we need to do
+		 * been checked yet with the native ExifToolNew3 install, so we need to do
 		 * that.
 		 */
 		if (supported == null) {
@@ -426,25 +426,25 @@ public class ExifToolNew2 implements ExifToolService {
 	 */
 	protected static void log(String message, Object... params) {
 		if (DEBUG)
-			ExifTool.log.debug(LOG_PREFIX + message + '\n', params);
+			ExifToolNew3.log.debug(LOG_PREFIX + message + '\n', params);
 	}
 
 	/**
-	 * Used to verify the version of ExifTool installed is a high enough version
+	 * Used to verify the version of ExifToolNew3 installed is a high enough version
 	 * to support the given features.
 	 * <p/>
 	 * This method runs the command "<code>exiftool -ver</code>" to get the
-	 * version of the installed ExifTool and then compares that version to the
+	 * version of the installed ExifToolNew3 and then compares that version to the
 	 * least required version specified by the given features (see
 	 * {@link Feature#getVersion()}).
 	 * 
 	 * @param features
 	 *            The features whose required versions will be checked against
-	 *            the installed ExifTool for support.
+	 *            the installed ExifToolNew3 for support.
 	 * 
 	 * @throws RuntimeException
 	 *             if any exception occurs communicating with the external
-	 *             ExifTool process spun up in order to check its version.
+	 *             ExifToolNew3 process spun up in order to check its version.
 	 */
 	protected static void checkFeatureSupport(Feature... features)
 			throws RuntimeException {
@@ -452,7 +452,7 @@ public class ExifToolNew2 implements ExifToolService {
 		if (features == null || features.length == 0)
 			return;
 
-		log("\tChecking %d feature(s) for support in the external ExifTool install...",
+		log("\tChecking %d feature(s) for support in the external ExifToolNew3 install...",
 				features.length);
 
 		for (int i = 0; i < features.length; i++) {
@@ -460,7 +460,7 @@ public class ExifToolNew2 implements ExifToolService {
 			Boolean supported;
 			Feature feature = features[i];
 
-			log("\t\tChecking feature %s for support, requires ExifTool version %s or higher...",
+			log("\t\tChecking feature %s for support, requires ExifToolNew3 version %s or higher...",
 					feature, feature.getVersion());
 
 			// Execute 'exiftool -ver'
@@ -472,14 +472,14 @@ public class ExifToolNew2 implements ExifToolService {
 			} catch (Exception e) {
 				/*
 				 * no-op, while it is important to know that we COULD launch the
-				 * ExifTool process (i.e. startExifToolProcess call worked) but
+				 * ExifToolNew3 process (i.e. startExifToolProcess call worked) but
 				 * couldn't communicate with it, the context with which this
 				 * method is called is from the constructor of this class which
 				 * would just wrap this exception and discard it anyway if it
 				 * failed.
 				 * 
 				 * the caller will realize there is something wrong with the
-				 * ExifTool process communication as soon as they make their
+				 * ExifToolNew3 process communication as soon as they make their
 				 * first call to getImageMeta in which case whatever was causing
 				 * the exception here will popup there and then need to be
 				 * corrected.
@@ -497,11 +497,11 @@ public class ExifToolNew2 implements ExifToolService {
 			if (ver != null
 					&& ver.compareTo(feature.getVersion().toString()) >= 0) {
 				supported = Boolean.TRUE;
-				log("\t\tFound ExifTool version %s, feature %s is SUPPORTED.",
+				log("\t\tFound ExifToolNew3 version %s, feature %s is SUPPORTED.",
 						ver, feature);
 			} else {
 				supported = Boolean.FALSE;
-				log("\t\tFound ExifTool version %s, feature %s is NOT SUPPORTED.",
+				log("\t\tFound ExifToolNew3 version %s, feature %s is NOT SUPPORTED.",
 						ver, feature);
 			}
 
@@ -515,16 +515,16 @@ public class ExifToolNew2 implements ExifToolService {
 		Process proc = null;
 		IOStream streams = null;
 
-		log("\tAttempting to start external ExifTool process using args: %s",
+		log("\tAttempting to start external ExifToolNew3 process using args: %s",
 				args);
 
 		try {
 			proc = new ProcessBuilder(args).start();
 			log("\t\tSuccessful");
 		} catch (Exception e) {
-			String message = "Unable to start external ExifTool process using the execution arguments: "
+			String message = "Unable to start external ExifToolNew3 process using the execution arguments: "
 					+ args
-					+ ". Ensure ExifTool is installed correctly and runs using the command path '"
+					+ ". Ensure ExifToolNew3 is installed correctly and runs using the command path '"
 					+ EXIF_TOOL_PATH
 					+ "' as specified by the 'exiftool.path' system property.";
 
@@ -532,7 +532,7 @@ public class ExifToolNew2 implements ExifToolService {
 			throw new RuntimeException(message, e);
 		}
 
-		log("\tSetting up Read/Write streams to the external ExifTool process...");
+		log("\tSetting up Read/Write streams to the external ExifToolNew3 process...");
 
 		// Setup read/write streams to the new process.
 		streams = new IOStream(new BufferedReader(new InputStreamReader(
@@ -561,14 +561,14 @@ public class ExifToolNew2 implements ExifToolService {
 		if (features != null && features.length > 0) {
 			/*
 			 * Process all features to ensure we checked them for support in the
-			 * installed version of ExifTool. If the feature has already been
+			 * installed version of ExifToolNew3. If the feature has already been
 			 * checked before, this method will return immediately.
 			 */
 			checkFeatureSupport(features);
 
 			/*
 			 * Now we need to verify that all the features requested for this
-			 * instance of ExifTool to use WERE supported after all.
+			 * instance of ExifToolNew3 to use WERE supported after all.
 			 */
 			for (int i = 0; i < features.length; i++) {
 				Feature f = features[i];
@@ -613,12 +613,12 @@ public class ExifToolNew2 implements ExifToolService {
 	}
 
 	/**
-	 * Used to shutdown the external ExifTool process and close the read/write
+	 * Used to shutdown the external ExifToolNew3 process and close the read/write
 	 * streams used to communicate with it when {@link Feature#STAY_OPEN} is
 	 * enabled.
 	 * <p/>
 	 * <strong>NOTE</strong>: Calling this method does not preclude this
-	 * instance of {@link ExifTool} from being re-used, it merely disposes of
+	 * instance of {@link ExifToolNew3} from being re-used, it merely disposes of
 	 * the native and internal resources until the next call to
 	 * <code>getImageMeta</code> causes them to be re-instantiated.
 	 * <p/>
@@ -638,18 +638,18 @@ public class ExifToolNew2 implements ExifToolService {
 			return;
 
 		/*
-		 * If ExifTool was used in stayOpen mode but getImageMeta was never
+		 * If ExifToolNew3 was used in stayOpen mode but getImageMeta was never
 		 * called then the streams were never initialized and there is nothing
 		 * to shut down or destroy, otherwise we need to close down all the
 		 * resources in use.
 		 */
 		if (streams == null) {
-			log("\tThis ExifTool instance was never used so no external process or streams were ever created (nothing to clean up, we will just exit).");
+			log("\tThis ExifToolNew3 instance was never used so no external process or streams were ever created (nothing to clean up, we will just exit).");
 		} else {
 			try {
-				log("\tAttempting to close ExifTool daemon process, issuing '-stay_open\\nFalse\\n' command...");
+				log("\tAttempting to close ExifToolNew3 daemon process, issuing '-stay_open\\nFalse\\n' command...");
 
-				// Tell the ExifTool process to exit.
+				// Tell the ExifToolNew3 process to exit.
 				streams.writer.write("-stay_open\nFalse\n");
 				streams.writer.flush();
 
@@ -666,15 +666,15 @@ public class ExifToolNew2 implements ExifToolService {
 	}
 
 	/**
-	 * For {@link ExifTool} instances with {@link Feature#STAY_OPEN} support
+	 * For {@link ExifToolNew3} instances with {@link Feature#STAY_OPEN} support
 	 * enabled, this method is used to determine if there is currently a running
-	 * ExifTool process associated with this class.
+	 * ExifToolNew3 process associated with this class.
 	 * <p/>
 	 * Any dependent processes and streams can be shutdown using
 	 * {@link #close()} and this class will automatically re-create them on the
 	 * next call to <code>getImageMeta</code> if necessary.
 	 * 
-	 * @return <code>true</code> if there is an external ExifTool process in
+	 * @return <code>true</code> if there is an external ExifToolNew3 process in
 	 *         daemon mode associated with this class utilizing the
 	 *         {@link Feature#STAY_OPEN} feature, otherwise returns
 	 *         <code>false</code>.
@@ -685,10 +685,10 @@ public class ExifToolNew2 implements ExifToolService {
 
 	/**
 	 * Used to determine if the given {@link Feature} has been enabled for this
-	 * particular instance of {@link ExifTool}.
+	 * particular instance of {@link ExifToolNew3}.
 	 * <p/>
 	 * This method is different from {@link #isFeatureSupported(Feature)}, which
-	 * checks if the given feature is supported by the underlying ExifTool
+	 * checks if the given feature is supported by the underlying ExifToolNew3
 	 * install where as this method tells the caller if the given feature has
 	 * been enabled for use in this particular instance.
 	 * 
@@ -697,7 +697,7 @@ public class ExifToolNew2 implements ExifToolService {
 	 *            this instance.
 	 * 
 	 * @return <code>true</code> if the given {@link Feature} is currently
-	 *         enabled on this instance of {@link ExifTool}, otherwise returns
+	 *         enabled on this instance of {@link ExifToolNew3}, otherwise returns
 	 *         <code>false</code>.
 	 * 
 	 * @throws IllegalArgumentException
@@ -749,7 +749,7 @@ public class ExifToolNew2 implements ExifToolService {
 		long exifToolCallElapsedTime = 0;
 
 		/*
-		 * Using ExifTool in daemon mode (-stay_open True) executes different
+		 * Using ExifToolNew3 in daemon mode (-stay_open True) executes different
 		 * code paths below. So establish the flag for this once and it is
 		 * reused a multitude of times later in this method to figure out where
 		 * to branch to.
@@ -760,7 +760,7 @@ public class ExifToolNew2 implements ExifToolService {
 		args.clear();
 
 		if (stayOpen) {
-			log("\tUsing ExifTool in daemon mode (-stay_open True)...");
+			log("\tUsing ExifToolNew3 in daemon mode (-stay_open True)...");
 
 			// Always reset the cleanup task.
 			resetCleanupTask();
@@ -771,7 +771,7 @@ public class ExifToolNew2 implements ExifToolService {
 			 * ready to receive commands from us.
 			 */
 			if (streams == null) {
-				log("\tStarting daemon ExifTool process and creating read/write streams (this only happens once)...");
+				log("\tStarting daemon ExifToolNew3 process and creating read/write streams (this only happens once)...");
 
 				args.add(EXIF_TOOL_PATH);
 				args.add("-stay_open");
@@ -779,11 +779,11 @@ public class ExifToolNew2 implements ExifToolService {
 				args.add("-@");
 				args.add("-");
 
-				// Begin the persistent ExifTool process.
+				// Begin the persistent ExifToolNew3 process.
 				streams = startExifToolProcess(args);
 			}
 
-			log("\tStreaming arguments to ExifTool process...");
+			log("\tStreaming arguments to ExifToolNew3 process...");
 
 			if (format == Format.NUMERIC)
 				streams.writer.write("-n\n"); // numeric output
@@ -799,16 +799,16 @@ public class ExifToolNew2 implements ExifToolService {
 			streams.writer.write(image.getAbsolutePath());
 			streams.writer.write("\n");
 
-			log("\tExecuting ExifTool...");
+			log("\tExecuting ExifToolNew3...");
 
-			// Begin tracking the duration ExifTool takes to respond.
+			// Begin tracking the duration ExifToolNew3 takes to respond.
 			exifToolCallElapsedTime = System.currentTimeMillis();
 
-			// Run ExifTool on our file with all the given arguments.
+			// Run ExifToolNew3 on our file with all the given arguments.
 			streams.writer.write("-execute\n");
 			streams.writer.flush();
 		} else {
-			log("\tUsing ExifTool in non-daemon mode (-stay_open False)...");
+			log("\tUsing ExifToolNew3 in non-daemon mode (-stay_open False)...");
 
 			/*
 			 * Since we are not using a stayOpen process, we need to setup the
@@ -826,14 +826,14 @@ public class ExifToolNew2 implements ExifToolService {
 
 			args.add(image.getAbsolutePath());
 
-			// Run the ExifTool with our args.
+			// Run the ExifToolNew3 with our args.
 			streams = startExifToolProcess(args);
 
-			// Begin tracking the duration ExifTool takes to respond.
+			// Begin tracking the duration ExifToolNew3 takes to respond.
 			exifToolCallElapsedTime = System.currentTimeMillis();
 		}
 
-		log("\tReading response back from ExifTool...");
+		log("\tReading response back from ExifToolNew3...");
 
 		String line = null;
 
@@ -859,7 +859,7 @@ public class ExifToolNew2 implements ExifToolService {
 			}
 
 			/*
-			 * When using a persistent ExifTool process, it terminates its
+			 * When using a persistent ExifToolNew3 process, it terminates its
 			 * output to us with a "{ready}" clause on a new line, we need to
 			 * look for it and break from this loop when we see it otherwise
 			 * this process will hang indefinitely blocking on the input stream
@@ -869,15 +869,15 @@ public class ExifToolNew2 implements ExifToolService {
 				break;
 		}
 
-		// Print out how long the call to external ExifTool process took.
-		log("\tFinished reading ExifTool response in %d ms.",
+		// Print out how long the call to external ExifToolNew3 process took.
+		log("\tFinished reading ExifToolNew3 response in %d ms.",
 				(System.currentTimeMillis() - exifToolCallElapsedTime));
 
 		/*
-		 * If we are not using a persistent ExifTool process, then after running
+		 * If we are not using a persistent ExifToolNew3 process, then after running
 		 * the command above, the process exited in which case we need to clean
 		 * our streams up since it no longer exists. If we were using a
-		 * persistent ExifTool process, leave the streams open for future calls.
+		 * persistent ExifToolNew3 process, leave the streams open for future calls.
 		 */
 		if (!stayOpen)
 			streams.close();
@@ -920,7 +920,7 @@ public class ExifToolNew2 implements ExifToolService {
 		long exifToolCallElapsedTime = 0;
 
 		/*
-		 * Using ExifTool in daemon mode (-stay_open True) executes different
+		 * Using ExifToolNew3 in daemon mode (-stay_open True) executes different
 		 * code paths below. So establish the flag for this once and it is
 		 * reused a multitude of times later in this method to figure out where
 		 * to branch to.
@@ -931,7 +931,7 @@ public class ExifToolNew2 implements ExifToolService {
 		args.clear();
 
 		if (stayOpen) {
-			log("\tUsing ExifTool in daemon mode (-stay_open True)...");
+			log("\tUsing ExifToolNew3 in daemon mode (-stay_open True)...");
 
 			// Always reset the cleanup task.
 			resetCleanupTask();
@@ -942,7 +942,7 @@ public class ExifToolNew2 implements ExifToolService {
 			 * ready to receive commands from us.
 			 */
 			if (streams == null) {
-				log("\tStarting daemon ExifTool process and creating read/write streams (this only happens once)...");
+				log("\tStarting daemon ExifToolNew3 process and creating read/write streams (this only happens once)...");
 
 				args.add(EXIF_TOOL_PATH);
 				args.add("-stay_open");
@@ -950,11 +950,11 @@ public class ExifToolNew2 implements ExifToolService {
 				args.add("-@");
 				args.add("-");
 
-				// Begin the persistent ExifTool process.
+				// Begin the persistent ExifToolNew3 process.
 				streams = startExifToolProcess(args);
 			}
 
-			log("\tStreaming arguments to ExifTool process...");
+			log("\tStreaming arguments to ExifToolNew3 process...");
 
 			if (format == Format.NUMERIC)
 				streams.writer.write("-n\n"); // numeric output
@@ -972,16 +972,16 @@ public class ExifToolNew2 implements ExifToolService {
 			streams.writer.write(image.getAbsolutePath());
 			streams.writer.write("\n");
 
-			log("\tExecuting ExifTool...");
+			log("\tExecuting ExifToolNew3...");
 
-			// Begin tracking the duration ExifTool takes to respond.
+			// Begin tracking the duration ExifToolNew3 takes to respond.
 			exifToolCallElapsedTime = System.currentTimeMillis();
 
-			// Run ExifTool on our file with all the given arguments.
+			// Run ExifToolNew3 on our file with all the given arguments.
 			streams.writer.write("-execute\n");
 			streams.writer.flush();
 		} else {
-			log("\tUsing ExifTool in non-daemon mode (-stay_open False)...");
+			log("\tUsing ExifToolNew3 in non-daemon mode (-stay_open False)...");
 
 			/*
 			 * Since we are not using a stayOpen process, we need to setup the
@@ -1000,20 +1000,20 @@ public class ExifToolNew2 implements ExifToolService {
 
 			args.add(image.getAbsolutePath());
 
-			// Run the ExifTool with our args.
+			// Run the ExifToolNew3 with our args.
 			streams = startExifToolProcess(args);
 
-			// Begin tracking the duration ExifTool takes to respond.
+			// Begin tracking the duration ExifToolNew3 takes to respond.
 			exifToolCallElapsedTime = System.currentTimeMillis();
 		}
 
-		log("\tReading response back from ExifTool...");
+		log("\tReading response back from ExifToolNew3...");
 
 		String line = null;
 
 		while ((line = streams.reader.readLine()) != null) {
 			/*
-			 * When using a persistent ExifTool process, it terminates its
+			 * When using a persistent ExifToolNew3 process, it terminates its
 			 * output to us with a "{ready}" clause on a new line, we need to
 			 * look for it and break from this loop when we see it otherwise
 			 * this process will hang indefinitely blocking on the input stream
@@ -1023,15 +1023,15 @@ public class ExifToolNew2 implements ExifToolService {
 				break;
 		}
 
-		// Print out how long the call to external ExifTool process took.
-		log("\tFinished reading ExifTool response in %d ms.",
+		// Print out how long the call to external ExifToolNew3 process took.
+		log("\tFinished reading ExifToolNew3 response in %d ms.",
 				(System.currentTimeMillis() - exifToolCallElapsedTime));
 
 		/*
-		 * If we are not using a persistent ExifTool process, then after running
+		 * If we are not using a persistent ExifToolNew3 process, then after running
 		 * the command above, the process exited in which case we need to clean
 		 * our streams up since it no longer exists. If we were using a
-		 * persistent ExifTool process, leave the streams open for future calls.
+		 * persistent ExifToolNew3 process, leave the streams open for future calls.
 		 */
 		if (!stayOpen)
 			streams.close();
@@ -1175,7 +1175,7 @@ public class ExifToolNew2 implements ExifToolService {
 	}
 	@Override
 	protected void finalize() throws Throwable {
-		ExifTool.log.info("ExifTool not used anymore shutdown the exiftool process...");
+		ExifToolNew3.log.info("ExifToolNew3 not used anymore shutdown the exiftool process...");
 		shutdown();
 		super.finalize();
 	}

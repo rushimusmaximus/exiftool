@@ -15,9 +15,9 @@ public class Example {
 	public static void main(String[] args) throws IOException,
 			InterruptedException {
 
-		// System.setProperty(ExifTool.ENV_EXIF_TOOL_PATH,
+		// System.setProperty(ExifToolNew3.ENV_EXIF_TOOL_PATH,
 		// "D:\\Tools\\exiftool.exe");
-		ExifToolService tool = new ExifTool(Feature.STAY_OPEN);
+		ExifToolService tool = new ExifToolNew3(Feature.STAY_OPEN);
 
 		File[] images = new File(TEST_FILES_PATH).listFiles();
 

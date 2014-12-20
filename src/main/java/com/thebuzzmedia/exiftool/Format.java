@@ -6,7 +6,7 @@ import java.io.File;
  * Enum used to define the 2 different output formats that {@link Tag} values
  * can be returned in: numeric or human-readable text.
  * <p/>
- * ExifTool, via the <code>-n</code> command line arg, is capable of returning
+ * ExifToolNew3, via the <code>-n</code> command line arg, is capable of returning
  * most values in their raw numeric form (e.g. Aperture="2.8010323841") as well
  * as a more human-readable/friendly format (e.g. Aperture="2.8").
  * <p/>
@@ -16,13 +16,13 @@ import java.io.File;
  * <p/>
  * If the caller finds the human-readable format easier to process,
  * {@link Format#HUMAN_READABLE} can be specified when calling
- * {@link ExifTool#getImageMeta(File, Format, Tag...)} and the returned
+ * {@link ExifToolNew3#getImageMeta(File, Format, Tag...)} and the returned
  * {@link String} values processed manually by the caller.
  * <p/>
  * In order to see the types of values that are returned when
  * {@link Format#HUMAN_READABLE} is used, you can check the comprehensive <a
  * href="http://www.sno.phy.queensu.ca/~phil/exiftool/TagNames/index.html">
- * ExifTool Tag Guide</a>.
+ * ExifToolNew3 Tag Guide</a>.
  * <p/>
  * This makes sense with some values like Aperture that in
  * {@link Format#NUMERIC} format end up returning as 14-decimal-place, high

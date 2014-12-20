@@ -14,7 +14,7 @@ public class Benchmark {
 	public static void main(String[] args) throws IOException,
 			InterruptedException {
 
-		// System.setProperty(ExifTool.ENV_EXIF_TOOL_PATH,
+		// System.setProperty(ExifToolNew3.ENV_EXIF_TOOL_PATH,
 		// "D:\\Tools\\exiftool.exe");
 
 		final Tag[] tags = Tag.values();
@@ -23,12 +23,12 @@ public class Benchmark {
 		log.info("Benchmark [tags=" + tags.length + ", images=" + images.length
 				+ ", iterations=" + ITERATIONS + "]");
 		log.info("\t" + (images.length * ITERATIONS)
-				+ " ExifTool process calls, "
+				+ " ExifToolNew3 process calls, "
 				+ (tags.length * images.length * ITERATIONS)
 				+ " total operations.\n");
 
-		ExifToolService tool = new ExifTool();
-		ExifToolService toolSO = new ExifTool(Feature.STAY_OPEN);
+		ExifToolService tool = new ExifToolNew3();
+		ExifToolService toolSO = new ExifToolNew3(Feature.STAY_OPEN);
 
 		/*
 		 * -stay_open False

@@ -3,10 +3,10 @@ package com.thebuzzmedia.exiftool;
 // ================================================================================
 /**
  * Enum used to define the different kinds of features in the native
- * ExifTool executable that this class can help you take advantage of.
+ * ExifToolNew3 executable that this class can help you take advantage of.
  * <p/>
  * These flags are different from {@link Tag}s in that a "feature" is
- * determined to be a special functionality of the underlying ExifTool
+ * determined to be a special functionality of the underlying ExifToolNew3
  * executable that requires a different code-path in this class to take
  * advantage of; for example, <code>-stay_open True</code> support.
  * 
@@ -15,11 +15,11 @@ package com.thebuzzmedia.exiftool;
  */
 public enum Feature {
 	/**
-	 * Enum used to specify that you wish to launch the underlying ExifTool
+	 * Enum used to specify that you wish to launch the underlying ExifToolNew3
 	 * process with <code>-stay_open True</code> support turned on that this
 	 * class can then take advantage of.
 	 * <p/>
-	 * Required ExifTool version is <code>8.36</code> or higher.
+	 * Required ExifToolNew3 version is <code>8.36</code> or higher.
 	 */
 	STAY_OPEN(8, 36),
 	/**
@@ -30,7 +30,7 @@ public enum Feature {
 	 * recommendations. Will add the args " -use MWG"
 	 * 
 	 * @see <a
-	 *      href="http://www.sno.phy.queensu.ca/~phil/exiftool/TagNames/MWG.html">ExifTool
+	 *      href="http://www.sno.phy.queensu.ca/~phil/exiftool/TagNames/MWG.html">ExifToolNew3
 	 *      MWG Docs</a> !! Note these version numbers are not correct
 	 */
 	MWG_MODULE(8, 36),
@@ -47,10 +47,10 @@ public enum Feature {
 	}
 
 	/**
-	 * Used to get the version of ExifTool required by this feature in order
+	 * Used to get the version of ExifToolNew3 required by this feature in order
 	 * to work.
 	 * 
-	 * @return the version of ExifTool required by this feature in order to
+	 * @return the version of ExifToolNew3 required by this feature in order to
 	 *         work.
 	 */
 	VersionNumber getVersion() {

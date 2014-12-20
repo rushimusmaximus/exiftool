@@ -21,6 +21,7 @@ limitations under the License.
 	
 	<property name="version.major" value="1" />
 	<property name="version.minor" value="2" />
+        <property name="version.patch" value="1" />
 
 	<property name="name.file" value="exiftool-lib" />
 	<property name="name.file.javadoc" value="${name.file}-${version.major}.${version.minor}-javadoc.jar" />
@@ -35,8 +36,7 @@ limitations under the License.
 	</target>
 
 	<target name="compile" depends="clean">
-		<!-- <javac destdir="${dir.bin}" debug="true" source="1.5" target="1.5" includeantruntime="false"> ??? -->
-		<javac destdir="${dir.bin}" debug="true" source="1.5" target="1.5">
+		<javac destdir="${dir.bin}" debug="true" source="1.5" target="1.5" includeantruntime="false">
 			<src path="${dir.src}" />
 		</javac>
 		<copy todir="${dir.bin}">
@@ -58,7 +58,7 @@ limitations under the License.
 	</target>
 
 	<target name="jar" depends="compile">
-		<jar basedir="${dir.bin}" destfile="${dir.dist}/${name.file}-${version.major}.${version.minor}.jar" compress="no" />
+		<jar basedir="${dir.bin}" destfile="${dir.dist}/${name.file}-${version.major}.${version.minor}.${version.patch}.jar" compress="no" />
 	</target>
 
 	<target name="src">

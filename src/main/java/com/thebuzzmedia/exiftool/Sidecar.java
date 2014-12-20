@@ -52,13 +52,13 @@ public class Sidecar {
 
 		long startTime = System.currentTimeMillis();
 
-		ExifTool.log("Writing %s tags to image: %s", xmp.getAbsolutePath(),
+		ExifToolNew3.log("Writing %s tags to image: %s", xmp.getAbsolutePath(),
 				file.getAbsolutePath());
 
 		long exifToolCallElapsedTime = 0;
 
 		/*
-		 * Using ExifTool in daemon mode (-stay_open True) executes different
+		 * Using ExifToolNew3 in daemon mode (-stay_open True) executes different
 		 * code paths below. So establish the flag for this once and it is
 		 * reused a multitude of times later in this method to figure out where
 		 * to branch to.
@@ -68,7 +68,7 @@ public class Sidecar {
 		this.exifTool.args.clear();
 
 		if (stayOpen) {
-			ExifTool.log("\tUsing ExifTool in daemon mode (-stay_open True)...");
+			ExifToolNew3.log("\tUsing ExifToolNew3 in daemon mode (-stay_open True)...");
 
 			// Always reset the cleanup task.
 			this.exifTool.resetCleanupTask();
@@ -79,7 +79,7 @@ public class Sidecar {
 			 * ready to receive commands from us.
 			 */
 			if (this.exifTool.streams == null) {
-				ExifTool.log("\tStarting daemon ExifTool process and creating read/write streams (this only happens once)...");
+				ExifToolNew3.log("\tStarting daemon ExifToolNew3 process and creating read/write streams (this only happens once)...");
 
 				this.exifTool.args.add(exifTool.EXIF_TOOL_PATH);
 				this.exifTool.args.add("-stay_open");
@@ -87,12 +87,12 @@ public class Sidecar {
 				this.exifTool.args.add("-@");
 				this.exifTool.args.add("-");
 
-				// Begin the persistent ExifTool process.
+				// Begin the persistent ExifToolNew3 process.
 				this.exifTool.streams = exifTool
 						.startExifToolProcess(this.exifTool.args);
 			}
 
-			ExifTool.log("\tStreaming arguments to ExifTool process...");
+			ExifToolNew3.log("\tStreaming arguments to ExifToolNew3 process...");
 
 			try {
 				this.exifTool.streams.writer.write("-tagsfromfile\n");
@@ -111,21 +111,21 @@ public class Sidecar {
 				this.exifTool.streams.writer.write(xmp.getAbsolutePath());
 				this.exifTool.streams.writer.write("\n");
 
-				ExifTool.log("\tExecuting ExifTool...");
+				ExifToolNew3.log("\tExecuting ExifToolNew3...");
 
-				// Begin tracking the duration ExifTool takes to respond.
+				// Begin tracking the duration ExifToolNew3 takes to respond.
 				exifToolCallElapsedTime = System.currentTimeMillis();
 
-				// Run ExifTool on our file with all the given arguments.
+				// Run ExifToolNew3 on our file with all the given arguments.
 				this.exifTool.streams.writer.write("-execute\n");
 				this.exifTool.streams.writer.flush();
 
 			} catch (IOException e) {
-				ExifTool.log("\tError received in stayopen stream: %s",
+				ExifToolNew3.log("\tError received in stayopen stream: %s",
 						e.getMessage());
 			} // compact output
 		} else {
-			ExifTool.log("\tUsing ExifTool in non-daemon mode (-stay_open False)...");
+			ExifToolNew3.log("\tUsing ExifToolNew3 in non-daemon mode (-stay_open False)...");
 
 			/*
 			 * Since we are not using a stayOpen process, we need to setup the
@@ -145,22 +145,22 @@ public class Sidecar {
 
 			this.exifTool.args.add(xmp.getAbsolutePath());
 
-			// Run the ExifTool with our args.
+			// Run the ExifToolNew3 with our args.
 			this.exifTool.streams = exifTool
 					.startExifToolProcess(this.exifTool.args);
 
-			// Begin tracking the duration ExifTool takes to respond.
+			// Begin tracking the duration ExifToolNew3 takes to respond.
 			exifToolCallElapsedTime = System.currentTimeMillis();
 		}
 
-		ExifTool.log("\tReading response back from ExifTool...");
+		ExifToolNew3.log("\tReading response back from ExifToolNew3...");
 
 		String line = null;
 
 		try {
 			while ((line = this.exifTool.streams.reader.readLine()) != null) {
 				/*
-				 * When using a persistent ExifTool process, it terminates its
+				 * When using a persistent ExifToolNew3 process, it terminates its
 				 * output to us with a "{ready}" clause on a new line, we need
 				 * to look for it and break from this loop when we see it
 				 * otherwise this process will hang indefinitely blocking on the
@@ -170,23 +170,23 @@ public class Sidecar {
 					break;
 			}
 		} catch (IOException e) {
-			ExifTool.log("\tError received in response: %d", e.getMessage());
+			ExifToolNew3.log("\tError received in response: %d", e.getMessage());
 		}
 
-		// Print out how long the call to external ExifTool process took.
-		ExifTool.log("\tFinished reading ExifTool response in %d ms.",
+		// Print out how long the call to external ExifToolNew3 process took.
+		ExifToolNew3.log("\tFinished reading ExifToolNew3 response in %d ms.",
 				(System.currentTimeMillis() - exifToolCallElapsedTime));
 
 		/*
-		 * If we are not using a persistent ExifTool process, then after running
+		 * If we are not using a persistent ExifToolNew3 process, then after running
 		 * the command above, the process exited in which case we need to clean
 		 * our streams up since it no longer exists. If we were using a
-		 * persistent ExifTool process, leave the streams open for future calls.
+		 * persistent ExifToolNew3 process, leave the streams open for future calls.
 		 */
 		if (!stayOpen)
 			this.exifTool.streams.close();
 
-		ExifTool.log("\tImage Meta Processed in %d ms [write %s tags]",
+		ExifToolNew3.log("\tImage Meta Processed in %d ms [write %s tags]",
 				(System.currentTimeMillis() - startTime), xmp.getAbsolutePath());
 
 	}

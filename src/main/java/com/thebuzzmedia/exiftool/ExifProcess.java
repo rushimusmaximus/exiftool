@@ -42,9 +42,9 @@ public final class ExifProcess {
 	static{
 		Runtime.getRuntime().addShutdownHook(new Thread() {
 			public void run() {
-				ExifTool.log.info("Close all remaining processes:" + all.keySet());
+				ExifToolNew3.log.info("Close all remaining processes:" + all.keySet());
 				for(Entry<String, Pair<String, ExifProcess>> item : new HashSet<Entry<String, Pair<String, ExifProcess>>>(all.entrySet())){
-					ExifTool.log.info("Close leaked process " + item);
+					ExifToolNew3.log.info("Close leaked process " + item);
 					item.getValue()._2.close();
 				}
 			}
@@ -52,7 +52,7 @@ public final class ExifProcess {
 	}
 	/**
 	 * Compiled {@link Pattern} of ": " used to split compact output from
-	 * ExifTool evenly into name/value pairs.
+	 * ExifToolNew3 evenly into name/value pairs.
 	 */
 	private static final Pattern TAG_VALUE_PATTERN = Pattern
 			.compile("\\s*:\\s*");
@@ -64,7 +64,7 @@ public final class ExifProcess {
 			return new VersionNumber(process.readLine());
 		} catch (IOException ex) {
 			throw new RuntimeException(String.format(
-					"Unable to check version number of ExifTool: %s", exifCmd));
+					"Unable to check version number of ExifToolNew3: %s", exifCmd));
 		} finally {
 			process.close();
 		}
@@ -125,8 +125,8 @@ public final class ExifProcess {
 
 	public ExifProcess(boolean keepAlive, List<String> args, Charset charset) {
 		this.keepAlive = keepAlive;
-		ExifTool.log.debug(String.format(
-				"Attempting to start ExifTool process using args: %s", args));
+		ExifToolNew3.log.debug(String.format(
+				"Attempting to start ExifToolNew3 process using args: %s", args));
 		try {
 			this.process = new ProcessBuilder(args).start();
 			all.put(process.toString(), new Pair<String, ExifProcess>(toString(new RuntimeException("start of "+process)),this));
@@ -137,15 +137,15 @@ public final class ExifProcess {
 					new BufferedReader(new InputStreamReader(
 							process.getErrorStream())));
 			errReader.start();
-			ExifTool.log.debug("\tSuccessful " + process + " started.");
+			ExifToolNew3.log.debug("\tSuccessful " + process + " started.");
 		} catch (Exception e) {
-			String message = "Unable to start external ExifTool process using the execution arguments: "
+			String message = "Unable to start external ExifToolNew3 process using the execution arguments: "
 					+ args
-					+ ". Ensure ExifTool is installed correctly and runs using the command path '"
+					+ ". Ensure ExifToolNew3 is installed correctly and runs using the command path '"
 					+ args.get(0)
 					+ "' as specified by the 'exiftool.path' system property.";
 
-			ExifTool.log.debug(message);
+			ExifToolNew3.log.debug(message);
 			throw new RuntimeException(message, e);
 		}
 	}
@@ -177,36 +177,36 @@ public final class ExifProcess {
 
 	public synchronized void writeFlush(String message) throws IOException {
 		if (closed)
-			throw new IOException(ExifTool.STREAM_CLOSED_MESSAGE);
+			throw new IOException(ExifToolNew3.STREAM_CLOSED_MESSAGE);
 		writer.write(message);
 		writer.flush();
 	}
 
 	public synchronized String readLine() throws IOException {
 		if (closed)
-			throw new IOException(ExifTool.STREAM_CLOSED_MESSAGE);
+			throw new IOException(ExifToolNew3.STREAM_CLOSED_MESSAGE);
 		return reader.readLine();
 	}
 
 	public synchronized Map<String, String> readResponse(List<String> args) throws IOException {
 		if (closed)
-			throw new IOException(ExifTool.STREAM_CLOSED_MESSAGE);
-		ExifTool.log.debug("Reading response back from ExifTool...");
+			throw new IOException(ExifToolNew3.STREAM_CLOSED_MESSAGE);
+		ExifToolNew3.log.debug("Reading response back from ExifToolNew3...");
 		Map<String, String> resultMap = new HashMap<String, String>(500);
 		String line;
 
 		while ((line = reader.readLine()) != null) {
 			if (closed)
-				throw new IOException(ExifTool.STREAM_CLOSED_MESSAGE);
+				throw new IOException(ExifToolNew3.STREAM_CLOSED_MESSAGE);
 			String[] pair = TAG_VALUE_PATTERN.split(line, 2);
 			if (pair.length == 2) {
 				resultMap.put(pair[0], pair[1]);
-				ExifTool.log.debug(String.format(
+				ExifToolNew3.log.debug(String.format(
 						"\tRead Tag [name=%s, value=%s]", pair[0], pair[1]));
 			}
 
 			/*
-			 * When using a persistent ExifTool process, it terminates its
+			 * When using a persistent ExifToolNew3 process, it terminates its
 			 * output to us with a "{ready}" clause on a new line, we need to
 			 * look for it and break from this loop when we see it otherwise
 			 * this process will hang indefinitely blocking on the input stream
@@ -229,7 +229,7 @@ public final class ExifProcess {
 			if(result.contains("No matching files")){
 				throw new ExifError(message);
 			}else{
-				ExifTool.log.info(message);
+				ExifToolNew3.log.info(message);
 			}
 		}
 		return resultMap;
@@ -237,16 +237,16 @@ public final class ExifProcess {
 
 	public synchronized String readResponseString() throws IOException {
 		if (closed)
-			throw new IOException(ExifTool.STREAM_CLOSED_MESSAGE);
-		ExifTool.log.debug("Reading response back from ExifTool...");
+			throw new IOException(ExifToolNew3.STREAM_CLOSED_MESSAGE);
+		ExifToolNew3.log.debug("Reading response back from ExifToolNew3...");
 		String line;
 		StringBuilder result = new StringBuilder();
 		while ((line = reader.readLine()) != null) {
 			if (closed)
-				throw new IOException(ExifTool.STREAM_CLOSED_MESSAGE);
+				throw new IOException(ExifToolNew3.STREAM_CLOSED_MESSAGE);
 
 			/*
-			 * When using a persistent ExifTool process, it terminates its
+			 * When using a persistent ExifToolNew3 process, it terminates its
 			 * output to us with a "{ready}" clause on a new line, we need to
 			 * look for it and break from this loop when we see it otherwise
 			 * this process will hang indefinitely blocking on the input stream
@@ -271,16 +271,16 @@ public final class ExifProcess {
 				if (!closed) {
 					closed = true;
 					try {
-						ExifTool.log.debug("Closing Read stream...");
+						ExifToolNew3.log.debug("Closing Read stream...");
 						reader.close();
-						ExifTool.log.debug("\tSuccessful");
+						ExifToolNew3.log.debug("\tSuccessful");
 					} catch (Exception e) {
 						// no-op, just try to close it.
 					}
 
 					try {
-						ExifTool.log
-								.debug("Attempting to close ExifTool daemon process, issuing '-stay_open\\nFalse\\n' command...");
+						ExifToolNew3.log
+								.debug("Attempting to close ExifToolNew3 daemon process, issuing '-stay_open\\nFalse\\n' command...");
 						writer.write("-stay_open\nFalse\n");
 						writer.flush();
 					} catch (IOException ex) {
@@ -288,32 +288,32 @@ public final class ExifProcess {
 					}
 
 					try {
-						ExifTool.log.debug("Closing Write stream...");
+						ExifToolNew3.log.debug("Closing Write stream...");
 						writer.close();
-						ExifTool.log.debug("\tSuccessful");
+						ExifToolNew3.log.debug("\tSuccessful");
 					} catch (Exception e) {
 						// no-op, just try to close it.
 					}
 
 					try {
-						ExifTool.log.debug("Closing Error stream...");
+						ExifToolNew3.log.debug("Closing Error stream...");
 						errReader.close();
-						ExifTool.log.debug("\tSuccessful");
+						ExifToolNew3.log.debug("\tSuccessful");
 					} catch (Exception e) {
 						// no-op, just try to close it.
 					}
 
-					ExifTool.log
+					ExifToolNew3.log
 							.debug("Read/Write streams successfully closed.");
 
 					try {
-						ExifTool.log.debug("\tDestroy process " + process + "...");
+						ExifToolNew3.log.debug("\tDestroy process " + process + "...");
 						process.destroy();
 						all.remove(process.toString());
-						ExifTool.log.debug("\tDestroy process " + process + " done => "+all.keySet());
+						ExifToolNew3.log.debug("\tDestroy process " + process + " done => "+all.keySet());
 					} catch (Exception e) {
 						//
-						ExifTool.log.debug("", e);
+						ExifToolNew3.log.debug("", e);
 					}
 					// process = null;
 
@@ -326,7 +326,7 @@ public final class ExifProcess {
 
 	@Override
 	protected void finalize() throws Throwable {
-		ExifTool.log.debug("\tFinalize process " + process + ".");
+		ExifToolNew3.log.debug("\tFinalize process " + process + ".");
 		close();
 		super.finalize();
 	}

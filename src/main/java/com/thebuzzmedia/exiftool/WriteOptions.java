@@ -29,7 +29,7 @@ public class WriteOptions {
 	}
 
 	/**
-	 * ExifTool automatically makes a backup copy a file before writing metadata
+	 * ExifToolNew3 automatically makes a backup copy a file before writing metadata
 	 * tags in the form "file.ext_original", by default this tool will delete
 	 * that original file after the writing is done.
 	 */
