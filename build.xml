@@ -35,6 +35,7 @@ limitations under the License.
 	</target>
 
 	<target name="compile" depends="clean">
+		<!-- <javac destdir="${dir.bin}" debug="true" source="1.5" target="1.5" includeantruntime="false"> ??? -->
 		<javac destdir="${dir.bin}" debug="true" source="1.5" target="1.5">
 			<src path="${dir.src}" />
 		</javac>
