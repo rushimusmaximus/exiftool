@@ -723,6 +723,9 @@ public class ExifToolNew2 implements ExifToolService {
 					"image cannot be null and must be a valid stream of image data.");
 		if (format == null)
 			throw new IllegalArgumentException("format cannot be null");
+//		if (tags == null) {
+//			tags = new MetadataTag[0];
+//		}
 		if (tags == null || tags.length == 0)
 			throw new IllegalArgumentException(
 					"tags cannot be null and must contain 1 or more Tag to query the image for.");
@@ -733,9 +736,6 @@ public class ExifToolNew2 implements ExifToolService {
 							+ "], ensure that the image exists at the given path and that the executing Java process has permissions to read it.");
 
 		long startTime = System.currentTimeMillis();
-		if (tags == null) {
-			tags = new MetadataTag[0];
-		}
 		/*
 		 * Create a result map big enough to hold results for each of the tags
 		 * and avoid collisions while inserting.

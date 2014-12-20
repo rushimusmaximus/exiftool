@@ -608,6 +608,9 @@ public class ExifTool implements ExifToolService, AutoCloseable {
 
 		// Validate input and create Arg Array
 		final boolean stayOpen = featureSet.contains(Feature.STAY_OPEN);
+		if (tags == null) {
+			tags = new String[0];
+		}
 		List<String> args = new ArrayList<String>(tags.length + 4);
 		if (format == null) {
 			throw new IllegalArgumentException("format cannot be null");
@@ -618,9 +621,6 @@ public class ExifTool implements ExifToolService, AutoCloseable {
 			args.add("-a"); // suppress duplicates
 		}
 		args.add("-S"); // compact output
-		if (tags == null) {
-			tags = new String[0];
-		}
 		for (String tag : tags) {
 			args.add("-" + tag);
 		}
