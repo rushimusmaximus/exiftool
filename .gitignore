@@ -1,6 +1,7 @@
 .classpath
 .project
 .settings/
-/bin
-/dist
-/target
+*.iml
+bin/
+dist/
+target/
