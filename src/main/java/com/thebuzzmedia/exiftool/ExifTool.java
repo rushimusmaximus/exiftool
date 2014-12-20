@@ -757,7 +757,6 @@ public class ExifTool {
                 MIME_TYPE("MIMEType", String.class),COMMENTS("Comment", String.class),
                 CREATE_DATE("CreateDate", Integer.class),
                 CONTENT_CREATION_DATE("ContentCreateDate", Integer.class);
-	}
 
 		private static final Map<String, Tag> TAG_LOOKUP_MAP;
 
