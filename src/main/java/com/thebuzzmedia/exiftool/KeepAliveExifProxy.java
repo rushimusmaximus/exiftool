@@ -2,14 +2,8 @@ package com.thebuzzmedia.exiftool;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.Timer;
-import java.util.TimerTask;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Manages an external exif process in keep alive mode.
@@ -17,21 +11,20 @@ import java.util.concurrent.atomic.AtomicLong;
 public class KeepAliveExifProxy implements ExifProxy {
 	private final List<String> startupArgs;
 	private final AtomicBoolean shuttingDown = new AtomicBoolean(false);
-	private final Timer cleanupTimer = new Timer(ExifToolNew3.CLEANUP_THREAD_NAME,
-			true);
+	private final Timer cleanupTimer = new Timer(ExifToolNew3.CLEANUP_THREAD_NAME, true);
 	private final long inactivityTimeout;
 	private volatile long lastRunStart = 0;
 	private volatile ExifProcess process;
 	private final Charset charset;
-
+	public KeepAliveExifProxy(String exifCmd, List<String> baseArgs, long inactivityTimeoutParam) {
+		this(exifCmd,baseArgs,inactivityTimeoutParam,ExifToolNew3.computeDefaultCharset(EnumSet.noneOf(Feature.class)));
+	}
 	public KeepAliveExifProxy(String exifCmd, List<String> baseArgs, Charset charset) {
-		this(exifCmd, baseArgs, Long.getLong(
-				ExifToolNew.ENV_EXIF_TOOL_PROCESSCLEANUPDELAY,
-				ExifToolNew.DEFAULT_PROCESS_CLEANUP_DELAY),charset);
+		this(exifCmd, baseArgs, Long.getLong(ExifToolNew.ENV_EXIF_TOOL_PROCESSCLEANUPDELAY,
+				ExifToolNew.DEFAULT_PROCESS_CLEANUP_DELAY), charset);
 	}
 
-	public KeepAliveExifProxy(String exifCmd, List<String> baseArgs,
-			long inactivityTimeoutParam, Charset charset) {
+	public KeepAliveExifProxy(String exifCmd, List<String> baseArgs, long inactivityTimeoutParam, Charset charset) {
 		this.inactivityTimeout = inactivityTimeoutParam;
 		startupArgs = new ArrayList<String>(baseArgs.size() + 5);
 		startupArgs.add(exifCmd);
@@ -44,8 +37,7 @@ public class KeepAliveExifProxy implements ExifProxy {
 			cleanupTimer.schedule(new TimerTask() {
 				@Override
 				public void run() {
-					if (process != null && lastRunStart > 0
-							&& inactivityTimeout > 0) {
+					if (process != null && lastRunStart > 0 && inactivityTimeout > 0) {
 						if ((System.currentTimeMillis() - lastRunStart) > inactivityTimeout) {
 							synchronized (this) {
 								if (process != null) {
@@ -59,7 +51,7 @@ public class KeepAliveExifProxy implements ExifProxy {
 				}
 			}, inactivityTimeout
 			// 60 * 1000// every minute
-			);
+					);
 		}
 	}
 
@@ -71,15 +63,14 @@ public class KeepAliveExifProxy implements ExifProxy {
 				if (process == null || process.isClosed()) {
 					ExifToolNew3.log
 							.debug("Starting daemon ExifToolNew3 process and creating read/write streams (this only happens once)...");
-					process = new ExifProcess(true, startupArgs,charset);
+					process = new ExifProcess(true, startupArgs, charset);
 				}
 			}
 		}
 	}
 
 	@Override
-	public Map<String, String> execute(final long runTimeoutMills,
-			List<String> args) throws IOException {
+	public List<String> execute(final long runTimeoutMills, List<String> args) {
 		lastRunStart = System.currentTimeMillis();
 		int attempts = 0;
 		while (attempts < 3 && !shuttingDown.get()) {
@@ -89,7 +80,7 @@ public class KeepAliveExifProxy implements ExifProxy {
 					if (process == null || process.isClosed()) {
 						ExifToolNew3.log
 								.debug("Starting daemon ExifToolNew3 process and creating read/write streams (this only happens once)...");
-						process = new ExifProcess(true, startupArgs,charset);
+						process = new ExifProcess(true, startupArgs, charset);
 					}
 				}
 			}
@@ -101,28 +92,24 @@ public class KeepAliveExifProxy implements ExifProxy {
 						public void run() {
 							if (process != null && !process.isClosed()) {
 								ExifToolNew3.log
-										.warn("Process ran too long closing, max "
-												+ runTimeoutMills + " mills");
+										.warn("Process ran too long closing, max " + runTimeoutMills + " mills");
 								process.close();
 							}
 						}
 					};
 					cleanupTimer.schedule(attemptTimer, runTimeoutMills);
 				}
-				ExifToolNew3.log
-						.debug("Streaming arguments to ExifToolNew3 process...");
+				ExifToolNew3.log.debug("Streaming arguments to ExifToolNew3 process...");
 				return process.sendToRunning(args);
 			} catch (IOException ex) {
-				if (ExifToolNew3.STREAM_CLOSED_MESSAGE.equals(ex.getMessage())
-						&& !shuttingDown.get()) {
+				if (ExifToolNew3.STREAM_CLOSED_MESSAGE.equals(ex.getMessage()) && !shuttingDown.get()) {
 					// only catch "Stream Closed" error (happens when
 					// process has died)
-					ExifToolNew3.log.warn(String.format(
-							"Caught IOException(\"%s\"), will restart daemon",
+					ExifToolNew3.log.warn(String.format("Caught IOException(\"%s\"), will restart daemon",
 							ExifToolNew3.STREAM_CLOSED_MESSAGE));
 					process.close();
 				} else {
-					throw ex;
+					throw new RuntimeException(ex);
 				}
 			} finally {
 				if (attemptTimer != null)
@@ -130,9 +117,9 @@ public class KeepAliveExifProxy implements ExifProxy {
 			}
 		}
 		if (shuttingDown.get()) {
-			throw new IOException("Shutting Down");
+			throw new RuntimeException("Shutting Down");
 		}
-		throw new IOException("Ran out of attempts");
+		throw new RuntimeException("Ran out of attempts");
 	}
 
 	@Override

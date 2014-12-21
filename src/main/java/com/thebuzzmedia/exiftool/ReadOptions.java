@@ -6,11 +6,11 @@ package com.thebuzzmedia.exiftool;
  * setters.
  */
 public class ReadOptions {
-	final long runTimeoutMills;
-	final boolean convertTypes;
-	final boolean numericOutput;
-	final boolean showDuplicates;
-	final boolean showEmptyTags;
+	public final long runTimeoutMills;
+	public final boolean convertTypes;
+	public final boolean numericOutput;
+	public final boolean showDuplicates;
+	public final boolean showEmptyTags;
 
 	public ReadOptions() {
 		this(0, false, false, false, false);
@@ -86,6 +86,10 @@ public class ReadOptions {
 	public ReadOptions withNumericOutput(boolean enabled) {
 		return new ReadOptions(runTimeoutMills, convertTypes, enabled,
 				showDuplicates, showEmptyTags);
+	}
+
+	public ReadOptions withNumericOutput(Format format) {
+		return withNumericOutput(format==Format.NUMERIC);
 	}
 
 	/**

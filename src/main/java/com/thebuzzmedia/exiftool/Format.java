@@ -16,7 +16,7 @@ import java.io.File;
  * <p/>
  * If the caller finds the human-readable format easier to process,
  * {@link Format#HUMAN_READABLE} can be specified when calling
- * {@link ExifToolNew3#getImageMeta(File, Format, Tag...)} and the returned
+ * {@link ExifToolNew3#getImageMeta4(File, ReadOptions, Format, Tag...)} and the returned
  * {@link String} values processed manually by the caller.
  * <p/>
  * In order to see the types of values that are returned when

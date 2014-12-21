@@ -246,8 +246,12 @@ public enum Tag implements MetadataTag {
 		}
 		return null;
 	}
-	
-	public static <T> T parseValue(Tag tag, String value)
+	@SuppressWarnings("unchecked")
+	public <T,T2> T getValue(Map<MetadataTag, T2> metadata) {
+		return (T)parseValue(this,metadata.get(this));
+	}
+	@SuppressWarnings("unchecked")
+	public static <T> T parseValue(Tag tag, Object value)
 			throws IllegalArgumentException, NumberFormatException {
 		if (tag == null)
 			throw new IllegalArgumentException("tag cannot be null");
@@ -257,25 +261,26 @@ public enum Tag implements MetadataTag {
 		// Check that there is work to do first.
 		if (value != null) {
 			Class<?> type = tag.type;
-
-			if (Boolean.class.isAssignableFrom(type))
-				result = (T) Boolean.valueOf(value);
+			if(type == value.getClass()){
+				result = (T)value;
+			}else if (Boolean.class.isAssignableFrom(type))
+				result = (T) Boolean.valueOf(value.toString());
 			else if (Byte.class.isAssignableFrom(type))
-				result = (T) Byte.valueOf(Byte.parseByte(value));
+				result = (T) Byte.valueOf(Byte.parseByte(value.toString()));
 			else if (Integer.class.isAssignableFrom(type))
-				result = (T) Integer.valueOf(Integer.parseInt(value));
+				result = (T) Integer.valueOf(Integer.parseInt(value.toString()));
 			else if (Short.class.isAssignableFrom(type))
-				result = (T) Short.valueOf(Short.parseShort(value));
+				result = (T) Short.valueOf(Short.parseShort(value.toString()));
 			else if (Long.class.isAssignableFrom(type))
-				result = (T) Long.valueOf(Long.parseLong(value));
+				result = (T) Long.valueOf(Long.parseLong(value.toString()));
 			else if (Float.class.isAssignableFrom(type))
-				result = (T) Float.valueOf(Float.parseFloat(value));
+				result = (T) Float.valueOf(Float.parseFloat(value.toString()));
 			else if (Double.class.isAssignableFrom(type))
-				result = (T) Double.valueOf(Double.parseDouble(value));
+				result = (T) Double.valueOf(Double.parseDouble(value.toString()));
 			else if (Character.class.isAssignableFrom(type))
-				result = (T) Character.valueOf(value.charAt(0));
+				result = (T) Character.valueOf(value.toString().charAt(0));
 			else if (String.class.isAssignableFrom(type))
-				result = (T) value;
+				result = (T) value.toString();
 		}
 
 		return result;

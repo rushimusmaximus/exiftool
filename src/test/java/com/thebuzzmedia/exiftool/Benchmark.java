@@ -6,6 +6,8 @@ import java.io.IOException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.thebuzzmedia.exiftool.adapters.ExifToolService;
+
 public class Benchmark {
 
 	public static final int ITERATIONS = 25;
@@ -27,8 +29,8 @@ public class Benchmark {
 				+ (tags.length * images.length * ITERATIONS)
 				+ " total operations.\n");
 
-		ExifToolService tool = new ExifToolNew3();
-		ExifToolService toolSO = new ExifToolNew3(Feature.STAY_OPEN);
+		ExifToolService tool = RawExifTool.Factory.create();
+		ExifToolService toolSO = RawExifTool.Factory.create(Feature.STAY_OPEN);
 
 		/*
 		 * -stay_open False
@@ -67,7 +69,7 @@ public class Benchmark {
 		long startTime = System.currentTimeMillis();
 
 		for (File image : images) {
-			tool.getImageMeta(image, tags);
+			tool.getImageMeta3(image, new ReadOptions(), tags);
 		}
 
 		return (System.currentTimeMillis() - startTime);

@@ -7,6 +7,8 @@ import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.thebuzzmedia.exiftool.adapters.ExifToolService;
+
 public class Example {
 
 	private static Logger log = LoggerFactory.getLogger(Example.class);
@@ -17,15 +19,15 @@ public class Example {
 
 		// System.setProperty(ExifToolNew3.ENV_EXIF_TOOL_PATH,
 		// "D:\\Tools\\exiftool.exe");
-		ExifToolService tool = new ExifToolNew3(Feature.STAY_OPEN);
+		ExifToolService tool = RawExifTool.Factory.create(Feature.STAY_OPEN);
 
 		File[] images = new File(TEST_FILES_PATH).listFiles();
 
 		// list all first-class tags
 		for (File f : images) {
 			log.info("\n[{}]", f.getName());
-			Map<MetadataTag, String> metadata = tool.getImageMeta(f,
-					Format.HUMAN_READABLE, Tag.values());
+			Map<MetadataTag, String> metadata = tool.getImageMeta4(f,
+					new ReadOptions(), Format.HUMAN_READABLE, Tag.values());
 			for (MetadataTag key : metadata.keySet()) {
 				log.info(String.format("\t\t%s: %s", key.getKey(),
 						metadata.get(key)));
@@ -39,8 +41,8 @@ public class Example {
 		for (TagGroup tagGroup : new TagGroup[] {
 				TagGroup.EXIF, TagGroup.IPTC,
 				TagGroup.XMP }) {
-			Map<String, String> metadata = tool.getImageMeta(f,
-					Format.HUMAN_READABLE, tagGroup);
+			Map<String, String> metadata = tool.getImageMeta5(f,
+					new ReadOptions(), Format.HUMAN_READABLE, tagGroup);
 			log.info(tagGroup.getKey());
 			for (String key : metadata.keySet()) {
 				log.info(String.format("\t\t%s: %s", key, metadata.get(key)));
