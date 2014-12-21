@@ -156,12 +156,13 @@ public class TestExifTool {
 		imageFile = new File(url.toURI());
 		metadata = tool.getImageMeta(imageFile, Format.HUMAN_READABLE,
 				Tag.values());
-		assertEquals(31, metadata.size());
+		assertEquals(32, metadata.size());
 
 		keys = metadata.keySet();
 
 		tag = Tag.IMAGE_WIDTH;
 		assertTrue(keys.contains(tag));
+		Object a = metadata.get(tag);
 		assertEquals(728, tag.parseValue(metadata.get(tag)));
 
 		tag = Tag.IMAGE_HEIGHT;
