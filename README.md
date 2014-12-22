@@ -241,3 +241,23 @@ build.sbt
 
 	resolvers += "raisercostin" at "https://raisercostin.googlecode.com/svn/maven2"
 	libraryDependencies += "com.thebuzzmedia.exiftool" % "exiftool-lib" % "2.3.2"
+
+## Samples
+
+    ExifTool tool = new ExifTool();
+    File imageFile = new File("/path/to/image.jpg");
+
+    //Read Metadata
+    Map<ExifTool.Tag,String> metadata = tool.getImageMeta(imageFile,
+      ExifTool.Format.HUMAN_READABLE, ExifTool.Tag.values());
+    String cameraModel = metadata.get(ExifTool.Tag.MODEL);
+
+    ExifTool.Tag tag = ExifTool.Tag.IMAGE_HEIGHT;
+    int imageWidth = tag.parseValue(metadata.get(tag));
+
+    //Write Metadata
+    Map<Object, Object> data = new HashMap<Object, Object>();
+    data.put(ExifTool.MwgTag.KEYWORDS, new String[]{"portrait", "nature", "flower"});
+    tool.writeMetadata(imageFile, data);
+
+See the included unit tests for more examples.
