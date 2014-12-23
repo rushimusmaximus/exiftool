@@ -29,16 +29,16 @@ public class ExifToolService extends RawExifToolAdapter implements Closeable {
 		Map<String, String> all = getImageMeta(image, options, toKeys(tags));
 		return (Map) toMetadataTagKeys(all);
 	}
-
-	public Map<Object, Object> getImageMeta2c(File file, ReadOptions options, MetadataTag... tags)
-			throws IllegalArgumentException, SecurityException, IOException {
-		return getImageMeta6(file, options, tags);
-	}
-
-	public Map<Object, Object> getImageMeta2b(File image, ReadOptions options, MetadataTag... tags)
-			throws IllegalArgumentException, SecurityException, IOException {
-		return (Map) getImageMeta3(image, options, tags);
-	}
+//
+//	public Map<Object, Object> getImageMeta2c(File file, ReadOptions options, MetadataTag... tags)
+//			throws IllegalArgumentException, SecurityException, IOException {
+//		return getImageMeta6(file, options, tags);
+//	}
+//
+//	public Map<Object, Object> getImageMeta2b(File image, ReadOptions options, MetadataTag... tags)
+//			throws IllegalArgumentException, SecurityException, IOException {
+//		return (Map) getImageMeta3(image, options, tags);
+//	}
 
 	public Map<MetadataTag, String> getImageMeta3(File image, ReadOptions options, MetadataTag... tags)
 			throws IllegalArgumentException, SecurityException, IOException {
@@ -49,32 +49,32 @@ public class ExifToolService extends RawExifToolAdapter implements Closeable {
 			throws IllegalArgumentException, SecurityException, IOException {
 		return toMetadataTagKeys(getImageMeta(image, options, toKeys(tags)));
 	}
-
-	public Map<MetadataTag, String> getImageMeta4c(File file, ReadOptions options, Format format, MetadataTag... tags)
-			throws IllegalArgumentException, SecurityException, IOException {
-		Map<?, ?> result = getImageMeta6(file, options, tags);
-		// since meta tags are passed we will have a proper Map result
-		return (Map) result;
-	}
-
-	public Map<MetadataTag, String> getImageMeta4b(File image, ReadOptions options, Format format, MetadataTag... tags)
-			throws IllegalArgumentException, SecurityException, IOException {
-		if (tags == null) {
-			tags = new MetadataTag[0];
-		}
-		String[] stringTags = new String[tags.length];
-		int i = 0;
-		for (MetadataTag tag : tags) {
-			stringTags[i++] = tag.getKey();
-		}
-		Map<String, String> result = exifTool.getImageMeta(image, new ReadOptions().withNumericOutput(format)
-				.withShowDuplicates(!true), stringTags);
-		ReadOptions readOptions = new ReadOptions().withConvertTypes(true).withNumericOutput(
-				format.equals(Format.NUMERIC));
-		return (Map) convertToMetadataTags(readOptions, result, tags);
-		// map only known values?
-		// return Tag.toTagMap(result);
-	}
+//
+//	public Map<MetadataTag, String> getImageMeta4c(File file, ReadOptions options, Format format, MetadataTag... tags)
+//			throws IllegalArgumentException, SecurityException, IOException {
+//		Map<?, ?> result = getImageMeta6(file, options, tags);
+//		// since meta tags are passed we will have a proper Map result
+//		return (Map) result;
+//	}
+//
+//	public Map<MetadataTag, String> getImageMeta4b(File image, ReadOptions options, Format format, MetadataTag... tags)
+//			throws IllegalArgumentException, SecurityException, IOException {
+//		if (tags == null) {
+//			tags = new MetadataTag[0];
+//		}
+//		String[] stringTags = new String[tags.length];
+//		int i = 0;
+//		for (MetadataTag tag : tags) {
+//			stringTags[i++] = tag.getKey();
+//		}
+//		Map<String, String> result = exifTool.getImageMeta(image, new ReadOptions().withNumericOutput(format)
+//				.withShowDuplicates(!true), stringTags);
+//		ReadOptions readOptions = new ReadOptions().withConvertTypes(true).withNumericOutput(
+//				format.equals(Format.NUMERIC));
+//		return (Map) convertToMetadataTags(readOptions, result, tags);
+//		// map only known values?
+//		// return Tag.toTagMap(result);
+//	}
 
 	public Map<String, String> getImageMeta5(File image, ReadOptions options, Format format, TagGroup... tags)
 			throws IllegalArgumentException, SecurityException, IOException {
@@ -120,18 +120,18 @@ public class ExifToolService extends RawExifToolAdapter implements Closeable {
 	// }
 
 	// @Override
-	public Map<String, String> getImageMeta5b(File image, ReadOptions options, Format format, TagGroup... tags)
-			throws IllegalArgumentException, SecurityException, IOException {
-		if (tags == null) {
-			tags = new TagGroup[0];
-		}
-		String[] stringTags = new String[tags.length];
-		int i = 0;
-		for (TagGroup tag : tags) {
-			stringTags[i++] = tag.getKey();
-		}
-		return exifTool.getImageMeta(image, options.withNumericOutput(format).withShowDuplicates(false), stringTags);
-	}
+//	public Map<String, String> getImageMeta5b(File image, ReadOptions options, Format format, TagGroup... tags)
+//			throws IllegalArgumentException, SecurityException, IOException {
+//		if (tags == null) {
+//			tags = new TagGroup[0];
+//		}
+//		String[] stringTags = new String[tags.length];
+//		int i = 0;
+//		for (TagGroup tag : tags) {
+//			stringTags[i++] = tag.getKey();
+//		}
+//		return exifTool.getImageMeta(image, options.withNumericOutput(format).withShowDuplicates(false), stringTags);
+//	}
 
 	public Map<Object, Object> getImageMeta6(File file, ReadOptions options, Object... tags) throws IOException {
 		return getImageMeta7(file, options, tags);
