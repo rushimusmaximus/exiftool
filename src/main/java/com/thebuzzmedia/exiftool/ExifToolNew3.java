@@ -183,6 +183,7 @@ import com.thebuzzmedia.exiftool.adapters.ExifToolService;
  * @since 1.1
  */
 public class ExifToolNew3 implements RawExifTool {
+	private static final org.slf4j.Logger LOG = org.slf4j.LoggerFactory.getLogger(ExifToolNew3.class);
 
 	private static final String ENV_EXIF_TOOL_PATH = "exiftool.path";
 	private static final String ENV_EXIF_TOOL_PROCESSCLEANUPDELAY = "exiftool.processCleanupDelay";
@@ -203,8 +204,6 @@ public class ExifToolNew3 implements RawExifTool {
 	 */
 	static final Pattern TAG_VALUE_PATTERN = Pattern.compile("\\s*:\\s*");
 	static final String STREAM_CLOSED_MESSAGE = "Stream closed";
-
-	static Logger log = LoggerFactory.getLogger(ExifToolNew3.class);
 
 	/**
 	 * The absolute path to the ExifToolNew3 executable on the host system running this class as defined by the "
@@ -356,7 +355,7 @@ public class ExifToolNew3 implements RawExifTool {
 		 * ExifToolNew3 install, so we need to do that.
 		 */
 		if (supported == null) {
-			log.debug("Support for feature %s has not been checked yet, checking...");
+			LOG.debug("Support for feature %s has not been checked yet, checking...");
 			supported = feature.isSupported(exifVersion);
 			featureSupportedMap.put(feature, supported);
 		}
@@ -380,7 +379,7 @@ public class ExifToolNew3 implements RawExifTool {
 		if (process == null || process.isClosed()) {
 			synchronized (this) {
 				if (process == null || process.isClosed()) {
-					log.debug("Starting daemon ExifToolNew3 process and creating read/write streams (this only happens once)...");
+					LOG.debug("Starting daemon ExifToolNew3 process and creating read/write streams (this only happens once)...");
 					process = ExifProcess.startup(exifCmd, charset);
 				}
 			}
@@ -394,7 +393,7 @@ public class ExifToolNew3 implements RawExifTool {
 				currentCleanupTask = new TimerTask() {
 					@Override
 					public void run() {
-						log.info("Auto cleanup task running...");
+						LOG.info("Auto cleanup task running...");
 						process.close();
 					}
 				};
@@ -516,8 +515,8 @@ public class ExifToolNew3 implements RawExifTool {
 
 		// start process
 		long startTime = System.currentTimeMillis();
-		log.debug(String.format("Querying %d tags from image: %s", tags.length, file.getAbsolutePath()));
-		log.info("call stayOpen="+stayOpen +" exiftool "+ Joiner.on(" ").join(args));
+		LOG.debug(String.format("Querying %d tags from image: %s", tags.length, file.getAbsolutePath()));
+		LOG.info("call stayOpen="+stayOpen +" exiftool "+ Joiner.on(" ").join(args));
 		/*
 		 * Using ExifToolNew3 in daemon mode (-stay_open True) executes different code paths below. So establish the
 		 * flag for this once and it is reused a multitude of times later in this method to figure out where to branch
@@ -525,16 +524,16 @@ public class ExifToolNew3 implements RawExifTool {
 		 */
 		Map<String, String> resultMap;
 		if (stayOpen) {
-			log.debug("Using ExifToolNew3 in daemon mode (-stay_open True)...");
+			LOG.debug("Using ExifToolNew3 in daemon mode (-stay_open True)...");
 			resultMap = processStayOpen(args);
 		} else {
-			log.debug("Using ExifToolNew3 in non-daemon mode (-stay_open False)...");
+			LOG.debug("Using ExifToolNew3 in non-daemon mode (-stay_open False)...");
 			resultMap = ExifToolService.toMap(execute(args));
 		}
 
 		// Print out how long the call to external ExifToolNew3 process took.
-		if (log.isDebugEnabled()) {
-			log.debug(String.format("Image Meta Processed in %d ms [queried %d tags and found %d values]",
+		if (LOG.isDebugEnabled()) {
+			LOG.debug(String.format("Image Meta Processed in %d ms [queried %d tags and found %d values]",
 					(System.currentTimeMillis() - startTime), tags.length, resultMap.size()));
 		}
 
@@ -602,7 +601,7 @@ public class ExifToolNew3 implements RawExifTool {
 							+ "], ensure that the image exists at the given path and that the executing Java process has permissions to write to it.");
 		}
 
-		log.info("Adding Tags {} to {}", values, image.getAbsolutePath());
+		LOG.info("Adding Tags {} to {}", values, image.getAbsolutePath());
 
 		// start process
 		long startTime = System.currentTimeMillis();
@@ -610,8 +609,8 @@ public class ExifToolNew3 implements RawExifTool {
 		execute(null, image, values);
 
 		// Print out how long the call to external ExifToolNew3 process took.
-		if (log.isDebugEnabled()) {
-			log.debug(String.format("Image Meta Processed in %d ms [added %d tags]",
+		if (LOG.isDebugEnabled()) {
+			LOG.debug(String.format("Image Meta Processed in %d ms [added %d tags]",
 					(System.currentTimeMillis() - startTime), values.size()));
 		}
 	}
@@ -619,10 +618,10 @@ public class ExifToolNew3 implements RawExifTool {
 	private <T> void execute(WriteOptions options, File image, Map<T, Object> values) throws IOException {
 		final boolean stayOpen = featureSet.contains(Feature.STAY_OPEN);
 		if (stayOpen) {
-			log.debug("Using ExifToolNew3 in daemon mode (-stay_open True)...");
+			LOG.debug("Using ExifToolNew3 in daemon mode (-stay_open True)...");
 			processStayOpen(createCommandList(image.getAbsolutePath(), values, stayOpen));
 		} else {
-			log.debug("Using ExifToolNew3 in non-daemon mode (-stay_open False)...");
+			LOG.debug("Using ExifToolNew3 in non-daemon mode (-stay_open False)...");
 			ExifProcess
 					.executeToResults(exifCmd, createCommandList(image.getAbsolutePath(), values, stayOpen), charset);
 		}
@@ -675,19 +674,19 @@ public class ExifToolNew3 implements RawExifTool {
 					attemptTimer = new TimerTask() {
 						@Override
 						public void run() {
-							log.warn("Process ran too long closing, max " + timeoutWhenKeepAlive + " mills");
+							LOG.warn("Process ran too long closing, max " + timeoutWhenKeepAlive + " mills");
 							process.close();
 						}
 					};
 					cleanupTimer.schedule(attemptTimer, timeoutWhenKeepAlive);
 				}
-				log.debug("Streaming arguments to ExifToolNew3 process...");
+				LOG.debug("Streaming arguments to ExifToolNew3 process...");
 				return ExifToolService.toMap(process.sendArgs(args));
 			} catch (IOException ex) {
 				if (STREAM_CLOSED_MESSAGE.equals(ex.getMessage()) && !shuttingDown.get()) {
 					// only catch "Stream Closed" error (happens when process
 					// has died)
-					log.warn(String.format("Caught IOException(\"%s\"), will restart daemon", STREAM_CLOSED_MESSAGE));
+					LOG.warn(String.format("Caught IOException(\"%s\"), will restart daemon", STREAM_CLOSED_MESSAGE));
 					process.close();
 				} else {
 					throw ex;
@@ -705,7 +704,7 @@ public class ExifToolNew3 implements RawExifTool {
 
 	/**
 	 * Helper method used to ensure a message is loggable before it is logged and then pre-pend a universal prefix to
-	 * all log messages generated by this library to make the log entries easy to parse visually or programmatically.
+	 * all LOG messages generated by this library to make the LOG entries easy to parse visually or programmatically.
 	 * <p/>
 	 * If a message cannot be logged (logging is disabled) then this method returns immediately.
 	 * <p/>
@@ -715,7 +714,7 @@ public class ExifToolNew3 implements RawExifTool {
 	 * calculations.
 	 * 
 	 * @param message
-	 *            The log message in <a href=
+	 *            The LOG message in <a href=
 	 *            "http://download.oracle.com/javase/6/docs/api/java/util/Formatter.html#syntax" >format string
 	 *            syntax</a> that will be logged.
 	 * @param params
@@ -725,7 +724,7 @@ public class ExifToolNew3 implements RawExifTool {
 	 * @see #LOG_PREFIX
 	 */
 	protected static void log(String message, Object... params) {
-		log.debug(message, params);
+		LOG.debug(message, params);
 	}
 
 	@Override
@@ -745,7 +744,7 @@ public class ExifToolNew3 implements RawExifTool {
 
 	@Override
 	protected void finalize() throws Throwable {
-		log.debug("Shutdown on finalize ...");
+		LOG.debug("Shutdown on finalize ...");
 		shutdown();
 		super.finalize();
 	}
