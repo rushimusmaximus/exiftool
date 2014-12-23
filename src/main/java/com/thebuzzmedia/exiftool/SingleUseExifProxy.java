@@ -5,6 +5,7 @@ import java.nio.charset.Charset;
 import java.util.*;
 
 public class SingleUseExifProxy implements ExifProxy {
+	private static final org.slf4j.Logger LOG = org.slf4j.LoggerFactory.getLogger(SingleUseExifProxy.class);
 	private final Timer cleanupTimer = new Timer(ExifToolNew3.CLEANUP_THREAD_NAME, true);
 	private final List<String> baseArgs;
 	private final Charset charset;
@@ -32,7 +33,7 @@ public class SingleUseExifProxy implements ExifProxy {
 				@Override
 				public void run() {
 					if (!process.isClosed()) {
-						ExifToolNew3.log.warn("Process ran too long closing, max " + runTimeoutMills + " mills");
+						LOG.warn("Process ran too long closing, max " + runTimeoutMills + " mills");
 						process.close();
 					}
 				}

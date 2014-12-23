@@ -31,6 +31,8 @@ import com.google.common.collect.Lists;
  * streams for reading and writing data.
  */
 public final class ExifProcess {
+	private static final org.slf4j.Logger LOG = org.slf4j.LoggerFactory.getLogger(ExifProcess.class);
+
 	private static class Pair<P1, P2> {
 		final P1 _1;
 		final P2 _2;
@@ -51,11 +53,13 @@ public final class ExifProcess {
 	static {
 		Runtime.getRuntime().addShutdownHook(new Thread() {
 			public void run() {
-				ExifToolNew3.log.info("Close all remaining processes:" + all.keySet());
-				for (Entry<String, Pair<String, ExifProcess>> item : new HashSet<Entry<String, Pair<String, ExifProcess>>>(
-						all.entrySet())) {
-					ExifToolNew3.log.info("Close leaked process " + item);
-					item.getValue()._2.close();
+				if (!all.isEmpty()) {
+					ExifToolNew3.log.warn("Close all leaked processes:" + all.keySet());
+					for (Entry<String, Pair<String, ExifProcess>> item : new HashSet<Entry<String, Pair<String, ExifProcess>>>(
+							all.entrySet())) {
+						ExifToolNew3.log.warn("Close leaked process " + item, new RuntimeException());
+						item.getValue()._2.close();
+					}
 				}
 			}
 		});
@@ -76,8 +80,7 @@ public final class ExifProcess {
 		return new ExifProcess(keepAlive, args, charset);
 	}
 
-	public static List<String> executeToResults(String exifCmd, List<String> args, Charset charset)
-			throws IOException {
+	public static List<String> executeToResults(String exifCmd, List<String> args, Charset charset) throws IOException {
 		List<String> newArgs = new ArrayList<String>(args.size() + 1);
 		newArgs.add(exifCmd);
 		newArgs.addAll(args);
@@ -98,11 +101,12 @@ public final class ExifProcess {
 		}
 		return sb.toString();
 	}
-//
-//	public static String executeToString(String exifCmd, List<String> args, Charset charset) throws IOException {
-//		return ExifProxy.$.toResponse(executeToResults(exifCmd,args,charset));
-//	}
-//
+
+	//
+	// public static String executeToString(String exifCmd, List<String> args, Charset charset) throws IOException {
+	// return ExifProxy.$.toResponse(executeToResults(exifCmd,args,charset));
+	// }
+	//
 	public static ExifProcess startup(String exifCmd, Charset charset) {
 		List<String> args = Arrays.asList(exifCmd, "-stay_open", "True", "-@", "-");
 		return _execute(true, args, charset);
@@ -158,6 +162,7 @@ public final class ExifProcess {
 			builder.append(arg).append("\n");
 		}
 		builder.append("-execute\n");
+		LOG.debug("sendArgs(\n" + builder.toString() + "\n)");
 		writeFlush(builder.toString());
 		return readResponse(args);
 	}
@@ -174,6 +179,7 @@ public final class ExifProcess {
 			throw new IOException(ExifToolNew3.STREAM_CLOSED_MESSAGE);
 		return reader.readLine();
 	}
+
 	public synchronized List<String> readResponse(List<String> args) throws IOException {
 		if (closed)
 			throw new IOException(ExifToolNew3.STREAM_CLOSED_MESSAGE);
@@ -182,15 +188,16 @@ public final class ExifProcess {
 		List<String> all = new ArrayList<String>();
 
 		while ((line = reader.readLine()) != null) {
-			if (closed)
+			if (closed) {
+				ExifToolNew3.log.info("stream closed message");
 				throw new IOException(ExifToolNew3.STREAM_CLOSED_MESSAGE);
+			}
+			ExifToolNew3.log.debug("stream line read [" + line + "]");
 			all.add(line);
 			/*
-			 * When using a persistent ExifToolNew3 process, it terminates its
-			 * output to us with a "{ready}" clause on a new line, we need to
-			 * look for it and break from this loop when we see it otherwise
-			 * this process will hang indefinitely blocking on the input stream
-			 * with no data to read.
+			 * When using a persistent ExifToolNew3 process, it terminates its output to us with a "{ready}" clause on a
+			 * new line, we need to look for it and break from this loop when we see it otherwise this process will hang
+			 * indefinitely blocking on the input stream with no data to read.
 			 */
 			if (keepAlive && line.equals("{ready}")) {
 				break;
@@ -205,12 +212,16 @@ public final class ExifProcess {
 				sb.append(error);
 			}
 			String result = sb.toString();
-			String message = result+". ["+all.size()+"] tags for exiftool with args ["+args+"].";
-			if(result.contains("No matching files")){
-				throw new ExifError(message);
-			}else{
-				ExifToolNew3.log.info(message);
-			}
+			String message = result + ". " + all.size() + " lines where read [" + all + "] for exiftool with args ["
+					+ args + "].";
+			// if(result.contains("No matching files")){
+			throw new ExifError(message);
+			// }else{
+			// ExifToolNew3.log.info(message);
+			// }
+		}
+		if (all.isEmpty()) {
+			throw new RuntimeException("Didn't get anything back from exiftool with args [" + args + "].");
 		}
 		return all;
 	}

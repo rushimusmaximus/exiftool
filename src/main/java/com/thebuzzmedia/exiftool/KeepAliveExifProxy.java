@@ -9,6 +9,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * Manages an external exif process in keep alive mode.
  */
 public class KeepAliveExifProxy implements ExifProxy {
+	private static final org.slf4j.Logger LOG = org.slf4j.LoggerFactory.getLogger(KeepAliveExifProxy.class);
 	private final List<String> startupArgs;
 	private final AtomicBoolean shuttingDown = new AtomicBoolean(false);
 	private final Timer cleanupTimer = new Timer(ExifToolNew3.CLEANUP_THREAD_NAME, true);
@@ -61,8 +62,7 @@ public class KeepAliveExifProxy implements ExifProxy {
 		if (process == null || process.isClosed()) {
 			synchronized (this) {
 				if (process == null || process.isClosed()) {
-					ExifToolNew3.log
-							.debug("Starting daemon ExifToolNew3 process and creating read/write streams (this only happens once)...");
+					LOG.debug("Starting daemon ExifToolNew3 process and creating read/write streams (this only happens once)...");
 					process = new ExifProcess(true, startupArgs, charset);
 				}
 			}

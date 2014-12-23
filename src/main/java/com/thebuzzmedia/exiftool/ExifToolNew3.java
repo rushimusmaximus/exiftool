@@ -42,6 +42,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.base.CharMatcher;
+import com.google.common.base.Joiner;
 import com.thebuzzmedia.exiftool.adapters.ExifToolService;
 
 /**
@@ -493,10 +494,12 @@ public class ExifToolNew3 implements RawExifTool {
 		} else if (readOptions.numericOutput) {
 			args.add("-n"); // numeric output
 		}
-		if (!readOptions.showDuplicates) {
-			args.add("-a"); // suppress duplicates
+		if (readOptions.showDuplicates) {
+			// args.add("-a");
+			args.add("-duplicates"); // allow duplicates to be shown
 		}
-		args.add("-S"); // compact output
+		// -S or -veryShort
+		args.add("-veryShort"); // compact output
 		for (String tag : tags) {
 			args.add("-" + tag);
 		}
@@ -514,6 +517,7 @@ public class ExifToolNew3 implements RawExifTool {
 		// start process
 		long startTime = System.currentTimeMillis();
 		log.debug(String.format("Querying %d tags from image: %s", tags.length, file.getAbsolutePath()));
+		log.info("call stayOpen="+stayOpen +" exiftool "+ Joiner.on(" ").join(args));
 		/*
 		 * Using ExifToolNew3 in daemon mode (-stay_open True) executes different code paths below. So establish the
 		 * flag for this once and it is reused a multitude of times later in this method to figure out where to branch
@@ -741,7 +745,7 @@ public class ExifToolNew3 implements RawExifTool {
 
 	@Override
 	protected void finalize() throws Throwable {
-		log.info("ExifToolNew3 not used anymore shutdown the exiftool process...");
+		log.debug("Shutdown on finalize ...");
 		shutdown();
 		super.finalize();
 	}
@@ -755,7 +759,7 @@ public class ExifToolNew3 implements RawExifTool {
 	@Override
 	public List<String> execute(List<String> args) {
 		try {
-			return ExifProcess.executeToResults(exifCmd,args,charset);
+			return ExifProcess.executeToResults(exifCmd, args, charset);
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}

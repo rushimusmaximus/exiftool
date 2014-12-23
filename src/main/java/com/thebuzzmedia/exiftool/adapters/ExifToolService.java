@@ -86,7 +86,7 @@ public class ExifToolService extends RawExifToolAdapter implements Closeable {
 		for (TagGroup tag : tags) {
 			stringTags[i++] = tag.getValue();
 		}
-		return exifTool.getImageMeta(image, new ReadOptions().withNumericOutput(format).withShowDuplicates(!false),
+		return exifTool.getImageMeta(image, new ReadOptions().withNumericOutput(format).withShowDuplicates(true),
 				stringTags);
 	}
 
@@ -306,9 +306,9 @@ public class ExifToolService extends RawExifToolAdapter implements Closeable {
 		Map<MetadataTag, String> result = new HashMap<MetadataTag, String>();
 		for (Entry<String, String> entry : all.entrySet()) {
 			MetadataTag tag = toTag(entry.getKey());
-			if (tag != null) {
-				result.put(tag, entry.getValue());
-			}
+			//if (tag != null) {
+			result.put(tag, entry.getValue());
+			//}
 		}
 		return result;
 	}

@@ -22,7 +22,7 @@ import java.util.concurrent.BlockingQueue;
 public class LineReaderThread extends Thread {
 	private BufferedReader reader;
 	private BlockingQueue<String> lineBuffer = new ArrayBlockingQueue<String>(
-			10, true);
+			50, true);
 
 	public LineReaderThread(String name, BufferedReader reader) {
 		super(name);
@@ -46,9 +46,9 @@ public class LineReaderThread extends Thread {
 				}
 			}
 		} catch (IOException ex) {
-			// exit
+			ExifToolNew3.log.warn("Error in LineReaderThread.",ex);
 		} catch (InterruptedException ignored) {
-			// exit
+			ExifToolNew3.log.debug("er:",ignored);
 		}
 	}
 
