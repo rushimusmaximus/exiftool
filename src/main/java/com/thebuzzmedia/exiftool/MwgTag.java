@@ -1,6 +1,7 @@
 package com.thebuzzmedia.exiftool;
 
 import java.util.Date;
+import java.util.Map;
 
 // ================================================================================
 public enum MwgTag implements MetadataTag {
@@ -50,5 +51,9 @@ public enum MwgTag implements MetadataTag {
 	@Override
 	public String toString() {
 		return name;
+	}
+	@SuppressWarnings("unchecked")
+	public <K,V1,V2> V2 getValue(Map<K, V1> metadata) {
+		return (V2) Tag.parseValue(this, metadata.get(this));
 	}
 }

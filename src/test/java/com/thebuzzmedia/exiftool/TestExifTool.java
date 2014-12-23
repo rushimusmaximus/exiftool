@@ -518,11 +518,11 @@ public class TestExifTool {
 			// Test what orientation value is at the start
 			SimpleDateFormat formatter = new SimpleDateFormat("yyyy:MM:dd hh:mm:ss");
 
-			Map<Object, Object> metadata = tool.getImageMeta2(imageFile, options, Tag.ORIENTATION,
+			Map<Object, Object> metadata = tool.getImageMeta2(imageFile, options.withNumericOutput(true), Tag.ORIENTATION,
 					MwgTag.DATE_TIME_ORIGINAL);
-			assertEquals("Orientation tag starting value is wrong", 1, metadata.get(Tag.ORIENTATION));
+			assertEquals("Orientation tag starting value is wrong", 1, Tag.ORIENTATION.getValue(metadata));
 			assertEquals("Wrong starting value", formatter.parse("2010:12:10 17:07:05"),
-					metadata.get(MwgTag.DATE_TIME_ORIGINAL));
+					MwgTag.DATE_TIME_ORIGINAL.getValue(metadata));
 
 			// Now change them
 			Map<Object, Object> data = new HashMap<Object, Object>();
