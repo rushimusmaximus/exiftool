@@ -246,9 +246,14 @@ public enum Tag implements MetadataTag {
 		}
 		return null;
 	}
+
+	public String getRawValue(Map<MetadataTag, String> metadata) {
+		return metadata.get(this);
+	}
+
 	@SuppressWarnings("unchecked")
-	public <T,T2> T getValue(Map<MetadataTag, T2> metadata) {
-		return (T)parseValue(this,metadata.get(this));
+	public <T, T2> T getValue(Map<MetadataTag, T2> metadata) {
+		return (T) parseValue(this, metadata.get(this));
 	}
 	@SuppressWarnings("unchecked")
 	public static <T> T parseValue(Tag tag, Object value)
@@ -261,9 +266,9 @@ public enum Tag implements MetadataTag {
 		// Check that there is work to do first.
 		if (value != null) {
 			Class<?> type = tag.type;
-			if(type == value.getClass()){
-				result = (T)value;
-			}else if (Boolean.class.isAssignableFrom(type))
+			if (type == value.getClass()) {
+				result = (T) value;
+			} else if (Boolean.class.isAssignableFrom(type))
 				result = (T) Boolean.valueOf(value.toString());
 			else if (Byte.class.isAssignableFrom(type))
 				result = (T) Byte.valueOf(Byte.parseByte(value.toString()));
@@ -274,9 +279,9 @@ public enum Tag implements MetadataTag {
 			else if (Long.class.isAssignableFrom(type))
 				result = (T) Long.valueOf(Long.parseLong(value.toString()));
 			else if (Float.class.isAssignableFrom(type))
-				result = (T) Float.valueOf(Float.parseFloat(value.toString()));
+				result = (T) new Float(parseDouble(value.toString()).floatValue());
 			else if (Double.class.isAssignableFrom(type))
-				result = (T) Double.valueOf(Double.parseDouble(value.toString()));
+				result = (T) parseDouble(value.toString());
 			else if (Character.class.isAssignableFrom(type))
 				result = (T) Character.valueOf(value.toString().charAt(0));
 			else if (String.class.isAssignableFrom(type))
@@ -286,15 +291,16 @@ public enum Tag implements MetadataTag {
 		return result;
 	}
 
-	private Double parseDouble(String in) {
+	private static Double parseDouble(String in) {
 		if (in.contains("/")) {
 			String[] enumeratorAndDivisor = in.split("/");
 			return Double.parseDouble(enumeratorAndDivisor[0])
-					/ Double.parseDouble(enumeratorAndDivisor[1]);
+					 / Double.parseDouble(enumeratorAndDivisor[1]);
 		} else {
 			return Double.parseDouble(in);
 		}
 	}
+
 	@SuppressWarnings("unchecked")
 	public <T> T parseValue2(String value) throws IllegalArgumentException {
 		return (T) deserialize(getKey(), value, getType());
@@ -319,8 +325,7 @@ public enum Tag implements MetadataTag {
 			} else if (Date.class.equals(expectedType)) {
 				if (value == null)
 					return null;
-				SimpleDateFormat formatter = new SimpleDateFormat(
-						ExifToolNew.EXIF_DATE_FORMAT);
+				SimpleDateFormat formatter = new SimpleDateFormat(ExifToolNew.EXIF_DATE_FORMAT);
 				return formatter.parse(value);
 			} else if (Integer.class.equals(expectedType)) {
 				if (value == null)
@@ -339,8 +344,7 @@ public enum Tag implements MetadataTag {
 					return 0;
 				String[] enumeratorAndDivisor = value.split("/");
 				if (enumeratorAndDivisor.length == 2) {
-					return Double.parseDouble(enumeratorAndDivisor[0])
-							/ Double.parseDouble(enumeratorAndDivisor[1]);
+					return Double.parseDouble(enumeratorAndDivisor[0]) / Double.parseDouble(enumeratorAndDivisor[1]);
 				} else {
 					return Double.parseDouble(value);
 				}
@@ -367,10 +371,8 @@ public enum Tag implements MetadataTag {
 	}
 
 	/**
-	 * Used to get a hint for the native type of this tag's value as
-	 * specified by Phil Harvey's <a href=
-	 * "http://www.sno.phy.queensu.ca/~phil/exiftool/TagNames/index.html"
-	 * >ExifToolNew3 Tag Guide</a>.
+	 * Used to get a hint for the native type of this tag's value as specified by Phil Harvey's <a href=
+	 * "http://www.sno.phy.queensu.ca/~phil/exiftool/TagNames/index.html" >ExifToolNew3 Tag Guide</a>.
 	 * 
 	 * @return a hint for the native type of this tag's value.
 	 */

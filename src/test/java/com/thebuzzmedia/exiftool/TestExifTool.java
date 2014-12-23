@@ -49,14 +49,14 @@ public class TestExifTool {
 			assertTrue(runTests(tool, ""));
 		}
 
-		try (ExifToolService tool = create(Feature.STAY_OPEN)) {
+		try (ExifToolService tool = create(/*Feature.STAY_OPEN*/)) {
 			assertTrue(runTests(tool, ""));
 		}
 
-		try (ExifToolService tool = create(Feature.STAY_OPEN)) {
-			tool.startup();
-			assertTrue(runTests(tool, ""));
-		}
+//		try (ExifToolService tool = create(Feature.STAY_OPEN)) {
+//			tool.startup();
+//			assertTrue(runTests(tool, ""));
+//		}
 	}
 
 	@Test
@@ -125,72 +125,34 @@ public class TestExifTool {
 		}
 	}
 
-	@Test
+	@Test(expected=IOException.class)
 	public void testProcessTimeout() throws Exception {
 		try (ExifToolService tool = create(1, Feature.STAY_OPEN)) {
 			long start = System.currentTimeMillis();
 			runTests(tool, "will fail");
 			long end = System.currentTimeMillis();
 			fail("should have failed. passed "+(end-start)+" miliseconds.");
-		} catch (IOException ex) {
-			;
 		}
 	}
 
 	public boolean runTests(ExifToolService tool, String runId)
 			throws IOException, URISyntaxException {
-
-		Map<MetadataTag, String> metadata;
-		File imageFile;
-		Set<MetadataTag> keys;
-		Tag tag;
-
-		URL url = getClass()
-				.getResource("/kureckjones_jett_075_02-cropped.tif");
-		imageFile = new File(url.toURI());
-		metadata = tool.getImageMeta4(imageFile, options ,
-				Format.HUMAN_READABLE, Tag.values());
-		assertEquals(32, metadata.size());
-
-		keys = metadata.keySet();
-
-		tag = Tag.IMAGE_WIDTH;
-		assertTrue(keys.contains(tag));
-		Object a = metadata.get(tag);
-		assertEquals(728, tag.getValue(metadata));
-
-		tag = Tag.IMAGE_HEIGHT;
-		assertEquals(825, tag.getValue(metadata));
-
-		tag = Tag.MODEL;
-		assertEquals("P 45+", tag.parseValue(metadata.get(tag)));
-		log.info(runId + ": finished image 1");
-
-		url = getClass().getResource("/nexus-s-electric-cars.jpg");
-		imageFile = new File(url.toURI());
-		metadata = tool.getImageMeta4(imageFile, options,
-				Format.HUMAN_READABLE, Tag.values());
-		assertEquals(27, metadata.size());
-
-		keys = metadata.keySet();
-		tag = Tag.IMAGE_WIDTH;
-		assertTrue(keys.contains(tag));
-		assertEquals(2560, tag.getValue(metadata));
-
-		tag = Tag.IMAGE_HEIGHT;
-		assertEquals(1920, tag.getValue(metadata));
-
-		tag = Tag.MODEL;
-		assertEquals("Nexus S", tag.getValue(metadata));
-
-		tag = Tag.ISO;
-		assertEquals(50, tag.getValue(metadata));
-
-		tag = Tag.SHUTTER_SPEED;
-		assertEquals("1/64", metadata.get(tag));
-		assertEquals(0.015625, tag.getValue(metadata));
-		log.info(runId + ": finished image 2");
+		testFile(tool, "/kureckjones_jett_075_02-cropped.tif",32,728,825,"P 45+",100,"1/6",0.16666);
+		testFile(tool, "/nexus-s-electric-cars.jpg",27,2560,1920,"Nexus S",50,"1/64",0.015625);
+//		Map<String, String> rawMetadata = tool.getImageMeta(imageFile, new ReadOptions().withNumericOutput(Format.HUMAN_READABLE));
+//		assertEquals(231, rawMetadata.size());
 		return true;
+	}
+	private void testFile(ExifToolService tool, String resource, int size, int width, int height, String model, int iso, String shutterRaw, double shutter) throws URISyntaxException, IOException {
+		File imageFile = new File(getClass().getResource(resource).toURI());
+		Map<MetadataTag, String> metadata = tool.getImageMeta4d(imageFile, new ReadOptions().withNumericOutput(Format.HUMAN_READABLE), Tag.values());
+		assertEquals(size, metadata.size());
+		assertEquals(width, Tag.IMAGE_WIDTH.getValue(metadata));
+		assertEquals(height, Tag.IMAGE_HEIGHT.getValue(metadata));
+		assertEquals(model, Tag.MODEL.getValue(metadata));
+		assertEquals(iso, Tag.ISO.getValue(metadata));
+		assertEquals(shutterRaw, Tag.SHUTTER_SPEED.getRawValue(metadata));
+		assertEquals(shutter, (Double)Tag.SHUTTER_SPEED.getValue(metadata),1e-5);
 	}
 
 	@Test
@@ -243,11 +205,10 @@ public class TestExifTool {
 			URL url = getClass().getResource("/nexus-s-electric-cars.jpg");
 			Path imageFile = Paths.get("target","nexus-s-electric-cars-tochange.jpg");
 			Files.copy(Paths.get(url.toURI()),imageFile, StandardCopyOption.REPLACE_EXISTING);
+			MetadataTag[] tags = { Tag.DATE_TIME_ORIGINAL };
 
 			// Check the value is correct at the start
-			Map<MetadataTag, String> metadata = tool.getImageMeta4(
-					imageFile.toFile(), options,
-					Format.HUMAN_READABLE, Tag.DATE_TIME_ORIGINAL);
+			Map<MetadataTag, String> metadata = tool.getImageMeta4d(imageFile.toFile(), new ReadOptions().withNumericOutput(Format.HUMAN_READABLE), tags);
 			assertEquals("Wrong starting value", "2010:12:10 17:07:05",
 					metadata.get(Tag.DATE_TIME_ORIGINAL));
 
@@ -256,10 +217,10 @@ public class TestExifTool {
 			Map<Tag, Object> newValues = new HashMap<Tag, Object>();
 			newValues.put(Tag.DATE_TIME_ORIGINAL, newDate);
 			tool.addImageMetadata(imageFile.toFile(), newValues);
+			MetadataTag[] tags1 = { Tag.DATE_TIME_ORIGINAL };
 
 			// Finally check that it's updated
-			metadata = tool.getImageMeta4(imageFile.toFile(),
-					options, Format.HUMAN_READABLE, Tag.DATE_TIME_ORIGINAL);
+			metadata = tool.getImageMeta4d(imageFile.toFile(), new ReadOptions().withNumericOutput(Format.HUMAN_READABLE), tags1);
 			assertEquals("DateTimeOriginal tag is wrong", newDate,
 					metadata.get(Tag.DATE_TIME_ORIGINAL));
 
@@ -281,11 +242,10 @@ public class TestExifTool {
 			URL url = getClass().getResource("/nexus-s-electric-cars.jpg");
 			Path imageFile = Paths.get("target","nexus-s-electric-cars-tochange.jpg");
 			Files.copy(Paths.get(url.toURI()),imageFile, StandardCopyOption.REPLACE_EXISTING);
+			MetadataTag[] tags = { Tag.DATE_TIME_ORIGINAL };
 
 			// Check the value is correct at the start
-			Map<MetadataTag, String> metadata = tool.getImageMeta4(
-					imageFile.toFile(), options,
-					Format.HUMAN_READABLE, Tag.DATE_TIME_ORIGINAL);
+			Map<MetadataTag, String> metadata = tool.getImageMeta4d(imageFile.toFile(), new ReadOptions().withNumericOutput(Format.HUMAN_READABLE), tags);
 			assertEquals("Wrong starting value", "2010:12:10 17:07:05",
 					metadata.get(Tag.DATE_TIME_ORIGINAL));
 
@@ -294,10 +254,10 @@ public class TestExifTool {
 			Map<Tag, Object> newValues = new HashMap<Tag, Object>();
 			newValues.put(Tag.DATE_TIME_ORIGINAL, newDate);
 			tool.addImageMetadata(imageFile.toFile(), newValues);
+			MetadataTag[] tags1 = { Tag.DATE_TIME_ORIGINAL };
 
 			// Finally check that it's updated
-			metadata = tool.getImageMeta4(imageFile.toFile(),
-					options, Format.HUMAN_READABLE, Tag.DATE_TIME_ORIGINAL);
+			metadata = tool.getImageMeta4d(imageFile.toFile(), new ReadOptions().withNumericOutput(Format.HUMAN_READABLE), tags1);
 			assertEquals("DateTimeOriginal tag is wrong", newDate,
 					metadata.get(Tag.DATE_TIME_ORIGINAL));
 
@@ -318,11 +278,10 @@ public class TestExifTool {
 			URL url = getClass().getResource("/nexus-s-electric-cars.jpg");
 			Path imageFile = Paths.get("target","nexus-s-electric-cars-tochange.jpg");
 			Files.copy(Paths.get(url.toURI()),imageFile, StandardCopyOption.REPLACE_EXISTING);
+			MetadataTag[] tags = { Tag.DATE_TIME_ORIGINAL };
 
 			// Check the value is correct at the start
-			Map<MetadataTag, String> metadata = tool.getImageMeta4(
-					imageFile.toFile(), options,
-					Format.HUMAN_READABLE, Tag.DATE_TIME_ORIGINAL);
+			Map<MetadataTag, String> metadata = tool.getImageMeta4d(imageFile.toFile(), new ReadOptions().withNumericOutput(Format.HUMAN_READABLE), tags);
 			assertEquals("Wrong starting value", "2010:12:10 17:07:05",
 					metadata.get(Tag.DATE_TIME_ORIGINAL));
 
@@ -332,10 +291,10 @@ public class TestExifTool {
 
 			// Now change it to an invalid value which should fail
 			tool.addImageMetadata(imageFile.toFile(), newValues);
+			MetadataTag[] tags1 = { Tag.DATE_TIME_ORIGINAL };
 
 			// Finally check that it's not updated
-			metadata = tool.getImageMeta4(imageFile.toFile(),
-					options, Format.HUMAN_READABLE, Tag.DATE_TIME_ORIGINAL);
+			metadata = tool.getImageMeta4d(imageFile.toFile(), new ReadOptions().withNumericOutput(Format.HUMAN_READABLE), tags1);
 			assertEquals("DateTimeOriginal tag is wrong",
 					"2010:12:10 17:07:05", metadata.get(Tag.DATE_TIME_ORIGINAL));
 
@@ -359,10 +318,10 @@ public class TestExifTool {
 			URL url = getClass().getResource("/nexus-s-electric-cars.jpg");
 			Path imageFile = Paths.get("target","nexus-s-electric-cars-tochange.jpg");
 			Files.copy(Paths.get(url.toURI()),imageFile, StandardCopyOption.REPLACE_EXISTING);
+			MetadataTag[] tags = { Tag.ORIENTATION };
 
 			// Test what orientation value is at the start
-			Map<MetadataTag, String> metadata = tool.getImageMeta4(
-					imageFile.toFile(), options, Format.HUMAN_READABLE, Tag.ORIENTATION);
+			Map<MetadataTag, String> metadata = tool.getImageMeta4d(imageFile.toFile(), new ReadOptions().withNumericOutput(Format.HUMAN_READABLE), tags);
 			assertEquals("Orientation tag starting value is wrong",
 					"Horizontal (normal)", metadata.get(Tag.ORIENTATION));
 
@@ -371,10 +330,10 @@ public class TestExifTool {
 			newValues.put(Tag.ORIENTATION, 3);
 
 			tool.addImageMetadata(imageFile.toFile(), newValues);
+			MetadataTag[] tags1 = { Tag.ORIENTATION };
 
 			// Finally check the updated value
-			metadata = tool.getImageMeta4(imageFile.toFile(),
-					options, Format.HUMAN_READABLE, Tag.ORIENTATION);
+			metadata = tool.getImageMeta4d(imageFile.toFile(), new ReadOptions().withNumericOutput(Format.HUMAN_READABLE), tags1);
 			assertEquals("Orientation tag updated value is wrong",
 					"Rotate 180", metadata.get(Tag.ORIENTATION));
 
@@ -396,10 +355,10 @@ public class TestExifTool {
 			URL url = getClass().getResource("/nexus-s-electric-cars.jpg");
 			Path imageFile = Paths.get("target","nexus-s-electric-cars-tochange.jpg");
 			Files.copy(Paths.get(url.toURI()),imageFile, StandardCopyOption.REPLACE_EXISTING);
+			MetadataTag[] tags = { Tag.ORIENTATION };
 
 			// Test what orientation value is at the start
-			Map<MetadataTag, String> metadata = tool.getImageMeta4(
-					imageFile.toFile(), options, Format.HUMAN_READABLE, Tag.ORIENTATION);
+			Map<MetadataTag, String> metadata = tool.getImageMeta4d(imageFile.toFile(), new ReadOptions().withNumericOutput(Format.HUMAN_READABLE), tags);
 			assertEquals("Orientation tag starting value is wrong",
 					"Horizontal (normal)", metadata.get(Tag.ORIENTATION));
 
@@ -408,10 +367,10 @@ public class TestExifTool {
 			newValues.put(Tag.ORIENTATION, 3);
 
 			tool.addImageMetadata(imageFile.toFile(), newValues);
+			MetadataTag[] tags1 = { Tag.ORIENTATION };
 
 			// Finally check the updated value
-			metadata = tool.getImageMeta4(imageFile.toFile(),
-					options, Format.HUMAN_READABLE, Tag.ORIENTATION);
+			metadata = tool.getImageMeta4d(imageFile.toFile(), new ReadOptions().withNumericOutput(Format.HUMAN_READABLE), tags1);
 			assertEquals("Orientation tag updated value is wrong",
 					"Rotate 180", metadata.get(Tag.ORIENTATION));
 
@@ -433,11 +392,10 @@ public class TestExifTool {
 		URL url = getClass().getResource("/nexus-s-electric-cars.jpg");
 		Path imageFile = Paths.get("target","nexus-s-electric-cars-tochange.jpg");
 		Files.copy(Paths.get(url.toURI()),imageFile, StandardCopyOption.REPLACE_EXISTING);
+		MetadataTag[] tags = { Tag.ORIENTATION, Tag.DATE_TIME_ORIGINAL };
 
 		// Test what orientation value is at the start
-		Map<MetadataTag, String> metadata = tool.getImageMeta4(
-				imageFile.toFile(), options,Format.HUMAN_READABLE, 
-				Tag.ORIENTATION, Tag.DATE_TIME_ORIGINAL);
+		Map<MetadataTag, String> metadata = tool.getImageMeta4d(imageFile.toFile(), new ReadOptions().withNumericOutput(Format.HUMAN_READABLE), tags);
 		assertEquals("Orientation tag starting value is wrong",
 				"Horizontal (normal)", metadata.get(Tag.ORIENTATION));
 		assertEquals("Wrong starting value", "2010:12:10 17:07:05",
@@ -450,9 +408,10 @@ public class TestExifTool {
 		newValues.put(Tag.ORIENTATION, 3);
 
 		tool.addImageMetadata(imageFile.toFile(), newValues);
+		MetadataTag[] tags1 = { Tag.ORIENTATION, Tag.DATE_TIME_ORIGINAL };
 
 		// Finally check the updated value
-		metadata = tool.getImageMeta4(imageFile.toFile(), options,Format.HUMAN_READABLE, Tag.ORIENTATION, Tag.DATE_TIME_ORIGINAL);
+		metadata = tool.getImageMeta4d(imageFile.toFile(), new ReadOptions().withNumericOutput(Format.HUMAN_READABLE), tags1);
 		assertEquals("Orientation tag updated value is wrong", "Rotate 180",
 				metadata.get(Tag.ORIENTATION));
 		assertEquals("DateTimeOriginal tag is wrong", newDate,
@@ -474,11 +433,10 @@ public class TestExifTool {
 		URL url = getClass().getResource("/nexus-s-electric-cars.jpg");
 		Path imageFile = Paths.get("target","nexus-s-electric-cars-tochange.jpg");
 		Files.copy(Paths.get(url.toURI()),imageFile, StandardCopyOption.REPLACE_EXISTING);
+		MetadataTag[] tags = { Tag.ORIENTATION, Tag.DATE_TIME_ORIGINAL };
 
 		// Test what orientation value is at the start
-		Map<MetadataTag, String> metadata = tool.getImageMeta4(
-				imageFile.toFile(), options, Format.HUMAN_READABLE, 
-				Tag.ORIENTATION, Tag.DATE_TIME_ORIGINAL);
+		Map<MetadataTag, String> metadata = tool.getImageMeta4d(imageFile.toFile(), new ReadOptions().withNumericOutput(Format.HUMAN_READABLE), tags);
 		assertEquals("Orientation tag starting value is wrong",
 				"Horizontal (normal)", metadata.get(Tag.ORIENTATION));
 		assertEquals("Wrong starting value", "2010:12:10 17:07:05",
@@ -491,10 +449,10 @@ public class TestExifTool {
 		newValues.put(Tag.ORIENTATION, 3);
 
 		tool.addImageMetadata(imageFile.toFile(), newValues);
+		MetadataTag[] tags1 = { Tag.ORIENTATION, Tag.DATE_TIME_ORIGINAL };
 
 		// Finally check the updated value
-		metadata = tool.getImageMeta4(imageFile.toFile(), options,Format.HUMAN_READABLE,
-				Tag.ORIENTATION, Tag.DATE_TIME_ORIGINAL);
+		metadata = tool.getImageMeta4d(imageFile.toFile(), new ReadOptions().withNumericOutput(Format.HUMAN_READABLE), tags1);
 		assertEquals("Orientation tag updated value is wrong", "Rotate 180",
 				metadata.get(Tag.ORIENTATION));
 		assertEquals("DateTimeOriginal tag is wrong", newDate,
@@ -516,11 +474,10 @@ public class TestExifTool {
 		URL url = getClass().getResource("/nexus-s-electric-cars.jpg");
 		Path imageFile = Paths.get("target","nexus-s-electric-cars-tochange.jpg");
 		Files.copy(Paths.get(url.toURI()),imageFile, StandardCopyOption.REPLACE_EXISTING);
+		MetadataTag[] tags = { Tag.ORIENTATION, Tag.DATE_TIME_ORIGINAL };
 
 		// Test what orientation value is at the start
-		Map<MetadataTag, String> metadata = tool.getImageMeta4(
-				imageFile.toFile(), options,Format.HUMAN_READABLE, 
-				Tag.ORIENTATION, Tag.DATE_TIME_ORIGINAL);
+		Map<MetadataTag, String> metadata = tool.getImageMeta4d(imageFile.toFile(), new ReadOptions().withNumericOutput(Format.HUMAN_READABLE), tags);
 		assertEquals("Orientation tag starting value is wrong",
 				"Horizontal (normal)", metadata.get(Tag.ORIENTATION));
 		assertEquals("Wrong starting value", "2010:12:10 17:07:05",
@@ -534,10 +491,10 @@ public class TestExifTool {
 
 		// tool.writeMetadata(imageFile.toFile(), newValues);
 		tool.addImageMetadata(imageFile.toFile(), newValues);
+		MetadataTag[] tags1 = { Tag.ORIENTATION, Tag.DATE_TIME_ORIGINAL };
 
 		// Finally check the updated value
-		metadata = tool.getImageMeta4(imageFile.toFile(), options,Format.HUMAN_READABLE,
-				Tag.ORIENTATION, Tag.DATE_TIME_ORIGINAL);
+		metadata = tool.getImageMeta4d(imageFile.toFile(), new ReadOptions().withNumericOutput(Format.HUMAN_READABLE), tags1);
 		assertEquals("Orientation tag updated value is wrong", "Rotate 180",
 				metadata.get(Tag.ORIENTATION));
 		assertEquals("DateTimeOriginal tag is wrong", newDate,

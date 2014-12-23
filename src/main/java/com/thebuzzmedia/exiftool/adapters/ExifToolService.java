@@ -15,7 +15,7 @@ import com.thebuzzmedia.exiftool.*;
 @SuppressWarnings("deprecation")
 public class ExifToolService extends RawExifToolAdapter implements Closeable {
 	private static final org.slf4j.Logger LOG = org.slf4j.LoggerFactory.getLogger(ExifToolService.class);
-	
+
 	public ExifToolService(RawExifTool exifTool) {
 		super(exifTool);
 	}
@@ -26,8 +26,8 @@ public class ExifToolService extends RawExifToolAdapter implements Closeable {
 	// }
 	public Map<Object, Object> getImageMeta2(File image, ReadOptions options, MetadataTag... tags)
 			throws IllegalArgumentException, SecurityException, IOException {
-		Map<String, String> all = getImageMeta(image,options,toKeys(tags));
-		return (Map)toMetadataTagKeys(all);
+		Map<String, String> all = getImageMeta(image, options, toKeys(tags));
+		return (Map) toMetadataTagKeys(all);
 	}
 
 	public Map<Object, Object> getImageMeta2c(File file, ReadOptions options, MetadataTag... tags)
@@ -42,14 +42,14 @@ public class ExifToolService extends RawExifToolAdapter implements Closeable {
 
 	public Map<MetadataTag, String> getImageMeta3(File image, ReadOptions options, MetadataTag... tags)
 			throws IllegalArgumentException, SecurityException, IOException {
-		return getImageMeta4(image, options, Format.NUMERIC, tags);
+		return getImageMeta4d(image, new ReadOptions().withNumericOutput(Format.NUMERIC), tags);
 	}
 
-	public Map<MetadataTag, String> getImageMeta4(File image, ReadOptions options,
-			Format format, MetadataTag... tags) throws IllegalArgumentException,
-			SecurityException, IOException {
-		return toMetadataTagKeys(getImageMeta(image,new ReadOptions().withNumericOutput(format), toKeys(tags)));
+	public Map<MetadataTag, String> getImageMeta4d(File image, ReadOptions options, MetadataTag... tags)
+			throws IllegalArgumentException, SecurityException, IOException {
+		return toMetadataTagKeys(getImageMeta(image, options, toKeys(tags)));
 	}
+
 	public Map<MetadataTag, String> getImageMeta4c(File file, ReadOptions options, Format format, MetadataTag... tags)
 			throws IllegalArgumentException, SecurityException, IOException {
 		Map<?, ?> result = getImageMeta6(file, options, tags);
@@ -68,7 +68,7 @@ public class ExifToolService extends RawExifToolAdapter implements Closeable {
 			stringTags[i++] = tag.getKey();
 		}
 		Map<String, String> result = exifTool.getImageMeta(image, new ReadOptions().withNumericOutput(format)
-				.withShowDuplicates(!true),stringTags);
+				.withShowDuplicates(!true), stringTags);
 		ReadOptions readOptions = new ReadOptions().withConvertTypes(true).withNumericOutput(
 				format.equals(Format.NUMERIC));
 		return (Map) convertToMetadataTags(readOptions, result, tags);
@@ -86,7 +86,8 @@ public class ExifToolService extends RawExifToolAdapter implements Closeable {
 		for (TagGroup tag : tags) {
 			stringTags[i++] = tag.getValue();
 		}
-		return exifTool.getImageMeta(image, new ReadOptions().withNumericOutput(format).withShowDuplicates(!false),stringTags);
+		return exifTool.getImageMeta(image, new ReadOptions().withNumericOutput(format).withShowDuplicates(!false),
+				stringTags);
 	}
 
 	//
@@ -287,7 +288,7 @@ public class ExifToolService extends RawExifToolAdapter implements Closeable {
 	}
 
 	static MetadataTag toTag(String name) {
-		//Tag.forName(
+		// Tag.forName(
 		for (Tag tag : Tag.values()) {
 			if (tag.getKey().equalsIgnoreCase(name)) {
 				return tag;
@@ -303,38 +304,42 @@ public class ExifToolService extends RawExifToolAdapter implements Closeable {
 
 	private Map<MetadataTag, String> toMetadataTagKeys(Map<String, String> all) {
 		Map<MetadataTag, String> result = new HashMap<MetadataTag, String>();
-		for (Entry<String, String> entry : all.entrySet()){
+		for (Entry<String, String> entry : all.entrySet()) {
 			MetadataTag tag = toTag(entry.getKey());
-			if(tag!=null){
-				result.put(tag,entry.getValue());
+			if (tag != null) {
+				result.put(tag, entry.getValue());
 			}
 		}
 		return result;
 	}
+
 	private String[] toKeys(MetadataTag... tags) {
-		return Lists.transform(Arrays.asList(tags),new Function<MetadataTag,String>(){
+		return Lists.transform(Arrays.asList(tags), new Function<MetadataTag, String>() {
 			@Override
 			public String apply(MetadataTag input) {
 				return input.getKey();
-			}}).toArray(new String[0]);
+			}
+		}).toArray(new String[0]);
 	}
+
 	//
-//	@Override @Deprecated
-//	public Map<String, String> getImageMeta(File file, Format format,
-//			boolean supressDuplicates, String... tags) throws IOException {
-//		return getImageMeta(file,format.withSuppressDuplicates(),tags);
-//	}
-//
-//	@Override @Deprecated
-//	public Map<String, String> getImageMeta(File file, ReadOptions options,
-//			boolean supressDuplicates, String... tags) throws IOException {
-//		return getImageMeta10(file,options,tags);
-//	}
-	
+	// @Override @Deprecated
+	// public Map<String, String> getImageMeta(File file, Format format,
+	// boolean supressDuplicates, String... tags) throws IOException {
+	// return getImageMeta(file,format.withSuppressDuplicates(),tags);
+	// }
+	//
+	// @Override @Deprecated
+	// public Map<String, String> getImageMeta(File file, ReadOptions options,
+	// boolean supressDuplicates, String... tags) throws IOException {
+	// return getImageMeta10(file,options,tags);
+	// }
+
 	@Override
 	public void close() {
 		super.close();
 	}
+
 	/**
 	 * Compiled {@link Pattern} of ": " used to split compact output from ExifToolNew3 evenly into name/value pairs.
 	 */
@@ -343,6 +348,7 @@ public class ExifToolService extends RawExifToolAdapter implements Closeable {
 	public static String toResponse(List<String> results) {
 		return Joiner.on('\n').join(results);
 	}
+
 	public static Map<String, String> toMap(List<String> all) {
 		Map<String, String> resultMap = new HashMap<String, String>(500);
 		for (String line : all) {

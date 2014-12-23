@@ -26,8 +26,7 @@ public class Example {
 		// list all first-class tags
 		for (File f : images) {
 			log.info("\n[{}]", f.getName());
-			Map<MetadataTag, String> metadata = tool.getImageMeta4(f,
-					new ReadOptions(), Format.HUMAN_READABLE, Tag.values());
+			Map<MetadataTag, String> metadata = tool.getImageMeta4d(f, new ReadOptions().withNumericOutput(Format.HUMAN_READABLE), Tag.values());
 			for (MetadataTag key : metadata.keySet()) {
 				log.info(String.format("\t\t%s: %s", key.getKey(),
 						metadata.get(key)));
