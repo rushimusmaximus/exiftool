@@ -158,6 +158,7 @@ import com.thebuzzmedia.exiftool.adapters.ExifToolService;
  * @since 1.1
  */
 public class ExifToolNew2 implements RawExifTool {
+	private static final org.slf4j.Logger LOG = org.slf4j.LoggerFactory.getLogger(ExifToolNew2.class);
 	/**
 	 * Flag used to indicate if debugging output has been enabled by setting the "<code>exiftool.debug</code>" system
 	 * property to <code>true</code>. This value will be <code>false</code> if the " <code>exiftool.debug</code>" system
@@ -339,7 +340,7 @@ public class ExifToolNew2 implements RawExifTool {
 	 */
 	protected static void log(String message, Object... params) {
 		if (DEBUG)
-			ExifToolNew3.log.debug(LOG_PREFIX + message + '\n', params);
+			LOG.debug(LOG_PREFIX + message + '\n', params);
 	}
 
 	/**
@@ -962,7 +963,7 @@ public class ExifToolNew2 implements RawExifTool {
 
 	@Override
 	protected void finalize() throws Throwable {
-		ExifToolNew3.log.info("ExifToolNew3 not used anymore shutdown the exiftool process...");
+		LOG.info("ExifToolNew3 not used anymore shutdown the exiftool process...");
 		shutdown();
 		super.finalize();
 	}

@@ -13,6 +13,7 @@ import java.util.TimerTask;
  * @since 1.1
  */
 class CleanupTimerTask extends TimerTask {
+	private static final org.slf4j.Logger LOG = org.slf4j.LoggerFactory.getLogger(CleanupTimerTask.class);
 	private ExifToolNew2 owner;
 
 	public CleanupTimerTask(ExifToolNew2 owner) throws IllegalArgumentException {
@@ -25,7 +26,7 @@ class CleanupTimerTask extends TimerTask {
 
 	@Override
 	public void run() {
-		ExifToolNew3.log.info("\tAuto cleanup task running...");
+		LOG.info("\tAuto cleanup task running...");
 		owner.close();
 	}
 }

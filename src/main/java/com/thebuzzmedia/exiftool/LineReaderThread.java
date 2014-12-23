@@ -20,6 +20,7 @@ import java.util.concurrent.BlockingQueue;
  * @since 7/25/14
  */
 public class LineReaderThread extends Thread {
+	private static final org.slf4j.Logger LOG = org.slf4j.LoggerFactory.getLogger(LineReaderThread.class);
 	private BufferedReader reader;
 	private BlockingQueue<String> lineBuffer = new ArrayBlockingQueue<String>(
 			50, true);
@@ -46,9 +47,9 @@ public class LineReaderThread extends Thread {
 				}
 			}
 		} catch (IOException ex) {
-			ExifToolNew3.log.warn("Error in LineReaderThread.",ex);
+			LOG.warn("Error in LineReaderThread.",ex);
 		} catch (InterruptedException ignored) {
-			ExifToolNew3.log.debug("er:",ignored);
+			LOG.debug("er:",ignored);
 		}
 	}
 

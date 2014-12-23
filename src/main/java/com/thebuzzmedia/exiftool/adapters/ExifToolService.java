@@ -357,7 +357,7 @@ public class ExifToolService extends RawExifToolAdapter implements Closeable {
 				resultMap.put(pair[0], pair[1]);
 				LOG.debug(String.format("\tRead Tag [name=%s, value=%s]", pair[0], pair[1]));
 			} else {
-				LOG.debug(String.format("\tIgnore line [%s]", line));
+				LOG.info(String.format("\tIgnore line [%s]", line));
 			}
 		}
 		return resultMap;

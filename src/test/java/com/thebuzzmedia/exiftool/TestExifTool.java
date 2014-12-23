@@ -109,7 +109,7 @@ public class TestExifTool {
 							for (int j = 0; j < 5; j++) {
 								runTests(tool, label);
 							}
-							log.info("DONE: " + label + " success!");
+							log.debug("DONE: " + label + " success!");
 						} catch (IOException ex) {
 							fail(label);
 						} catch (URISyntaxException e) {
@@ -563,8 +563,8 @@ public class TestExifTool {
 				Feature.STAY_OPEN)) {
 			URL url = getClass().getResource("/20140502_152336_Östliche Zubringerstraße.png");
 			File imageFile = new File(url.toURI());
-			System.out.println(imageFile.getAbsolutePath());
 			Map<MetadataTag, String> metadata = tool.getImageMeta3(imageFile, options);
+			//should fail on the line before. this is just for breakpoint and retry
 			Map<MetadataTag, String> metadata2 = tool.getImageMeta3(imageFile, options);
 			assertEquals(19, metadata2.size());
 		}
@@ -576,7 +576,7 @@ public class TestExifTool {
 				Feature.STAY_OPEN)) {
 			URL url = getClass().getResource("/20140502_152336_Östliche_Zubringerstraße.png");
 			File imageFile = new File(url.toURI());
-			System.out.println(imageFile.getAbsolutePath());
+			//System.out.println(imageFile.getAbsolutePath());
 			Map<MetadataTag, String> metadata = tool.getImageMeta3(imageFile, options);
 			assertEquals(19, metadata.size());
 		}
@@ -587,7 +587,7 @@ public class TestExifTool {
 		try (ExifToolService tool = create(new ReadOptions().withNumericOutput(true).withConvertTypes(true))) {
 			URL url = getClass().getResource("/20140502_152336_Östliche Zubringerstraße.png");
 			File imageFile = new File(url.toURI());
-			System.out.println(imageFile.getAbsolutePath());
+			//System.out.println(imageFile.getAbsolutePath());
 			Map<MetadataTag, String> metadata = tool.getImageMeta3(imageFile, options);
 			assertEquals(19, metadata.size());
 		}
@@ -599,7 +599,7 @@ public class TestExifTool {
 				Feature.STAY_OPEN, Feature.WINDOWS)) {
 			URL url = getClass().getResource("/20140502_152336_Östliche Zubringerstraße.png");
 			File imageFile = new File(url.toURI());
-			System.out.println(imageFile.getAbsolutePath());
+			//System.out.println(imageFile.getAbsolutePath());
 			Map<MetadataTag, String> metadata = tool.getImageMeta3(imageFile, options);
 			assertEquals(19, metadata.size());
 		}
@@ -611,10 +611,10 @@ public class TestExifTool {
 				Feature.STAY_OPEN, Feature.WINDOWS)) {
 			URL url = getClass().getResource("/20131231_230955_Strada Frumoasă.png");
 			File imageFile = new File(url.toURI());
-			System.out.println(imageFile.getAbsolutePath());
+			//System.out.println(imageFile.getAbsolutePath());
 			Map<String, String> metadata1 = tool.getImageMeta(imageFile, options);
 			assertEquals(19, metadata1.size());
-			System.out.println(metadata1);
+			//System.out.println(metadata1);
 			Map<MetadataTag, String> metadata = tool.getImageMeta3(imageFile, options);
 			assertEquals(19, metadata.size());
 		}

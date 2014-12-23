@@ -17,9 +17,12 @@ public class KeepAliveExifProxy implements ExifProxy {
 	private volatile long lastRunStart = 0;
 	private volatile ExifProcess process;
 	private final Charset charset;
+
 	public KeepAliveExifProxy(String exifCmd, List<String> baseArgs, long inactivityTimeoutParam) {
-		this(exifCmd,baseArgs,inactivityTimeoutParam,ExifToolNew3.computeDefaultCharset(EnumSet.noneOf(Feature.class)));
+		this(exifCmd, baseArgs, inactivityTimeoutParam, ExifToolNew3.computeDefaultCharset(EnumSet
+				.noneOf(Feature.class)));
 	}
+
 	public KeepAliveExifProxy(String exifCmd, List<String> baseArgs, Charset charset) {
 		this(exifCmd, baseArgs, Long.getLong(ExifToolNew.ENV_EXIF_TOOL_PROCESSCLEANUPDELAY,
 				ExifToolNew.DEFAULT_PROCESS_CLEANUP_DELAY), charset);
@@ -78,8 +81,7 @@ public class KeepAliveExifProxy implements ExifProxy {
 			if (process == null || process.isClosed()) {
 				synchronized (this) {
 					if (process == null || process.isClosed()) {
-						ExifToolNew3.log
-								.debug("Starting daemon ExifToolNew3 process and creating read/write streams (this only happens once)...");
+						LOG.debug("Starting daemon ExifToolNew3 process and creating read/write streams (this only happens once)...");
 						process = new ExifProcess(true, startupArgs, charset);
 					}
 				}
@@ -91,21 +93,20 @@ public class KeepAliveExifProxy implements ExifProxy {
 						@Override
 						public void run() {
 							if (process != null && !process.isClosed()) {
-								ExifToolNew3.log
-										.warn("Process ran too long closing, max " + runTimeoutMills + " mills");
+								LOG.warn("Process ran too long closing, max " + runTimeoutMills + " mills");
 								process.close();
 							}
 						}
 					};
 					cleanupTimer.schedule(attemptTimer, runTimeoutMills);
 				}
-				ExifToolNew3.log.debug("Streaming arguments to ExifToolNew3 process...");
+				LOG.debug("Streaming arguments to ExifToolNew3 process...");
 				return process.sendToRunning(args);
 			} catch (IOException ex) {
 				if (ExifToolNew3.STREAM_CLOSED_MESSAGE.equals(ex.getMessage()) && !shuttingDown.get()) {
 					// only catch "Stream Closed" error (happens when
 					// process has died)
-					ExifToolNew3.log.warn(String.format("Caught IOException(\"%s\"), will restart daemon",
+					LOG.warn(String.format("Caught IOException(\"%s\"), will restart daemon",
 							ExifToolNew3.STREAM_CLOSED_MESSAGE));
 					process.close();
 				} else {

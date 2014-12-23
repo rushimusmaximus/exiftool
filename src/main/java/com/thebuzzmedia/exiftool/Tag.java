@@ -145,6 +145,7 @@ public enum Tag implements MetadataTag {
 	THUMBNAIL_PHOTOSHOP("PhotoshopThumbnail", String.class),
 	;
 
+	private static final org.slf4j.Logger LOG = org.slf4j.LoggerFactory.getLogger(Tag.class);
 	private static final Map<String, Tag> TAG_LOOKUP_MAP;
 
 	/**
@@ -356,10 +357,10 @@ public enum Tag implements MetadataTag {
 				return value;
 			}
 		} catch (ParseException ex) {
-			ExifToolNew3.log.warn("Invalid format, Tag:" + tagName);
+			LOG.warn("Invalid format, Tag:" + tagName);
 			return null;
 		} catch (NumberFormatException ex) {
-			ExifToolNew3.log.warn("Invalid format, Tag:" + tagName);
+			LOG.warn("Invalid format, Tag:" + tagName);
 			return null;
 		}
 
