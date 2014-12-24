@@ -40,4 +40,8 @@ public enum TagGroup implements MetadataTag {
 		return false;
 	}
 
+	@Override
+	public <T> String toExif(T value) {
+		return Tag.toExif(this, value);
+	}
 }

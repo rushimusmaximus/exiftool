@@ -37,4 +37,9 @@ public class CustomTag implements MetadataTag {
 	public String toString() {
 		return getKey();
 	}
+
+	@Override
+	public <T> String toExif(T value) {
+		return Tag.toExif(this, value);
+	}
 }

@@ -19,4 +19,6 @@ public interface MetadataTag {
 	public Class getType();
 
 	public boolean isMapped();
+
+	public <T> String toExif(T value);
 }

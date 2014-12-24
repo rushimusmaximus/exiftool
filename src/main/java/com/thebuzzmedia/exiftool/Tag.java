@@ -6,48 +6,39 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.google.common.base.Joiner;
+import com.google.common.base.Splitter;
+
 // ================================================================================
 /**
- * Enum used to pre-define a convenient list of tags that can be easily
- * extracted from images using this class with an external install of
- * ExifToolNew3.
+ * Enum used to pre-define a convenient list of tags that can be easily extracted from images using this class with an
+ * external install of ExifToolNew3.
  * <p/>
- * Each tag defined also includes a type hint for the parsed value
- * associated with it when the default {@link Format#NUMERIC} value format
- * is used.
+ * Each tag defined also includes a type hint for the parsed value associated with it when the default
+ * {@link Format#NUMERIC} value format is used.
  * <p/>
- * All replies from ExifToolNew3 are parsed as {@link String}s and using the
- * type hint from each {@link Tag} can easily be converted to the correct
- * data format by using the provided {@link Tag#parseValue(String)} method.
+ * All replies from ExifToolNew3 are parsed as {@link String}s and using the type hint from each {@link Tag} can easily
+ * be converted to the correct data format by using the provided {@link Tag#parseValue(String)} method.
  * <p/>
- * This class does not make an attempt at converting the value automatically
- * in case the caller decides they would prefer tag values returned in
- * {@link Format#HUMAN_READABLE} format and to avoid any compatibility
- * issues with future versions of ExifToolNew3 if a tag's return value is
- * changed. This approach to leaving returned tag values as strings until
- * the caller decides they want to parse them is a safer and more robust
- * approach.
+ * This class does not make an attempt at converting the value automatically in case the caller decides they would
+ * prefer tag values returned in {@link Format#HUMAN_READABLE} format and to avoid any compatibility issues with future
+ * versions of ExifToolNew3 if a tag's return value is changed. This approach to leaving returned tag values as strings
+ * until the caller decides they want to parse them is a safer and more robust approach.
  * <p/>
  * The types provided by each tag are merely a hint based on the <a
- * href="http://www.sno.phy.queensu.ca/~phil/exiftool/TagNames/index.html"
- * >ExifToolNew3 Tag Guide</a> by Phil Harvey; the caller is free to parse or
- * process the returned {@link String} values any way they wish.
+ * href="http://www.sno.phy.queensu.ca/~phil/exiftool/TagNames/index.html" >ExifToolNew3 Tag Guide</a> by Phil Harvey;
+ * the caller is free to parse or process the returned {@link String} values any way they wish.
  * <h3>Tag Support</h3>
- * ExifToolNew3 is capable of parsing almost every tag known to man (1000+), but
- * this class makes an attempt at pre-defining a convenient list of the most
- * common tags for use.
+ * ExifToolNew3 is capable of parsing almost every tag known to man (1000+), but this class makes an attempt at
+ * pre-defining a convenient list of the most common tags for use.
  * <p/>
- * This list was determined by looking at the common metadata tag values
- * written to images by popular mobile devices (iPhone, Android) as well as
- * cameras like simple point and shoots as well as DSLRs. As an additional
- * source of input the list of supported/common EXIF formats that Flickr
- * supports was also reviewed to ensure the most common/useful tags were
- * being covered here.
+ * This list was determined by looking at the common metadata tag values written to images by popular mobile devices
+ * (iPhone, Android) as well as cameras like simple point and shoots as well as DSLRs. As an additional source of input
+ * the list of supported/common EXIF formats that Flickr supports was also reviewed to ensure the most common/useful
+ * tags were being covered here.
  * <p/>
- * Please email me or <a
- * href="https://github.com/thebuzzmedia/imgscalr/issues">file an issue</a>
- * if you think this list is missing a commonly used tag that should be
- * added to it.
+ * Please email me or <a href="https://github.com/thebuzzmedia/imgscalr/issues">file an issue</a> if you think this list
+ * is missing a commonly used tag that should be added to it.
  * 
  * @author Riyad Kalla (software@thebuzzmedia.com)
  * @since 1.1
@@ -142,15 +133,13 @@ public enum Tag implements MetadataTag {
 	// actually binary data, but what are we doing to do here??? Just use to
 	// save to file...
 	THUMBNAIL_IMAGE("ThumbnailImage", String.class),
-	THUMBNAIL_PHOTOSHOP("PhotoshopThumbnail", String.class),
-	;
+	THUMBNAIL_PHOTOSHOP("PhotoshopThumbnail", String.class), ;
 
 	private static final org.slf4j.Logger LOG = org.slf4j.LoggerFactory.getLogger(Tag.class);
 	private static final Map<String, Tag> TAG_LOOKUP_MAP;
 
 	/**
-	 * Initializer used to init the <code>static final</code> tag/name lookup
-	 * map used by all instances of this class.
+	 * Initializer used to init the <code>static final</code> tag/name lookup map used by all instances of this class.
 	 */
 	static {
 		Tag[] values = Tag.values();
@@ -163,14 +152,13 @@ public enum Tag implements MetadataTag {
 	}
 
 	/**
-	 * Used to get the {@link Tag} identified by the given, case-sensitive, tag
-	 * name.
+	 * Used to get the {@link Tag} identified by the given, case-sensitive, tag name.
 	 * 
 	 * @param name
 	 *            The case-sensitive name of the tag that will be searched for.
 	 * 
-	 * @return the {@link Tag} identified by the given, case-sensitive, tag name
-	 *         or <code>null</code> if one couldn't be found.
+	 * @return the {@link Tag} identified by the given, case-sensitive, tag name or <code>null</code> if one couldn't be
+	 *         found.
 	 */
 	public static Tag forName(String name) {
 		return TAG_LOOKUP_MAP.get(name);
@@ -191,41 +179,33 @@ public enum Tag implements MetadataTag {
 	}
 
 	/**
-	 * Convenience method used to convert the given string Tag value
-	 * (returned from the external ExifToolNew3 process) into the type described
-	 * by the associated {@link Tag}.
+	 * Convenience method used to convert the given string Tag value (returned from the external ExifToolNew3 process)
+	 * into the type described by the associated {@link Tag}.
 	 * 
 	 * @param <T>
 	 *            The type of the returned value.
 	 * @param value
-	 *            The {@link String} representation of the tag's value as
-	 *            parsed from the image.
+	 *            The {@link String} representation of the tag's value as parsed from the image.
 	 * 
-	 * @return the given string value converted to a native Java type (e.g.
-	 *         Integer, Double, etc.).
+	 * @return the given string value converted to a native Java type (e.g. Integer, Double, etc.).
 	 * 
 	 * @throws IllegalArgumentException
 	 *             if <code>tag</code> is <code>null</code>.
 	 * @throws NumberFormatException
-	 *             if any exception occurs while trying to parse the given
-	 *             <code>value</code> to any of the supported numeric types
-	 *             in Java via calls to the respective <code>parseXXX</code>
-	 *             methods defined on all the numeric wrapper classes (e.g.
-	 *             {@link Integer#parseInt(String)} ,
-	 *             {@link Double#parseDouble(String)} and so on).
+	 *             if any exception occurs while trying to parse the given <code>value</code> to any of the supported
+	 *             numeric types in Java via calls to the respective <code>parseXXX</code> methods defined on all the
+	 *             numeric wrapper classes (e.g. {@link Integer#parseInt(String)} , {@link Double#parseDouble(String)}
+	 *             and so on).
 	 * @throws ClassCastException
-	 *             if the type defined by <code>T</code> is incompatible
-	 *             with the type defined by {@link Tag#getType()} returned
-	 *             by the <code>tag</code> argument passed in. This class
-	 *             performs an implicit/unchecked cast to the type
-	 *             <code>T</code> before returning the parsed result of the
-	 *             type indicated by {@link Tag#getType()}. If the types do
-	 *             not match, a <code>ClassCastException</code> will be
-	 *             generated by the VM.
+	 *             if the type defined by <code>T</code> is incompatible with the type defined by {@link Tag#getType()}
+	 *             returned by the <code>tag</code> argument passed in. This class performs an implicit/unchecked cast
+	 *             to the type <code>T</code> before returning the parsed result of the type indicated by
+	 *             {@link Tag#getType()}. If the types do not match, a <code>ClassCastException</code> will be generated
+	 *             by the VM.
 	 */
 	@SuppressWarnings("unchecked")
 	public <T> T parseValue(String value) throws IllegalArgumentException {
-		return parseValue((Class<T>)getType(),value);
+		return parseValue((Class<T>) getType(), value);
 	}
 
 	public String getRawValue(Map<MetadataTag, String> metadata) {
@@ -247,10 +227,41 @@ public enum Tag implements MetadataTag {
 	}
 
 	@SuppressWarnings("unchecked")
+	public static <T> String toExif(MetadataTag tag, Object value) throws IllegalArgumentException,
+			NumberFormatException {
+		String result = null;
+		if (value == null) {
+			// nothing to do
+		} else {
+			Class<T> type = tag.getType();
+			if (Date.class.equals(type)) {
+				if (!Date.class.equals(value.getClass())) {
+					value = parseValue(tag, value);
+				}
+				SimpleDateFormat formatter = new SimpleDateFormat(ExifToolNew.EXIF_DATE_FORMAT);
+				try {
+					result = formatter.format(value);
+				} catch (IllegalArgumentException e) {
+					throw new ExifError("Cannot convert [" + value + "] of type " + value.getClass()
+							+ " to date using formatter [" + ExifToolNew.EXIF_DATE_FORMAT + "]", e);
+				}
+			} else if (String[].class.equals(type)) {
+				// @see http://www.sno.phy.queensu.ca/~phil/exiftool/faq.html - 17.
+				// "List-type tags do not behave as expected"
+				// result = Joiner.on(", ").join((String[])value);
+				result = value.toString();
+			} else {
+				result = value.toString();
+			}
+		}
+		return result;
+	}
+
+	@SuppressWarnings("unchecked")
 	public static <T> T parseValue(Class<T> type, Object value) throws IllegalArgumentException, NumberFormatException {
 		T result = null;
 		if (value == null) {
-			//nothing to do
+			// nothing to do
 		} else if (type == value.getClass()) {
 			result = (T) value;
 		} else if (Boolean.class.isAssignableFrom(type))
@@ -271,13 +282,22 @@ public enum Tag implements MetadataTag {
 			result = (T) Character.valueOf(value.toString().charAt(0));
 		else if (String.class.isAssignableFrom(type))
 			result = (T) value.toString();
-		else if (Date.class.equals(type)) {
+		else if (String[].class.equals(type)) {
+			// @see http://www.sno.phy.queensu.ca/~phil/exiftool/faq.html - 17.
+			// "List-type tags do not behave as expected"
+			result = (T) Splitter.on(", ").splitToList(value.toString()).toArray(new String[0]);
+		} else if (Date.class.equals(type)) {
 			SimpleDateFormat formatter = new SimpleDateFormat(ExifToolNew.EXIF_DATE_FORMAT);
 			try {
-				result = (T) formatter.parse((String) value);
+				result = (T) formatter.parse(value.toString());
 			} catch (ParseException e) {
-				throw new RuntimeException("Can't parse value " + value + " with format ["
-						+ ExifToolNew.EXIF_DATE_FORMAT + "].", e);
+				try {
+					long value2 = Long.parseLong(value.toString());
+					result = (T)new Date(value2);
+				} catch (NumberFormatException e2) {
+					throw new ExifError("Can't parse value " + value + " with format ["
+							+ ExifToolNew.EXIF_DATE_FORMAT + "] and neither as a number of miliseconds from ["+new Date(0)+"].", e);
+				}
 			}
 		} else
 			result = (T) value;
@@ -394,5 +414,10 @@ public enum Tag implements MetadataTag {
 	private Tag(String key, Class<?> type) {
 		this.key = key;
 		this.type = type;
+	}
+
+	@Override
+	public <T> String toExif(T value) {
+		return toExif(this, value);
 	}
 }

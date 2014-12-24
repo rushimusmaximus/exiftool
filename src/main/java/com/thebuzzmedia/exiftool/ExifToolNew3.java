@@ -20,19 +20,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.charset.Charset;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.EnumSet;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.StringTokenizer;
-import java.util.Timer;
-import java.util.TimerTask;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.regex.Pattern;
@@ -43,6 +31,7 @@ import org.slf4j.LoggerFactory;
 
 import com.google.common.base.CharMatcher;
 import com.google.common.base.Joiner;
+import com.google.common.collect.Lists;
 import com.thebuzzmedia.exiftool.adapters.ExifToolService;
 
 /**
@@ -516,7 +505,7 @@ public class ExifToolNew3 implements RawExifTool {
 		// start process
 		long startTime = System.currentTimeMillis();
 		LOG.debug(String.format("Querying %d tags from image: %s", tags.length, file.getAbsolutePath()));
-		LOG.info("call stayOpen="+stayOpen +" exiftool "+ Joiner.on(" ").join(args));
+		LOG.info("call stayOpen=" + stayOpen + " exiftool " + Joiner.on(" ").join(args));
 		/*
 		 * Using ExifToolNew3 in daemon mode (-stay_open True) executes different code paths below. So establish the
 		 * flag for this once and it is reused a multitude of times later in this method to figure out where to branch
@@ -628,34 +617,48 @@ public class ExifToolNew3 implements RawExifTool {
 	}
 
 	private <T> List<String> createCommandList(String filename, Map<T, Object> values, boolean stayOpen) {
-
 		List<String> args = new ArrayList<String>(64);
-
 		for (Map.Entry<T, Object> entry : values.entrySet()) {
-			// works only for Tags
-			Tag tag = (Tag) entry.getKey();
+			MetadataTag tag = (MetadataTag) entry.getKey();
 			Object value = entry.getValue();
-
-			StringBuilder arg = new StringBuilder();
-			arg.append("-").append(tag.getKey());
-			if (value instanceof Number) {
-				arg.append("#");
-			}
-			arg.append("=");
-			if (value != null) {
-				// if (value instanceof String && !stayOpen) {
-				// arg.append("\"").append(value.toString()).append("\"");
-				// } else {
-				arg.append(value.toString());
-				// }
-			}
-			args.add(arg.toString());
-
+			args.addAll(toRawData(tag, value));
 		}
-
 		args.add(filename);
 		return args;
 
+	}
+
+	private <T> List<String> toRawData(MetadataTag tag, Object value) {
+		if (tag.getType().equals(String[].class)) {
+			List<String> result = new LinkedList<String>();
+			String[] array = (String[])value;
+			for (String value2 : array) {
+				String raw = getRawExif(tag, value2);
+				result.add(raw);
+			}
+			return result;
+		} else {
+			String raw = getRawExif(tag, value);
+			return Lists.newArrayList(raw);
+		}
+	}
+
+	private String getRawExif(MetadataTag tag, Object value) {
+		StringBuilder arg = new StringBuilder();
+		arg.append("-").append(tag.getKey());
+		if (value instanceof Number) {
+			arg.append("#");
+		}
+		arg.append("=");
+		if (value != null) {
+			// if (value instanceof String && !stayOpen) {
+			// arg.append("\"").append(value.toString()).append("\"");
+			// } else {
+			arg.append(tag.toExif(value));
+			// }
+		}
+		String raw = arg.toString();
+		return raw;
 	}
 
 	/**
@@ -739,7 +742,8 @@ public class ExifToolNew3 implements RawExifTool {
 
 	@Override
 	public <T> void writeMetadata(WriteOptions options, File image, Map<T, Object> values) throws IOException {
-		throw new RuntimeException("Not implemented.");
+		addImageMetadata(image, values);
+		// throw new RuntimeException("Not implemented.");
 	}
 
 	@Override

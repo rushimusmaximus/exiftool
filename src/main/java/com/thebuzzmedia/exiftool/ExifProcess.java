@@ -124,6 +124,7 @@ public final class ExifProcess {
 		this.keepAlive = keepAlive;
 		LOG.debug(String.format("Attempting to start ExifToolNew3 process using args: %s", args));
 		try {
+			LOG.info("start background process: "+Joiner.on(" ").join(args));
 			this.process = new ProcessBuilder(args).start();
 			all.put(process.toString(), new Pair<String, ExifProcess>(toString(new RuntimeException("start of "
 					+ process)), this));
@@ -162,7 +163,7 @@ public final class ExifProcess {
 			builder.append(arg).append("\n");
 		}
 		builder.append("-execute\n");
-		LOG.debug("sendArgs(\n" + builder.toString() + "\n)");
+		LOG.info("exiftool " + Joiner.on(" ").join(args));
 		writeFlush(builder.toString());
 		return readResponse(args);
 	}

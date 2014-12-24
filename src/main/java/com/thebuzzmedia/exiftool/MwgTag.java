@@ -56,4 +56,9 @@ public enum MwgTag implements MetadataTag {
 	public <K,V1,V2> V2 getValue(Map<K, V1> metadata) {
 		return (V2) Tag.parseValue(this, metadata.get(this));
 	}
+
+	@Override
+	public <T> String toExif(T value) {
+		return Tag.toExif(this, value);
+	}
 }
