@@ -4,7 +4,7 @@
 	<groupId>com.thebuzzmedia.exiftool</groupId>
 	<artifactId>exiftool-lib</artifactId>
 	<packaging>jar</packaging>
-	<version>2.3.6-SNAPSHOT</version>
+	<version>2.3.5-SNAPSHOT</version>
 	<url>https://github.com/raisercostin/exiftool</url>
 	<developers>
 		<developer>
