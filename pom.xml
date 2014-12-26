@@ -1,10 +1,23 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
+	<parent>
+		<groupId>org.raisercostin</groupId>
+		<artifactId>raisercostin-maven-defaults</artifactId>
+		<version>3.3</version>
+	</parent>
 	<!-- Top level stuff -->
 	<groupId>com.thebuzzmedia.exiftool</groupId>
 	<artifactId>exiftool-lib</artifactId>
-	<packaging>jar</packaging>
 	<version>2.3.5-SNAPSHOT</version>
+	<packaging>jar</packaging>
+	<name>exiftool-lib</name>
+	<licenses>
+		<license>
+			<name>The Apache Software License, Version 2.0</name>
+			<distribution>repo</distribution>
+			<url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+		</license>
+	</licenses>
 	<url>https://github.com/raisercostin/exiftool</url>
 	<developers>
 		<developer>
@@ -17,11 +30,11 @@
 		</developer>
 	</developers>
 	<scm>
-		<!--https://github.com/raisercostin/exiftool.git-->
 		<connection>scm:git:https://github.com/raisercostin/exiftool.git</connection>
 		<developerConnection>scm:git:https://github.com/raisercostin/exiftool.git</developerConnection>
 		<url>https://github.com/raisercostin/exiftool.git</url>
 		<tag>HEAD</tag>
+		<!--https://github.com/raisercostin/exiftool.git-->
 	</scm>
 	<distributionManagement>
 		<repository>
@@ -39,24 +52,12 @@
 		</site>
 		-->
 	</distributionManagement>
-	<build>
-		<plugins>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-compiler-plugin</artifactId>
-				<version>3.0</version>
-				<configuration>
-					<source>1.7</source>
-					<target>1.7</target>
-				</configuration>
-			</plugin>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-release-plugin</artifactId>
-				<version>2.5</version>
-			</plugin>
-		</plugins>
-	</build>
+	<properties>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<maven.compiler.source>1.5</maven.compiler.source>
+		<maven.compiler.target>1.5</maven.compiler.target>
+		<source.version>1.7</source.version>
+	</properties>
 	<dependencies>
 		<dependency>
 			<groupId>commons-io</groupId>
@@ -93,6 +94,26 @@
 			<version>2.2</version>
 		</dependency>
 	</dependencies>
+	<build>
+		<plugins>
+			<!--
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<version>3.0</version>
+				<configuration>
+					<source>1.7</source>
+					<target>1.7</target>
+				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-release-plugin</artifactId>
+				<version>2.5</version>
+			</plugin>
+			-->
+		</plugins>
+	</build>
 	<profiles>
 		<profile>
 			<id>release</id>
@@ -124,6 +145,13 @@
 						</executions>
 					</plugin>
 				</plugins>
+				<extensions>
+					<extension>
+						<groupId>com.google.code.maven-svn-wagon</groupId>
+						<artifactId>maven-svn-wagon</artifactId>
+						<version>1.4</version>
+					</extension>
+				</extensions>
 			</build>
 		</profile>
 	</profiles>
