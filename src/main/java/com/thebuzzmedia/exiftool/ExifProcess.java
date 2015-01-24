@@ -54,10 +54,10 @@ public final class ExifProcess {
 		Runtime.getRuntime().addShutdownHook(new Thread() {
 			public void run() {
 				if (!all.isEmpty()) {
-					LOG.warn("Close all leaked processes:" + all.keySet());
+					LOG.debug("Close all not closed processes:" + all.keySet());
 					for (Entry<String, Pair<String, ExifProcess>> item : new HashSet<Entry<String, Pair<String, ExifProcess>>>(
 							all.entrySet())) {
-						LOG.warn("Close leaked process " + item, new RuntimeException());
+						LOG.debug("Close not closed process " + item, new RuntimeException());
 						item.getValue()._2.close();
 					}
 				}

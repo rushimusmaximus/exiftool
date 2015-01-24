@@ -33,7 +33,42 @@ import com.google.common.base.CharMatcher;
 import com.google.common.base.Joiner;
 import com.google.common.collect.Lists;
 import com.thebuzzmedia.exiftool.adapters.ExifToolService;
+/*
+  private def extractExifWithExifToolOld2(prefix: String, file: File): Try[Tags] =
+    Try {
 
+        def split(text: String): Pair[String, String] = {
+          val all = text.splitAt(text.indexOf(":"))
+          Pair(all._1.trim.replaceAll("[/ ]", ""), all._2.drop(1).trim)
+        }
+      //println("Coulnd't get exif info from " + file)
+      import scala.sys.process._
+      import scala.sys.process.ProcessIO
+      val pb = Process(s"""exiftool "${file.getAbsolutePath}"""")
+      var map = Map[String, String]()
+      val pio = new ProcessIO(_ => (),
+        stdout => scala.io.Source.fromInputStream(stdout)
+          .getLines.foreach { x =>
+            //println(s"found $x")
+            map += split(x)
+          },
+        _ => ())
+      val a = pb.run(pio)
+      val blockTillExits = a.exitValue
+      if (blockTillExits == 0) {
+        //println(map)
+        //"exiftool".!
+        //println(map mkString "\n")
+        val result = map.toMap.map { x =>
+          //println(x)
+          (prefix + x._1, formatted(x._2)_)
+        }
+        Tags(result)
+      } else {
+        throw new RuntimeException(s"Coulnd't get exif info from " + file + ". Got $blockTillExits from exiftool.")
+      }
+    }
+ */
 /**
  * Provide a Java-like interface to Phil Harvey's excellent, Perl-based <a
  * href="http://www.sno.phy.queensu.ca/~phil/exiftool">ExifToolNew3</a>.

@@ -352,6 +352,10 @@ public class ExifToolService extends RawExifToolAdapter implements Closeable {
 	public void close() {
 		super.close();
 	}
+	@Override
+	protected void finalize() throws Throwable {
+		close();
+	}
 
 	/**
 	 * Compiled {@link Pattern} of ": " used to split compact output from ExifToolNew3 evenly into name/value pairs.
