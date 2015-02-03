@@ -15,19 +15,17 @@
  */
 package com.thebuzzmedia.exiftool;
 
-import java.io.Closeable;
 import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.charset.Charset;
+import java.nio.file.Files;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.regex.Pattern;
 
-import org.apache.commons.io.FilenameUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
 
 import com.google.common.base.CharMatcher;
 import com.google.common.base.Joiner;
@@ -539,40 +537,85 @@ public class ExifToolNew3 implements RawExifTool {
 							+ file.getAbsolutePath()
 							+ "], ensure that the image exists at the given path and that the executing Java process has permissions to read it.");
 		}
-		args.add(getAbsoluteFileName(file));
-
-		// start process
-		long startTime = System.currentTimeMillis();
-		LOG.debug(String.format("Querying %d tags from image: %s", tags.length, file.getAbsolutePath()));
-		LOG.info("call stayOpen=" + stayOpen + " exiftool " + Joiner.on(" ").join(args));
-		/*
-		 * Using ExifToolNew3 in daemon mode (-stay_open True) executes different code paths below. So establish the
-		 * flag for this once and it is reused a multitude of times later in this method to figure out where to branch
-		 * to.
-		 */
+		String absoluteName = getAbsoluteFileName(file);
+		String fileName = absoluteName;
+		File tempFileName = null;
+		if (absoluteName == null) {
+			tempFileName = getTemporaryCopiedFileName(file);
+			fileName = tempFileName.getAbsolutePath();
+			LOG.info("Exiftool will work with temporary file " + fileName + " for original file [" + absoluteName
+					+ "].");
+		}
 		Map<String, String> resultMap;
-		if (stayOpen) {
-			LOG.debug("Using ExifToolNew3 in daemon mode (-stay_open True)...");
-			resultMap = processStayOpen(args);
-		} else {
-			LOG.debug("Using ExifToolNew3 in non-daemon mode (-stay_open False)...");
-			resultMap = ExifToolService.toMap(execute(args));
-		}
+		try {
+			args.add(fileName);
 
-		// Print out how long the call to external ExifToolNew3 process took.
-		if (LOG.isDebugEnabled()) {
-			LOG.debug(String.format("Image Meta Processed in %d ms [queried %d tags and found %d values]",
-					(System.currentTimeMillis() - startTime), tags.length, resultMap.size()));
-		}
+			// start process
+			long startTime = System.currentTimeMillis();
+			LOG.debug(String.format("Querying %d tags from image: %s", tags.length, file.getAbsolutePath()));
+			LOG.info("call stayOpen=" + stayOpen + " exiftool " + Joiner.on(" ").join(args));
+			/*
+			 * Using ExifToolNew3 in daemon mode (-stay_open True) executes different code paths below. So establish the
+			 * flag for this once and it is reused a multitude of times later in this method to figure out where to
+			 * branch to.
+			 */
+			if (stayOpen) {
+				LOG.debug("Using ExifToolNew3 in daemon mode (-stay_open True)...");
+				resultMap = processStayOpen(args);
+			} else {
+				LOG.debug("Using ExifToolNew3 in non-daemon mode (-stay_open False)...");
+				resultMap = ExifToolService.toMap(execute(args));
+			}
 
+			// Print out how long the call to external ExifToolNew3 process took.
+			if (LOG.isDebugEnabled()) {
+				LOG.debug(String.format("Image Meta Processed in %d ms [queried %d tags and found %d values]",
+						(System.currentTimeMillis() - startTime), tags.length, resultMap.size()));
+			}
+		} finally {
+			if (tempFileName != null) {
+				FileUtils.forceDelete(tempFileName);
+			}
+		}
 		return resultMap;
 	}
 
+	private File getTemporaryCopiedFileName(File file) {
+		File dest = new File(file.getParentFile(), "temp");
+		copyFromAsHardLink(file, dest, false);
+		return dest;
+	}
+
+	void copyFromAsHardLink(File src, File dest, Boolean overwriteIfAlreadyExists) {
+		try {
+			if (overwriteIfAlreadyExists) {
+				if (dest.exists()) {
+					FileUtils.forceDelete(dest);
+				}
+				FileUtils.forceMkdir(dest.getParentFile());
+				Files.createLink(dest.toPath(), src.toPath());
+			} else {
+				if (dest.exists()) {
+					throw new RuntimeException("Destination file " + this + " already exists.");
+				} else {
+					FileUtils.forceMkdir(dest.getParentFile());
+					Files.createLink(dest.toPath(), src.toPath());
+				}
+			}
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
+	}
+
 	public String getAbsoluteFileName(File file) {
-		if (!CharMatcher.ASCII.matchesAllOf(file.getAbsolutePath()) && featureSet.contains(Feature.WINDOWS))
-			return getMSDOSName(file);
-		else
+		// if (!CharMatcher.ASCII.matchesAllOf(file.getAbsolutePath()) && featureSet.contains(Feature.WINDOWS))
+		// return getMSDOSName(file);
+		// else
+		// return file.getAbsolutePath();
+		if (CharMatcher.ASCII.matchesAllOf(file.getAbsolutePath())) {
 			return file.getAbsolutePath();
+		}
+		return null;
 	}
 
 	/**
@@ -585,14 +628,47 @@ public class ExifToolNew3 implements RawExifTool {
 	public static String getMSDOSName(File file) {
 		try {
 			String path = getAbsolutePath(file);
-			Process process = Runtime.getRuntime().exec(
-					"cmd /c for %I in (\"" + file.getAbsolutePath() + "\") do @echo %~fsI");
+			String path2 = file.getAbsolutePath();
+			System.out.println(path2);
+			// String toExecute = "cmd.exe /c for %I in (\"" + path2 + "\") do @echo %~fsI";
+			// ProcessBuilder pb = new ProcessBuilder("cmd","/c","for","%I","in","(" + path2 + ")","do","@echo","%~sI");
+			path2 = new File(
+					"d:\\aaaaaaaaaaaaaaaaaaaaaaaaaaaa\\bbbbbbbbbbbbbbbbbb\\2013-12-22--12-10-42------Bulevardul-Petrochimiștilor.jpg")
+					.getAbsolutePath();
+			path2 = new File(
+					"d:\\personal\\photos-tofix\\2013-proposed1-bad\\2013-12-22--12-10-42------Bulevardul-Petrochimiștilor.jpg")
+					.getAbsolutePath();
+
+			System.out.println(path2);
+			ProcessBuilder pb = new ProcessBuilder("cmd", "/c", "for", "%I", "in", "(\"" + path2 + "\")", "do",
+					"@echo", "%~fsI");
+			// ProcessBuilder pb = new ProcessBuilder("cmd","/c","chcp 65001 & dir",path2);
+			// ProcessBuilder pb = new ProcessBuilder("cmd","/c","ls",path2);
+			Process process = pb.start();
+			// Process process = Runtime.getRuntime().exec(execLine);
+			// Process process = Runtime.getRuntime().exec(new String[]{"cmd","/c","for","%I","in","(\"" + path2 +
+			// "\")","do","@echo","%~fsI"});
 			process.waitFor();
 			byte[] data = new byte[65536];
-			int size = process.getInputStream().read(data);
-			if (size > 0)
-				path = new String(data, 0, size).replaceAll("\\r\\n", "");
-			return path;
+			// InputStreamReader isr = new InputStreamReader(process.getInputStream(), "UTF-8");
+			// String charset = Charset.defaultCharset().name();
+			String charset = "UTF-8";
+			String lines = IOUtils.toString(process.getInputStream(), charset);
+			// int size = process.getInputStream().read(data);
+			// String path3 = path;
+			// if (size > 0)
+			// path3 = new String(data, 0, size).replaceAll("\\r\\n", "");
+			String path3 = lines;
+			System.out.println(pb.command());
+			System.out.println(path3);
+			byte[] data2 = new byte[65536];
+			int size2 = process.getErrorStream().read(data2);
+			if (size2 > 0) {
+				String error = new String(data2, 0, size2);
+				System.out.println(error);
+				throw new RuntimeException("Error was thrown " + error);
+			}
+			return path3;
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		} catch (InterruptedException e) {
