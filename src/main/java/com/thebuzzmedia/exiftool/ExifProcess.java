@@ -51,6 +51,7 @@ public final class ExifProcess {
 	private static final Map<String, Pair<String, ExifProcess>> all = Collections
 			.synchronizedMap(new TreeMap<String, Pair<String, ExifProcess>>());
 	static {
+		LOG.debug("addShutdownHook");
 		Runtime.getRuntime().addShutdownHook(new Thread() {
 			public void run() {
 				if (!all.isEmpty()) {
@@ -76,7 +77,7 @@ public final class ExifProcess {
 		}
 	}
 
-	public static ExifProcess _execute(boolean keepAlive, List<String> args, Charset charset) {
+	private static ExifProcess _execute(boolean keepAlive, List<String> args, Charset charset) {
 		return new ExifProcess(keepAlive, args, charset);
 	}
 
@@ -132,6 +133,7 @@ public final class ExifProcess {
 			this.writer = new OutputStreamWriter(process.getOutputStream(), charset);
 			this.errReader = new LineReaderThread("exif-process-err-reader", new BufferedReader(new InputStreamReader(
 					process.getErrorStream())));
+			this.errReader.setDaemon(true);
 			errReader.start();
 			LOG.debug("\tSuccessful " + process + " started.");
 		} catch (Exception e) {
@@ -256,6 +258,7 @@ public final class ExifProcess {
 						LOG.debug("\tSuccessful");
 					} catch (Exception e) {
 						// no-op, just try to close it.
+						LOG.debug("", e);
 					}
 
 					try {
@@ -263,8 +266,9 @@ public final class ExifProcess {
 								.debug("Attempting to close ExifToolNew3 daemon process, issuing '-stay_open\\nFalse\\n' command...");
 						writer.write("-stay_open\nFalse\n");
 						writer.flush();
-					} catch (IOException ex) {
+					} catch (IOException e) {
 						// log.error(ex,ex);
+						LOG.debug("", e);
 					}
 
 					try {
@@ -273,6 +277,7 @@ public final class ExifProcess {
 						LOG.debug("\tSuccessful");
 					} catch (Exception e) {
 						// no-op, just try to close it.
+						LOG.debug("", e);
 					}
 
 					try {
@@ -281,8 +286,8 @@ public final class ExifProcess {
 						LOG.debug("\tSuccessful");
 					} catch (Exception e) {
 						// no-op, just try to close it.
+						LOG.debug("", e);
 					}
-
 					LOG.debug("Read/Write streams successfully closed.");
 
 					try {

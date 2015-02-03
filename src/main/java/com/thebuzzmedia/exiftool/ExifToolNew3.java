@@ -33,41 +33,42 @@ import com.google.common.base.CharMatcher;
 import com.google.common.base.Joiner;
 import com.google.common.collect.Lists;
 import com.thebuzzmedia.exiftool.adapters.ExifToolService;
-/*
-  private def extractExifWithExifToolOld2(prefix: String, file: File): Try[Tags] =
-    Try {
 
-        def split(text: String): Pair[String, String] = {
-          val all = text.splitAt(text.indexOf(":"))
-          Pair(all._1.trim.replaceAll("[/ ]", ""), all._2.drop(1).trim)
-        }
-      //println("Coulnd't get exif info from " + file)
-      import scala.sys.process._
-      import scala.sys.process.ProcessIO
-      val pb = Process(s"""exiftool "${file.getAbsolutePath}"""")
-      var map = Map[String, String]()
-      val pio = new ProcessIO(_ => (),
-        stdout => scala.io.Source.fromInputStream(stdout)
-          .getLines.foreach { x =>
-            //println(s"found $x")
-            map += split(x)
-          },
-        _ => ())
-      val a = pb.run(pio)
-      val blockTillExits = a.exitValue
-      if (blockTillExits == 0) {
-        //println(map)
-        //"exiftool".!
-        //println(map mkString "\n")
-        val result = map.toMap.map { x =>
-          //println(x)
-          (prefix + x._1, formatted(x._2)_)
-        }
-        Tags(result)
-      } else {
-        throw new RuntimeException(s"Coulnd't get exif info from " + file + ". Got $blockTillExits from exiftool.")
-      }
-    }
+/*
+ private def extractExifWithExifToolOld2(prefix: String, file: File): Try[Tags] =
+ Try {
+
+ def split(text: String): Pair[String, String] = {
+ val all = text.splitAt(text.indexOf(":"))
+ Pair(all._1.trim.replaceAll("[/ ]", ""), all._2.drop(1).trim)
+ }
+ //println("Coulnd't get exif info from " + file)
+ import scala.sys.process._
+ import scala.sys.process.ProcessIO
+ val pb = Process(s"""exiftool "${file.getAbsolutePath}"""")
+ var map = Map[String, String]()
+ val pio = new ProcessIO(_ => (),
+ stdout => scala.io.Source.fromInputStream(stdout)
+ .getLines.foreach { x =>
+ //println(s"found $x")
+ map += split(x)
+ },
+ _ => ())
+ val a = pb.run(pio)
+ val blockTillExits = a.exitValue
+ if (blockTillExits == 0) {
+ //println(map)
+ //"exiftool".!
+ //println(map mkString "\n")
+ val result = map.toMap.map { x =>
+ //println(x)
+ (prefix + x._1, formatted(x._2)_)
+ }
+ Tags(result)
+ } else {
+ throw new RuntimeException(s"Coulnd't get exif info from " + file + ". Got $blockTillExits from exiftool.")
+ }
+ }
  */
 /**
  * Provide a Java-like interface to Phil Harvey's excellent, Perl-based <a
@@ -391,13 +392,13 @@ public class ExifToolNew3 implements RawExifTool {
 	 * Used to startup the external ExifToolNew3 process and open the read/write streams used to communicate with it
 	 * when {@link Feature#STAY_OPEN} is enabled. This method has no effect if the stay open feature is not enabled.
 	 */
-	@Override
-	public void startup() {
-		if (featureSet.contains(Feature.STAY_OPEN)) {
-			shuttingDown.set(false);
-			ensureProcessRunning();
-		}
-	}
+	// @Override
+	// public void startup() {
+	// if (featureSet.contains(Feature.STAY_OPEN)) {
+	// shuttingDown.set(false);
+	// ensureProcessRunning();
+	// }
+	// }
 
 	private void ensureProcessRunning() {
 		if (process == null || process.isClosed()) {
@@ -449,6 +450,9 @@ public class ExifToolNew3 implements RawExifTool {
 	 */
 	@Override
 	public synchronized void close() {
+		if (cleanupTimer != null) {
+			cleanupTimer.cancel();
+		}
 		shuttingDown.set(true);
 		if (process != null) {
 			process.close();
@@ -666,7 +670,7 @@ public class ExifToolNew3 implements RawExifTool {
 	private <T> List<String> toRawData(MetadataTag tag, Object value) {
 		if (tag.getType().equals(String[].class)) {
 			List<String> result = new LinkedList<String>();
-			String[] array = (String[])value;
+			String[] array = (String[]) value;
 			for (String value2 : array) {
 				String raw = getRawExif(tag, value2);
 				result.add(raw);

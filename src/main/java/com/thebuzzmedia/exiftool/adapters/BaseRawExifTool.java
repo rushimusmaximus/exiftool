@@ -15,11 +15,11 @@ public class BaseRawExifTool implements RawExifTool {
 		return false;
 	}
 
-	@Override
-	public void startup() {
-		// TODO Auto-generated method stub
-
-	}
+//	@Override
+//	public void startup() {
+//		// TODO Auto-generated method stub
+//
+//	}
 
 	@Override
 	public void shutdown() {

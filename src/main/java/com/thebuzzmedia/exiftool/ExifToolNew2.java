@@ -935,10 +935,10 @@ public class ExifToolNew2 implements RawExifTool {
 		log("\t\tSuccessful");
 	}
 
-	@Override
-	public void startup() {
-		resetCleanupTask();
-	}
+//	@Override
+//	public void startup() {
+//		resetCleanupTask();
+//	}
 
 	@Override
 	public void shutdown() {

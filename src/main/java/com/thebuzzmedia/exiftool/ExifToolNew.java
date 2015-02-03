@@ -376,13 +376,13 @@ public class ExifToolNew implements RawExifTool {
 		return featureEnabledSet.contains(feature);
 	}
 
-	/**
-	 * Used to startup the external ExifToolNew3 process and open the read/write streams used to communicate with it
-	 * when {@link Feature#STAY_OPEN} is enabled. This method has no effect if the stay open feature is not enabled.
-	 */
-	public void startup() {
-		exifProxy.startup();
-	}
+//	/**
+//	 * Used to startup the external ExifToolNew3 process and open the read/write streams used to communicate with it
+//	 * when {@link Feature#STAY_OPEN} is enabled. This method has no effect if the stay open feature is not enabled.
+//	 */
+//	public void startup() {
+//		exifProxy.startup();
+//	}
 
 	/**
 	 * This is same as {@link #close()}, added for consistency with {@link #startup()}

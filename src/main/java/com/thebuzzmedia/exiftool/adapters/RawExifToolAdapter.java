@@ -19,10 +19,10 @@ public abstract class RawExifToolAdapter implements RawExifTool{
 		return exifTool.isFeatureSupported(feature);
 	}
 
-	@Override
-	public void startup() {
-		exifTool.startup();
-	}
+//	@Override
+//	public void startup() {
+//		exifTool.startup();
+//	}
 
 	@Override
 	public void shutdown() {
