@@ -208,7 +208,7 @@ import com.thebuzzmedia.exiftool.adapters.ExifToolService;
 public class ExifToolNew3 implements RawExifTool {
 	private static final org.slf4j.Logger LOG = org.slf4j.LoggerFactory.getLogger(ExifToolNew3.class);
 
-	private static final String ENV_EXIF_TOOL_PATH = "exiftool.path";
+	public static final String ENV_EXIF_TOOL_PATH = "exiftool.path";
 	private static final String ENV_EXIF_TOOL_PROCESSCLEANUPDELAY = "exiftool.processCleanupDelay";
 	private static final long DEFAULT_PROCESS_CLEANUP_DELAY = 0;
 
