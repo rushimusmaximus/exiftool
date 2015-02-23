@@ -1,8 +1,9 @@
-target
-dist
-bin
-.idea/workspace.xml
-workspace.xml
+.project
+.classpath
+.settings/
 *.iml
-.idea
-out
+.idea/
+out/
+bin/
+dist/
+target/
