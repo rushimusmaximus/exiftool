@@ -24,8 +24,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.regex.Pattern;
 
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.IOUtils;
+import org.apache.commons.io.*;
 
 import com.google.common.base.CharMatcher;
 import com.google.common.base.Joiner;
@@ -582,8 +581,9 @@ public class ExifToolNew3 implements RawExifTool {
 
 	private File getTemporaryCopiedFileName(File file) {
 		File dest = new File(file.getParentFile(), "temp");
-		copyFromAsHardLink(file, dest, false);
-		return dest;
+		File temp = findFirstUniqueFile(dest);
+		copyFromAsHardLink(file,temp, false);
+		return temp;
 	}
 
 	void copyFromAsHardLink(File src, File dest, Boolean overwriteIfAlreadyExists) {
@@ -605,6 +605,26 @@ public class ExifToolNew3 implements RawExifTool {
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
+	}
+
+	private File findFirstUniqueFile(File dest) {
+		if(!dest.exists()){
+			return dest;
+		}
+		File parent = dest.getParentFile();
+		String full = dest.getAbsolutePath();
+		String extension = FilenameUtils.getExtension(full);
+		String current = FilenameUtils.getBaseName(full);
+		int counter = 1;
+		int MAX_COUNTER = 100000;
+		do {
+			File file = new File(parent, current + "-" + counter + "." + extension);
+			if (!file.exists()) {
+				return file;
+			}
+			counter++;
+		} while (counter < MAX_COUNTER);
+		throw new RuntimeException("Couldn't find a unique name similar with ["+full+"] till "+MAX_COUNTER);
 	}
 
 	public String getAbsoluteFileName(File file) {

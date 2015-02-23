@@ -1,7 +1,6 @@
 package com.thebuzzmedia.exiftool;
 
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -9,7 +8,6 @@ import org.slf4j.LoggerFactory;
 import com.thebuzzmedia.exiftool.adapters.ExifToolService;
 
 public class Benchmark {
-
 	public static final int ITERATIONS = 25;
 	private static Logger log = LoggerFactory.getLogger(Benchmark.class);
 
