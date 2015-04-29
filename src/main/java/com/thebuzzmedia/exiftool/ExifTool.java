@@ -675,6 +675,25 @@ public class ExifTool {
       }
     }
   }
+
+  /**
+   * Allows execution of arbitrary arguments
+   * @return results mapped to map, split on ":"
+   * @throws IOException
+   */
+  public Map<String,String> execute(List<String> args) throws IOException {
+    return execute(getWriteOptions(),args);
+  }
+  /**
+   * Allows execution of arbitrary arguments
+   * @return results mapped to map, split on ":"
+   * @throws IOException
+   */
+  public Map<String,String> execute(WriteOptions options, List<String> args) throws IOException {
+    return exifProxy.execute(options.runTimeoutMills, args);
+  }
+
+  //================================================================================
   //================================================================================
   //STATIC helpers
 
