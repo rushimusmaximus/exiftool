@@ -630,7 +630,7 @@ public class ExifTool {
     }
 
     for(Map.Entry<?, Object> entry : values.entrySet()) {
-      args.addAll(serializeToArgs(entry.getKey(),entry.getValue()));
+      args.addAll(serializeToArgs(options, entry.getKey(),entry.getValue()));
     }
     args.add(file.getAbsolutePath());
 
@@ -697,7 +697,7 @@ public class ExifTool {
   //================================================================================
   //STATIC helpers
 
-  static List<String> serializeToArgs(Object tag, Object value) {
+  static List<String> serializeToArgs(WriteOptions options, Object tag, Object value) {
     final Class tagType;
     final String tagName;
     if ( tag instanceof MetadataTag ) {
@@ -728,14 +728,14 @@ public class ExifTool {
 
     List<String> args = new ArrayList<String>(4);
     String arg;
-    if (value == null ) {
+    if ( value == null ) {
       arg = String.format("-%s=",tagName);
     } else if ( value instanceof Number ) {
       arg = String.format("-%s#=%s",tagName,value);
-    } else if(value instanceof Date) {
+    } else if( value instanceof Date) {
       SimpleDateFormat formatter = new SimpleDateFormat(EXIF_DATE_FORMAT);
       arg = String.format("-%s=%s",tagName,formatter.format((Date)value));
-    } else if (value instanceof Iterable) {
+    } else if ( value instanceof Iterable) {
       Iterable it = (Iterable) value;
       args.add("-sep");
       args.add(",");
@@ -751,6 +751,9 @@ public class ExifTool {
       if ( tagType != null && tagType.isArray() ) {
         args.add("-sep");
         args.add(",");
+      }
+      if ( options.stripNewLines ) {
+        value = value.toString().replaceAll("\n"," ");
       }
       arg = String.format("-%s=%s",tagName,value);
     }
@@ -1253,34 +1256,40 @@ public class ExifTool {
     private final long runTimeoutMills;
     private final boolean deleteBackupFile;
     private final boolean ignoreMinorErrors;
+    private final boolean stripNewLines;
 
     public WriteOptions() {
-      this(0,false, false);
+      this(0,false, false, true);
     }
 
-    private WriteOptions(long runTimeoutMills, boolean deleteBackupFile, boolean ignoreMinorErrors) {
+    private WriteOptions(long runTimeoutMills, boolean deleteBackupFile, boolean ignoreMinorErrors, boolean stripNewLines) {
       this.runTimeoutMills = runTimeoutMills;
       this.deleteBackupFile = deleteBackupFile;
       this.ignoreMinorErrors = ignoreMinorErrors;
+      this.stripNewLines = stripNewLines;
     }
 
     public String toString() {
-      return String.format("%s(runTimeOut:%,d deleteBackupFile:%s ignoreMinorErrors:%s)",getClass().getSimpleName(),runTimeoutMills,deleteBackupFile,ignoreMinorErrors);
+      return String.format("%s(runTimeOut:%,d deleteBackupFile:%s ignoreMinorErrors:%s, stripNewLines:%s)",getClass().getSimpleName(),runTimeoutMills,deleteBackupFile,ignoreMinorErrors, stripNewLines);
     }
 
     public WriteOptions withRunTimeoutMills(long mills) {
-      return new WriteOptions(mills,deleteBackupFile, ignoreMinorErrors);
+      return new WriteOptions(mills,deleteBackupFile, ignoreMinorErrors, stripNewLines);
     }
     /**
      * ExifTool automatically makes a backup copy a file before writing metadata tags in the form
      * "file.ext_original", by default this tool will delete that original file after the writing is done.
      */
     public WriteOptions withDeleteBackupFile(boolean enabled) {
-      return new WriteOptions(runTimeoutMills,enabled, ignoreMinorErrors);
+      return new WriteOptions(runTimeoutMills,enabled, ignoreMinorErrors, stripNewLines);
     }
 
     public WriteOptions withIgnoreMinorErrors(boolean enabled) {
-      return new WriteOptions(runTimeoutMills,deleteBackupFile, enabled);
+      return new WriteOptions(runTimeoutMills,deleteBackupFile, enabled, stripNewLines);
+    }
+
+    public WriteOptions withStripNewLines(boolean enabled) {
+      return new WriteOptions(runTimeoutMills,deleteBackupFile,ignoreMinorErrors, enabled);
     }
   }
 
