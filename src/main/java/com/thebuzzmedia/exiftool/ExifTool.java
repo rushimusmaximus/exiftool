@@ -20,9 +20,11 @@ import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
+import java.io.StringReader;
 import java.lang.reflect.Array;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -271,15 +273,10 @@ public class ExifTool {
    */
   private static final String CLEANUP_THREAD_NAME = "ExifTool Cleanup Thread";
 
-  /**
-   * Compiled {@link Pattern} of ": " used to split compact output from
-   * ExifTool evenly into name/value pairs.
-   */
-  private static final Pattern TAG_VALUE_PATTERN = Pattern.compile("\\s*:\\s*");
   private static final String STREAM_CLOSED_MESSAGE = "Stream closed";
   private static final String EXIF_DATE_FORMAT = "yyyy:MM:dd HH:mm:ss";
 
-  private static Logger log = LoggerFactory.getLogger(ExifTool.class);
+  private static final Logger log = LoggerFactory.getLogger(ExifTool.class);
 
   private final Map<Feature, Boolean> featureSupportedMap = new HashMap<Feature, Boolean>();
   private final Set<Feature> featureEnabledSet = EnumSet.noneOf(Feature.class);
@@ -577,7 +574,8 @@ public class ExifTool {
     }
     args.add(file.getAbsolutePath());
 
-    Map<String,String> resultMap = exifProxy.execute(options.runTimeoutMills,args);
+    String output = exifProxy.executeToString(options.runTimeoutMills,args);
+    Map<String,String> resultMap = toMap(output);
 
     Map<Object,Object> metadata = new HashMap<Object,Object>(resultMap.size());
 
@@ -620,48 +618,92 @@ public class ExifTool {
   /**
    * Takes a map of tags (either (@link Tag) or Strings for keys) and replaces/appends them to the metadata.
    */
-  public <T> void writeMetadata(WriteOptions options, File image, Map<T, Object> values) throws IOException {
-    if (image == null){
-      throw new IllegalArgumentException("image cannot be null and must be a valid stream of image data.");
-    }
-    if (values == null || values.isEmpty()){
-      throw new IllegalArgumentException("values cannot be null and must contain 1 or more tag to value mappings");
-    }
+  public <T> void writeMetadata(WriteOptions options, File file, Map<T, Object> values) throws IOException {
+    if ( file == null ) throw new NullPointerException("File is null");
+    if ( ! file.exists() ) throw new FileNotFoundException(String.format("File \"%s\" does not exits",file.getAbsolutePath()));
+    if ( ! file.canWrite() ) throw new SecurityException(String.format("File \"%s\" cannot be written to",file.getAbsolutePath()));
 
-    if (!image.canWrite()){
-      throw new SecurityException("Unable to write the given image [" + image.getAbsolutePath()
-        + "], ensure that the image exists at the given path and that the executing Java process has permissions to write to it.");
-    }
-
-    log.info("Adding Tags {} to {}", values, image.getAbsolutePath());
+    log.info("Adding Tags {} to {}", values, file.getAbsolutePath());
 
     List<String> args = new ArrayList<String>(values.size()+3);
-    for(Map.Entry<?, Object> entry : values.entrySet()) {
-      args.addAll(serializeToArgs(entry.getKey(),entry.getValue()));
+
+    if ( options.ignoreMinorErrors ) {
+      args.add("-ignoreMinorErrors");
     }
-    args.add(image.getAbsolutePath());
+
+    for(Map.Entry<?, Object> entry : values.entrySet()) {
+      args.addAll(serializeToArgs(options, entry.getKey(),entry.getValue()));
+    }
+    args.add(file.getAbsolutePath());
 
     //start process
     long startTime = System.currentTimeMillis();
     try {
-      exifProxy.execute(options.runTimeoutMills, args);
+      exifProxy.executeToString(options.runTimeoutMills, args);
     } finally {
       if ( options.deleteBackupFile ) {
-        File origBackup = new File(image.getAbsolutePath()+"_original");
+        File origBackup = new File(file.getAbsolutePath()+"_original");
         if ( origBackup.exists() ) origBackup.delete();
       }
     }
 
     // Print out how long the call to external ExifTool process took.
-    if (log.isDebugEnabled()){
-      log.debug(String.format("Image Meta Processed in %d ms [added %d tags]",
-        (System.currentTimeMillis() - startTime), values.size()));
+    if (log.isDebugEnabled()) log.debug(String.format("Image Meta Processed in %d ms [added %d tags]", (System.currentTimeMillis() - startTime), values.size()));
+
+  }
+
+  public void rebuildMetadata(File file) throws IOException {
+    rebuildMetadata(getWriteOptions(),file);
+  }
+
+  /**
+   * Rewrite all the the metadata tags in a JPEG image. This will not work for TIFF files.
+   * Use this when the image has some corrupt tags.
+   *
+   * @link http://www.sno.phy.queensu.ca/~phil/exiftool/faq.html#Q20
+   */
+  public void rebuildMetadata(WriteOptions options, File file) throws IOException {
+    if ( file == null ) throw new NullPointerException("File is null");
+    if ( ! file.exists() ) throw new FileNotFoundException(String.format("File \"%s\" does not exits",file.getAbsolutePath()));
+    if ( ! file.canWrite() ) throw new SecurityException(String.format("File \"%s\" cannot be written to",file.getAbsolutePath()));
+
+    List<String> args = Arrays.asList("-all=", "-tagsfromfile", "@", "-all:all", "-unsafe",file.getAbsolutePath());
+    try {
+      exifProxy.executeToString(options.runTimeoutMills, args);
+    } finally {
+      if ( options.deleteBackupFile ) {
+        File origBackup = new File(file.getAbsolutePath()+"_original");
+        if ( origBackup.exists() ) origBackup.delete();
+      }
     }
   }
+
+  /**
+   * Allows execution of arbitrary arguments
+   * @return results mapped to map, split on ":"
+   * @throws IOException
+   */
+  public Map<String,String> execute(List<String> args) throws IOException {
+    return execute(getWriteOptions(),args);
+  }
+  /**
+   * Allows execution of arbitrary arguments
+   * @return results mapped to map, split on ":"
+   * @throws IOException
+   */
+  public Map<String,String> execute(WriteOptions options, List<String> args) throws IOException {
+    return toMap(exifProxy.executeToString(options.runTimeoutMills, args));
+  }
+
+  public String executeToString(List<String> args) throws IOException {
+    return exifProxy.executeToString(getReadOptions().runTimeoutMills,args);
+  }
+
+  //================================================================================
   //================================================================================
   //STATIC helpers
 
-  static List<String> serializeToArgs(Object tag, Object value) {
+  static List<String> serializeToArgs(WriteOptions options, Object tag, Object value) {
     final Class tagType;
     final String tagName;
     if ( tag instanceof MetadataTag ) {
@@ -692,14 +734,14 @@ public class ExifTool {
 
     List<String> args = new ArrayList<String>(4);
     String arg;
-    if (value == null ) {
+    if ( value == null ) {
       arg = String.format("-%s=",tagName);
     } else if ( value instanceof Number ) {
       arg = String.format("-%s#=%s",tagName,value);
-    } else if(value instanceof Date) {
+    } else if( value instanceof Date) {
       SimpleDateFormat formatter = new SimpleDateFormat(EXIF_DATE_FORMAT);
       arg = String.format("-%s=%s",tagName,formatter.format((Date)value));
-    } else if (value instanceof Iterable) {
+    } else if ( value instanceof Iterable) {
       Iterable it = (Iterable) value;
       args.add("-sep");
       args.add(",");
@@ -715,6 +757,9 @@ public class ExifTool {
       if ( tagType != null && tagType.isArray() ) {
         args.add("-sep");
         args.add(",");
+      }
+      if ( options.stripNewLines ) {
+        value = value.toString().replaceAll("\n"," ");
       }
       arg = String.format("-%s=%s",tagName,value);
     }
@@ -785,12 +830,37 @@ public class ExifTool {
     return new CustomTag(name,String.class);
   }
 
+  /**
+   * Compiled {@link Pattern} of ": " used to split compact output from
+   * ExifTool evenly into name/value pairs.
+   */
+  private static final Pattern TAG_VALUE_PATTERN = Pattern.compile("\\s*:\\s*");
+  static Map<String,String> toMap(String input) {
+    try {
+      BufferedReader reader = new BufferedReader(new StringReader(input));
+      Map<String, String> resultMap = new HashMap<String, String>(500);
+      for (String line = reader.readLine(); line != null; line = reader.readLine()) {
+        String[] pair = TAG_VALUE_PATTERN.split(line, 2);
+        if (pair.length == 2) {
+          resultMap.put(pair[0], pair[1]);
+          log.debug(String.format("\tRead Tag [name=%s, value=%s]", pair[0], pair[1]));
+        }
+      }
+      reader.close();
+      return resultMap;
+    } catch (IOException ignore) {
+      //never going to happen
+      throw new RuntimeException(ignore);
+    }
+  }
   //================================================================================
+
   /**
    * Represents an external exif process.  Works for both single use and keep alive modes.
    * This is the actual process, with streams for reading and writing data.
    */
   public static final class ExifProcess {
+
     public static VersionNumber readVersion(String exifCmd) {
       ExifProcess process = new ExifProcess(false, Arrays.asList(exifCmd, "-ver"));
       try {
@@ -805,8 +875,9 @@ public class ExifTool {
     private final ReentrantLock closeLock = new ReentrantLock(false);
     private final boolean keepAlive;
     private final Process process;
-    private final BufferedReader reader;
-    private final OutputStreamWriter writer;
+    private final BufferedReader out;
+    private final OutputStreamWriter in;
+    private final LineReaderThread errReader;
     private volatile boolean closed = false;
 
     public ExifProcess(boolean keepAlive, List<String> args) {
@@ -814,8 +885,10 @@ public class ExifTool {
       log.debug(String.format("Attempting to start ExifTool process using args: %s", args));
       try {
         this.process = new ProcessBuilder(args).start();
-        this.reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
-        this.writer = new OutputStreamWriter(process.getOutputStream());
+        this.out = new BufferedReader(new InputStreamReader(process.getInputStream()));
+        this.in = new OutputStreamWriter(process.getOutputStream());
+        this.errReader = new LineReaderThread("exif-process-err-reader",new BufferedReader(new InputStreamReader(process.getErrorStream())));
+        errReader.start();
         log.debug("\tSuccessful");
       } catch (Exception e) {
         String message = "Unable to start external ExifTool process using the execution arguments: "
@@ -829,7 +902,7 @@ public class ExifTool {
       }
     }
 
-    public synchronized Map<String, String> sendToRunning(List<String> args) throws IOException {
+    public synchronized String sendToRunningToString(List<String> args) throws IOException {
       if (!keepAlive) {
         throw new IOException("Not KeepAlive Process");
       }
@@ -839,44 +912,79 @@ public class ExifTool {
       }
       builder.append("-execute\n");
       writeFlush(builder.toString());
-      return readResponse();
+      return readResponseToString();
     }
 
     public synchronized void writeFlush(String message) throws IOException {
       if (closed) throw new IOException(STREAM_CLOSED_MESSAGE);
-      writer.write(message);
-      writer.flush();
+      in.write(message);
+      in.flush();
     }
 
     public synchronized String readLine() throws IOException {
       if (closed) throw new IOException(STREAM_CLOSED_MESSAGE);
-      return reader.readLine();
+      return out.readLine();
     }
 
-    public synchronized Map<String, String> readResponse() throws IOException {
+    public synchronized String readResponseToString() throws IOException {
+      if (closed) throw new IOException(STREAM_CLOSED_MESSAGE);
+      log.debug("Reading response back from ExifTool...");
+
+      StringBuilder lines = new StringBuilder();
+      String line;
+      while ((line = out.readLine()) != null) {
+        if (closed) throw new IOException(STREAM_CLOSED_MESSAGE);
+        /*
+         * When using a persistent ExifTool process, it terminates its
+         * output to us with a "{ready}" clause on a new line, we need to
+         * look for it and break from this loop when we see it otherwise
+         * this process will hang indefinitely blocking on the input stream
+         * with no data to read.
+         */
+        if (keepAlive && line.equals("{ready}")) {
+          break;
+        }
+        lines.append(line).append("\n");
+      }
+      if ( errReader.hasLines() ) {
+        for(String error : errReader.takeLines()) {
+          if ( error.toLowerCase().startsWith("error") ) {
+            throw new ExifError(error);
+          }
+        }
+      }
+      return lines.toString();
+    }
+
+    public synchronized Map<String, String> readResponseToMap() throws IOException {
       if (closed) throw new IOException(STREAM_CLOSED_MESSAGE);
       log.debug("Reading response back from ExifTool...");
       Map<String, String> resultMap = new HashMap<String, String>(500);
       String line;
-
-      while ((line = reader.readLine()) != null) {
+      while ((line = out.readLine()) != null) {
         if (closed) throw new IOException(STREAM_CLOSED_MESSAGE);
         String[] pair = TAG_VALUE_PATTERN.split(line, 2);
-
         if (pair.length == 2) {
           resultMap.put(pair[0], pair[1]);
           log.debug(String.format("\tRead Tag [name=%s, value=%s]", pair[0], pair[1]));
         }
 
-      /*
-       * When using a persistent ExifTool process, it terminates its
-       * output to us with a "{ready}" clause on a new line, we need to
-       * look for it and break from this loop when we see it otherwise
-       * this process will hang indefinitely blocking on the input stream
-       * with no data to read.
-       */
+        /*
+         * When using a persistent ExifTool process, it terminates its
+         * output to us with a "{ready}" clause on a new line, we need to
+         * look for it and break from this loop when we see it otherwise
+         * this process will hang indefinitely blocking on the input stream
+         * with no data to read.
+         */
         if (keepAlive && line.equals("{ready}")) {
           break;
+        }
+      }
+      if ( errReader.hasLines() ) {
+        for(String error : errReader.takeLines()) {
+          if ( error.toLowerCase().startsWith("error") ) {
+            throw new ExifError(error);
+          }
         }
       }
       return resultMap;
@@ -894,7 +1002,7 @@ public class ExifTool {
             closed = true;
             try {
               log.debug("Closing Read stream...");
-              reader.close();
+              out.close();
               log.debug("\tSuccessful");
             } catch (Exception e) {
               // no-op, just try to close it.
@@ -902,15 +1010,23 @@ public class ExifTool {
 
             try {
               log.debug("Attempting to close ExifTool daemon process, issuing '-stay_open\\nFalse\\n' command...");
-              writer.write("-stay_open\nFalse\n");
-              writer.flush();
+              in.write("-stay_open\nFalse\n");
+              in.flush();
             } catch (IOException ex) {
               //log.error(ex,ex);
             }
 
             try {
               log.debug("Closing Write stream...");
-              writer.close();
+              in.close();
+              log.debug("\tSuccessful");
+            } catch (Exception e) {
+              // no-op, just try to close it.
+            }
+
+            try {
+              log.debug("Closing Error stream...");
+              errReader.close();
               log.debug("\tSuccessful");
             } catch (Exception e) {
               // no-op, just try to close it.
@@ -939,7 +1055,7 @@ public class ExifTool {
    */
   public interface ExifProxy {
     public void startup();
-    public Map<String, String> execute(long runTimeoutMills, List<String> args) throws IOException;
+    public String executeToString(long runTimeoutMills, List<String> args) throws IOException;
     public boolean isRunning();
     public void shutdown();
   }
@@ -995,7 +1111,7 @@ public class ExifTool {
       }
     }
 
-    public Map<String,String> execute(final long runTimeoutMills, List<String> args) throws IOException {
+    public String executeToString(final long runTimeoutMills, List<String> args) throws IOException {
       lastRunStart = System.currentTimeMillis();
       int attempts = 0;
       while (attempts < 3 && ! shuttingDown.get()){
@@ -1022,7 +1138,7 @@ public class ExifTool {
             cleanupTimer.schedule(attemptTimer, runTimeoutMills);
           }
           log.debug("Streaming arguments to ExifTool process...");
-          return process.sendToRunning(args);
+          return process.sendToRunningToString(args);
         } catch (IOException ex){
           if ( STREAM_CLOSED_MESSAGE.equals(ex.getMessage()) && ! shuttingDown.get() ){
             //only catch "Stream Closed" error (happens when process has died)
@@ -1060,7 +1176,7 @@ public class ExifTool {
       this.baseArgs.addAll(defaultArgs);
     }
 
-    public Map<String, String> execute(final long runTimeoutMills, List<String> args) throws IOException {
+    public String executeToString(final long runTimeoutMills, List<String> args) throws IOException {
       List<String> newArgs = new ArrayList<String>(baseArgs.size()+args.size());
       newArgs.addAll(baseArgs);
       newArgs.addAll(args);
@@ -1078,7 +1194,7 @@ public class ExifTool {
         cleanupTimer.schedule(attemptTimer, runTimeoutMills);
       }
       try {
-        return process.readResponse();
+        return process.readResponseToString();
       } finally {
         process.close();
         if ( attemptTimer != null ) attemptTimer.cancel();
@@ -1107,17 +1223,19 @@ public class ExifTool {
     private final boolean numericOutput;
     private final boolean showDuplicates;
     private final boolean showEmptyTags;
+    private final boolean jsonOutput;
 
     public ReadOptions() {
-      this(0,false,false,false,false);
+      this(0,false,false,false,false,false);
     }
 
-    private ReadOptions(long runTimeoutMills, boolean convertTypes, boolean numericOutput, boolean showDuplicates, boolean showEmptyTags) {
+    private ReadOptions(long runTimeoutMills, boolean convertTypes, boolean numericOutput, boolean showDuplicates, boolean showEmptyTags, boolean jsonOutput) {
       this.runTimeoutMills = runTimeoutMills;
       this.convertTypes = convertTypes;
       this.numericOutput = numericOutput;
       this.showDuplicates = showDuplicates;
       this.showEmptyTags = showEmptyTags;
+      this.jsonOutput = jsonOutput;
     }
 
     public String toString() {
@@ -1129,7 +1247,7 @@ public class ExifTool {
      * Sets the maximum time a process can run
      */
     public ReadOptions withRunTimeoutMills(long mills) {
-      return new ReadOptions(mills,convertTypes,numericOutput, showDuplicates,showEmptyTags);
+      return new ReadOptions(mills,convertTypes,numericOutput, showDuplicates,showEmptyTags,jsonOutput);
     }
 
     /**
@@ -1137,7 +1255,7 @@ public class ExifTool {
      * If this is enabled then {@link MetadataTag#getType()} is used to cast the string into a java type.
      */
     public ReadOptions withConvertTypes(boolean enabled) {
-      return new ReadOptions(runTimeoutMills,enabled,numericOutput, showDuplicates,showEmptyTags);
+      return new ReadOptions(runTimeoutMills,enabled,numericOutput, showDuplicates,showEmptyTags,jsonOutput);
     }
 
     /**
@@ -1172,18 +1290,18 @@ public class ExifTool {
      * @author Riyad Kalla (software@thebuzzmedia.com)
      */
     public ReadOptions withNumericOutput(boolean enabled) {
-      return new ReadOptions(runTimeoutMills,convertTypes,enabled, showDuplicates,showEmptyTags);
+      return new ReadOptions(runTimeoutMills,convertTypes,enabled, showDuplicates,showEmptyTags,jsonOutput);
     }
 
     /**
      * If enabled will show tags which are duplicated between different tag regions, relates to the "-a" option in ExifTool.
      */
     public ReadOptions withShowDuplicates(boolean enabled) {
-      return new ReadOptions(runTimeoutMills,convertTypes,numericOutput,enabled,showEmptyTags);
+      return new ReadOptions(runTimeoutMills,convertTypes,numericOutput,enabled,showEmptyTags,jsonOutput);
     }
 
     public ReadOptions withShowEmptyTags(boolean enabled) {
-      return new ReadOptions(runTimeoutMills,convertTypes,numericOutput,showDuplicates,enabled);
+      return new ReadOptions(runTimeoutMills,convertTypes,numericOutput,showDuplicates,enabled,jsonOutput);
     }
   }
 
@@ -1194,29 +1312,41 @@ public class ExifTool {
   public static class WriteOptions {
     private final long runTimeoutMills;
     private final boolean deleteBackupFile;
+    private final boolean ignoreMinorErrors;
+    private final boolean stripNewLines;
 
     public WriteOptions() {
-      this(0,false);
+      this(0,false, false, true);
     }
 
-    private WriteOptions(long runTimeoutMills, boolean deleteBackupFile) {
+    private WriteOptions(long runTimeoutMills, boolean deleteBackupFile, boolean ignoreMinorErrors, boolean stripNewLines) {
       this.runTimeoutMills = runTimeoutMills;
       this.deleteBackupFile = deleteBackupFile;
+      this.ignoreMinorErrors = ignoreMinorErrors;
+      this.stripNewLines = stripNewLines;
     }
 
     public String toString() {
-      return String.format("%s(runTimeOut:%,d deleteBackupFile:%s)",getClass().getSimpleName(),runTimeoutMills,deleteBackupFile);
+      return String.format("%s(runTimeOut:%,d deleteBackupFile:%s ignoreMinorErrors:%s, stripNewLines:%s)",getClass().getSimpleName(),runTimeoutMills,deleteBackupFile,ignoreMinorErrors, stripNewLines);
     }
 
     public WriteOptions withRunTimeoutMills(long mills) {
-      return new WriteOptions(mills,deleteBackupFile);
+      return new WriteOptions(mills,deleteBackupFile, ignoreMinorErrors, stripNewLines);
     }
     /**
      * ExifTool automatically makes a backup copy a file before writing metadata tags in the form
      * "file.ext_original", by default this tool will delete that original file after the writing is done.
      */
     public WriteOptions withDeleteBackupFile(boolean enabled) {
-      return new WriteOptions(runTimeoutMills,enabled);
+      return new WriteOptions(runTimeoutMills,enabled, ignoreMinorErrors, stripNewLines);
+    }
+
+    public WriteOptions withIgnoreMinorErrors(boolean enabled) {
+      return new WriteOptions(runTimeoutMills,deleteBackupFile, enabled, stripNewLines);
+    }
+
+    public WriteOptions withStripNewLines(boolean enabled) {
+      return new WriteOptions(runTimeoutMills,deleteBackupFile,ignoreMinorErrors, enabled);
     }
   }
 
@@ -1377,58 +1507,65 @@ public class ExifTool {
   public enum Tag implements MetadataTag {
     //single entry tags
     APERTURE("ApertureValue", Double.class),
-    AUTHOR("XPAuthor", String.class),
+    ARTIST("Artist", String.class),
+    AUTHOR( "XPAuthor", String.class),
+    CAPTION_ABSTRACT("Caption-Abstract", String.class),
     COLOR_SPACE("ColorSpace", Integer.class),
     COMMENT("XPComment", String.class),
     CONTRAST("Contrast", Integer.class),
-    CREATE_DATE("CreateDate", Date.class),
-    CREATION_DATE("CreationDate", Date.class),
-    DATE_CREATED("DateCreated", Date.class),
-    DATE_TIME_ORIGINAL("DateTimeOriginal", Date.class),
+    COPYRIGHT("Copyright", String.class),
+    COPYRIGHT_NOTICE("CopyrightNotice", String.class),
+    CREATION_DATE("CreationDate", String.class),
+    CREATOR("Creator", String.class),
+    DATE_TIME_ORIGINAL("DateTimeOriginal", String.class),
     DIGITAL_ZOOM_RATIO("DigitalZoomRatio", Double.class),
-    EXIF_VERSION("ExifVersion", String.class),
-    EXPOSURE_COMPENSATION("ExposureCompensation", Double.class),
-    EXPOSURE_PROGRAM("ExposureProgram", Integer.class),
-    EXPOSURE_TIME("ExposureTime", Double.class),
-    FLASH("Flash", Integer.class),
+    EXIF_VERSION("ExifVersion",String.class),
+    EXPOSURE_COMPENSATION( "ExposureCompensation", Double.class),
+    EXPOSURE_PROGRAM( "ExposureProgram", Integer.class),
+    EXPOSURE_TIME( "ExposureTime", Double.class),
+    FLASH( "Flash", Integer.class),
     FOCAL_LENGTH("FocalLength", Double.class),
-    FOCAL_LENGTH_35MM("FocalLengthIn35mmFormat", Integer.class),
+    FOCAL_LENGTH_35MM( "FocalLengthIn35mmFormat", Integer.class),
     FNUMBER("FNumber", String.class),
     GPS_ALTITUDE("GPSAltitude", Double.class),
-    GPS_ALTITUDE_REF("GPSAltitudeRef", Integer.class),
-    GPS_BEARING("GPSDestBearing", Double.class),
-    GPS_BEARING_REF("GPSDestBearingRef", String.class),
+    GPS_ALTITUDE_REF( "GPSAltitudeRef", Integer.class),
+    GPS_BEARING( "GPSDestBearing", Double.class),
+    GPS_BEARING_REF( "GPSDestBearingRef", String.class),
     GPS_DATESTAMP("GPSDateStamp", String.class),
-    GPS_LATITUDE("GPSLatitude", Double.class),
-    GPS_LATITUDE_REF("GPSLatitudeRef", String.class),
+    GPS_LATITUDE( "GPSLatitude", Double.class),
+    GPS_LATITUDE_REF( "GPSLatitudeRef", String.class),
     GPS_LONGITUDE("GPSLongitude", Double.class),
     GPS_LONGITUDE_REF("GPSLongitudeRef", String.class),
-    GPS_PROCESS_METHOD("GPSProcessingMethod", String.class),
+    GPS_PROCESS_METHOD( "GPSProcessingMethod", String.class),
     GPS_SPEED("GPSSpeed", Double.class),
     GPS_SPEED_REF("GPSSpeedRef", String.class),
-    GPS_TIMESTAMP("GPSTimeStamp", String.class),
-    IMAGE_HEIGHT("ImageHeight", Integer.class),
+    GPS_TIMESTAMP( "GPSTimeStamp", String.class),
+    IMAGE_HEIGHT( "ImageHeight", Integer.class),
     IMAGE_WIDTH("ImageWidth", Integer.class),
+    IPTC_KEYWORDS("Keywords", String.class),
     ISO("ISO", Integer.class),
-    KEYWORDS("XPKeywords", String.class),
+    KEYWORDS( "XPKeywords", String.class),
+    LENS_ID("LensID",String.class),
     LENS_MAKE("LensMake", String.class),
-    LENS_MODEL("LensModel", String.class),
+    LENS_MODEL( "LensModel", String.class),
     MAKE("Make", String.class),
     METERING_MODE("MeteringMode", Integer.class),
     MODEL("Model", String.class),
+    OBJECT_NAME("ObjectName", String.class),
     ORIENTATION("Orientation", Integer.class),
     OWNER_NAME("OwnerName", String.class),
-    RATING("Rating", Integer.class),
+    RATING( "Rating", Integer.class),
     RATING_PERCENT("RatingPercent", Integer.class),
-    ROTATION("Rotation", Integer.class),
+    ROTATION("Rotation",Integer.class),
     SATURATION("Saturation", Integer.class),
-    SENSING_METHOD("SensingMethod", Integer.class),
-    SHARPNESS("Sharpness", Integer.class),
+    SENSING_METHOD( "SensingMethod", Integer.class),
+    SHARPNESS( "Sharpness", Integer.class),
     SHUTTER_SPEED("ShutterSpeedValue", Double.class),
     SOFTWARE("Software", String.class),
     SUBJECT("XPSubject", String.class),
+    SUB_SEC_TIME_ORIGINAL("SubSecTimeOriginal", Integer.class),
     TITLE("XPTitle", String.class),
-    WHITE_BALANCE("WhiteBalance", Integer.class),
+    WHITE_BALANCE( "WhiteBalance", Integer.class),
     X_RESOLUTION("XResolution", Double.class),
     Y_RESOLUTION("YResolution", Double.class),
     ;
