@@ -7,9 +7,9 @@
     <version>6</version>
   </parent>
 	<!-- Top level stuff -->
-	<groupId>com.thebuzzmedia.exiftool</groupId>
+	<groupId>org.raisercostin</groupId>
 	<artifactId>exiftool</artifactId>
-	<version>2.3.11-raiserfork-SNAPSHOT</version>
+	<version>2.3.11-SNAPSHOT</version>
 	<packaging>jar</packaging>
 	<name>exiftool</name>
         <description>Enhanced Java Integration for Phil Harvey's ExifTool.</description>
