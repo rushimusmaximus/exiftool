@@ -9,7 +9,7 @@
   <!-- Top level stuff -->
   <groupId>org.raisercostin</groupId>
   <artifactId>exiftool</artifactId>
-  <version>2.3.12</version>
+  <version>2.3.13-SNAPSHOT</version>
   <packaging>jar</packaging>
   <name>exiftool</name>
   <description>Enhanced Java Integration for Phil Harvey's ExifTool.</description>
@@ -34,7 +34,7 @@
     <connection>scm:git:${git.url}.git</connection>
     <developerConnection>scm:git:${git.url}.git</developerConnection>
     <url>${git.url}</url>
-    <tag>exiftool-2.3.12</tag>
+    <tag>${project.artifactId}-${project.version}</tag>
   </scm>
   <distributionManagement>
     <repository>
