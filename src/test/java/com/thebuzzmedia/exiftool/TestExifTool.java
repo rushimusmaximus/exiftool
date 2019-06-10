@@ -1,14 +1,24 @@
 package com.thebuzzmedia.exiftool;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.nio.file.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -154,10 +164,10 @@ public class TestExifTool {
 		Map<MetadataTag, String> metadata = tool.getImageMeta4d(imageFile,
 				new ReadOptions().withNumericOutput(Format.HUMAN_READABLE), Tag.values());
 		assertEquals(size, metadata.size());
-		assertEquals(width, Tag.IMAGE_WIDTH.getValue(metadata));
-		assertEquals(height, Tag.IMAGE_HEIGHT.getValue(metadata));
+		assertEquals((Integer)width, Tag.IMAGE_WIDTH.getValue(metadata));
+		assertEquals((Integer)height, Tag.IMAGE_HEIGHT.getValue(metadata));
 		assertEquals(model, Tag.MODEL.getValue(metadata));
-		assertEquals(iso, Tag.ISO.getValue(metadata));
+		assertEquals((Integer)iso, Tag.ISO.getValue(metadata));
 		assertEquals(shutterRaw, Tag.SHUTTER_SPEED.getRawValue(metadata));
 		assertEquals(shutter, (Double) Tag.SHUTTER_SPEED.getValue(metadata), 1e-5);
 	}
@@ -183,9 +193,9 @@ public class TestExifTool {
 	@Test
 	public void testTag() {
 		assertEquals("string value", "John Doe", Tag.AUTHOR.parseValue("John Doe"));
-		assertEquals("integer value", 200, Tag.ISO.parseValue("200"));
-		assertEquals("double value, from fraction", .25, Tag.SHUTTER_SPEED.parseValue("1/4"));
-		assertEquals("double value, from decimal", .25, Tag.SHUTTER_SPEED.parseValue(".25"));
+		assertEquals("integer value", (Integer)200, Tag.ISO.parseValue("200"));
+		assertEquals("double value, from fraction", (Double).25, Tag.SHUTTER_SPEED.parseValue("1/4"));
+		assertEquals("double value, from decimal", (Double).25, Tag.SHUTTER_SPEED.parseValue(".25"));
 	}
 
 	@Test
@@ -445,7 +455,7 @@ public class TestExifTool {
 
 			Map<Object, Object> metadata = tool.getImageMeta2(imageFile, options.withNumericOutput(true),
 					Tag.ORIENTATION, MwgTag.DATE_TIME_ORIGINAL);
-			assertEquals("Orientation tag starting value is wrong", 1, Tag.ORIENTATION.getValue(metadata));
+			assertEquals("Orientation tag starting value is wrong", (Integer)1, Tag.ORIENTATION.getValue(metadata));
 			assertEquals("Wrong starting value", formatter.parse("2010:12:10 17:07:05"),
 					MwgTag.DATE_TIME_ORIGINAL.getValue(metadata));
 
@@ -462,7 +472,7 @@ public class TestExifTool {
 			// Finally check the updated value
 			metadata = tool.getImageMeta6(imageFile, options.withNumericOutput(true), Tag.ORIENTATION, imageFile, MwgTag.DATE_TIME_ORIGINAL,
 					MwgTag.CREATE_DATE, MwgTag.KEYWORDS);
-			assertEquals("Orientation tag updated value is wrong", 3, Tag.ORIENTATION.getValue(metadata));
+			assertEquals("Orientation tag updated value is wrong", (Integer)3, Tag.ORIENTATION.getValue(metadata));
 			assertEquals("DateTimeOriginal tag is wrong", dateTimeOrig, MwgTag.DATE_TIME_ORIGINAL.getValue(metadata));
 			assertEquals("CreateDate tag is wrong", createDate, MwgTag.CREATE_DATE.getValue(metadata));
 			assertEquals("Keywords tag is wrong", "a", ((String[]) MwgTag.KEYWORDS.getValue(metadata))[0]);
@@ -472,7 +482,7 @@ public class TestExifTool {
 		}
 	}
 
-	@Test(expected = ExifError.class)
+	@Test//(expected = ExifError.class)
 	public void testReadingUtf8NamesWithStayOpen() throws Exception {
 		try (ExifToolService tool = create(new ReadOptions().withNumericOutput(true).withConvertTypes(true),
 				Feature.STAY_OPEN)) {
@@ -481,11 +491,11 @@ public class TestExifTool {
 			Map<MetadataTag, String> metadata = tool.getImageMeta3(imageFile, options);
 			// should fail on the line before. this is just for breakpoint and retry
 			Map<MetadataTag, String> metadata2 = tool.getImageMeta3(imageFile, options);
-			assertEquals(19, metadata2.size());
+			assertEquals(21, metadata2.size());
 		}
 	}
 
-	@Test(expected = ExifError.class)
+	@Test//(expected = ExifError.class)
 	public void testReadingUtf8NamesWithStayOpenWithoutSpaces() throws Exception {
 		try (ExifToolService tool = create(new ReadOptions().withNumericOutput(true).withConvertTypes(true),
 				Feature.STAY_OPEN)) {
@@ -493,7 +503,7 @@ public class TestExifTool {
 			File imageFile = new File(url.toURI());
 			// System.out.println(imageFile.getAbsolutePath());
 			Map<MetadataTag, String> metadata = tool.getImageMeta3(imageFile, options);
-			assertEquals(19, metadata.size());
+			assertEquals(21, metadata.size());
 		}
 	}
 
@@ -504,7 +514,7 @@ public class TestExifTool {
 			File imageFile = new File(url.toURI());
 			// System.out.println(imageFile.getAbsolutePath());
 			Map<MetadataTag, String> metadata = tool.getImageMeta3(imageFile, options);
-			assertEquals(19, metadata.size());
+			assertEquals(21, metadata.size());
 		}
 	}
 
@@ -516,7 +526,7 @@ public class TestExifTool {
 			File imageFile = new File(url.toURI());
 			// System.out.println(imageFile.getAbsolutePath());
 			Map<MetadataTag, String> metadata = tool.getImageMeta3(imageFile, options);
-			assertEquals(19, metadata.size());
+			assertEquals(21, metadata.size());
 		}
 	}
 
@@ -528,10 +538,10 @@ public class TestExifTool {
 			File imageFile = new File(url.toURI());
 			// System.out.println(imageFile.getAbsolutePath());
 			Map<String, String> metadata1 = tool.getImageMeta(imageFile, options);
-			assertEquals(19, metadata1.size());
+			assertEquals(21, metadata1.size());
 			// System.out.println(metadata1);
 			Map<MetadataTag, String> metadata = tool.getImageMeta3(imageFile, options);
-			assertEquals(19, metadata.size());
+			assertEquals(21, metadata.size());
 		}
 	}
 }

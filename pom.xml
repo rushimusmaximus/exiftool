@@ -1,63 +1,99 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-	<modelVersion>4.0.0</modelVersion>
-	<parent>
-		<groupId>org.raisercostin</groupId>
-		<artifactId>raisercostin-maven-defaults</artifactId>
-		<version>3.3</version>
-	</parent>
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <groupId>org.raisercostin.utils</groupId>
+    <artifactId>maven-defaults</artifactId>
+    <version>6</version>
+  </parent>
 	<!-- Top level stuff -->
 	<groupId>com.thebuzzmedia.exiftool</groupId>
-	<artifactId>exiftool-lib</artifactId>
-	<version>2.3.10-SNAPSHOT</version>
+	<artifactId>exiftool</artifactId>
+	<version>2.3.10-raiserfork-SNAPSHOT</version>
 	<packaging>jar</packaging>
-	<name>exiftool-lib</name>
-	<licenses>
-		<license>
-			<name>The Apache Software License, Version 2.0</name>
-			<distribution>repo</distribution>
-			<url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
-		</license>
-	</licenses>
-	<url>https://github.com/raisercostin/exiftool</url>
+	<name>exiftool</name>
+        <description>Enhanced Java Integration for Phil Harvey's ExifTool.</description>
+  <url>${git.url}</url>
+  <issueManagement>
+    <system>Github</system>
+    <url>https://github.com/raisercostin/${project.artifactId}/issues</url>
+  </issueManagement>
 	<developers>
 		<developer>
 			<name>Riyad Kalla</name>
 			<email>software@thebuzzmedia.com</email>
 		</developer>
-		<developer>
-			<name>raisercostin</name>
-			<email>raisercostin@gmail.com</email>
-		</developer>
+    <developer>
+      <name>Costin Grigore</name>
+      <email>raisercostin@gmail.com</email>
+      <organization>raisercostin</organization>
+      <organizationUrl>http://raisercostin.org</organizationUrl>
+    </developer>
 	</developers>
 	<scm>
-		<connection>scm:git:https://github.com/raisercostin/exiftool.git</connection>
-		<developerConnection>scm:git:https://github.com/raisercostin/exiftool.git</developerConnection>
-		<url>https://github.com/raisercostin/exiftool.git</url>
-		<tag>HEAD</tag>
-		<!--https://github.com/raisercostin/exiftool.git-->
+    <connection>scm:git:${git.url}.git</connection>
+    <developerConnection>scm:git:${git.url}.git</developerConnection>
+    <url>${git.url}</url>
+    <tag>${project.artifactId}-${project.version}</tag>
 	</scm>
 	<distributionManagement>
-		<repository>
-			<id>exiftool.releases</id>
-			<url>svn:https://raisercostin.googlecode.com/svn/maven2/</url>
-		</repository>
-		<!--
-		<snapshotRepository>
-			<id>exiftool.snapshots</id>
-			<url>svn:https://raisercostin.googlecode.com/svn/maven2/snapshots/</url>
-		</snapshotRepository>
-		<site>
-			<id>exiftool.sites</id>
-			<url>svn:https://raisercostin.googlecode.com/svn/maven2/sites/${project.groupId}-${project.artifactId}-${project.version}</url>
-		</site>
-		-->
+    <repository>
+      <id>bintray</id>
+      <url>https://api.bintray.com/maven/${bintray.user}/${bintray.repo}/${bintray.package}/;publish=1</url>
+    </repository>
+    <!-- <snapshotRepository> <id>${org}-private-maven2-snapshots</id> <url>${dist.snapshot.url}</url> 
+			<uniqueVersion>false</uniqueVersion> </snapshotRepository> <site> <id>${org}-private-maven2-sites</id> 
+			<url>${dist.site.url}</url> </site> -->
 	</distributionManagement>
-	<properties>
-		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<maven.compiler.source>1.5</maven.compiler.source>
-		<maven.compiler.target>1.5</maven.compiler.target>
-		<source.version>1.7</source.version>
-	</properties>
+  <properties>
+    <git.userOrGroup>raisercostin</git.userOrGroup>
+    <git.repo>${project.artifactId}</git.repo>
+    <git.host>github.com</git.host>
+    <git.url>https://${git.host}/${git.userOrGroup}/${git.repo}</git.url>
+    <org>raisercostin</org>
+    <bintray.user>raisercostin</bintray.user>
+    <bintray.repo>maven</bintray.repo>
+    <bintray.package>${project.artifactId}</bintray.package>
+    <maven.build.timestamp.format>yyyyMMdd'T'HHmmss</maven.build.timestamp.format>
+    <dist.url>https://api.bintray.com/maven/${bintray.user}/${bintray.repo}/${bintray.package}</dist.url>
+    <dist.release.url>${dist.url}/releases/</dist.release.url>
+    <dist.snapshot.url>${dist.url}/snapshots/</dist.snapshot.url>
+    <dist.site.url>${dist.url}/sites/${project.groupId}-${project.artifactId}-${project.version}</dist.site.url>
+    <createChecksum>false</createChecksum>
+    <maven.test.skip>false</maven.test.skip>
+    <!--<docker.image.prefix>registry.gitlab.com/dcsi/all/docker/custom</docker.image.prefix> -->
+    <docker.image.prefix>com.revomatico</docker.image.prefix>
+    <org.mapstruct.version>1.2.0.Final</org.mapstruct.version>
+    <lombok.version>1.18.4</lombok.version>
+    <junit-jupiter.version>5.4.2</junit-jupiter.version>
+    <junit-platform.version>1.4.2</junit-platform.version>
+    <slf4j.version>1.7.25</slf4j.version>
+    <logback.version>1.2.3</logback.version>
+    <reactor.version>3.2.5.RELEASE</reactor.version>
+    <spring.version>5.1.4.RELEASE</spring.version>
+    <!--http://mapstruct.org/documentation/ide-support/ : automatically run 
+			annotation processors within the incremental compilation -->
+    <m2e.apt.activation>jdt_apt</m2e.apt.activation>
+    <spring.boot.version>2.1.1.RELEASE</spring.boot.version>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+    <java.version>1.5</java.version>
+    <target.java.version>${java.version}</target.java.version>
+    <source.java.version>1.7</source.java.version>
+    <target.jvm.version>${java.version}</target.jvm.version>
+    <kotlin.version>1.2.71</kotlin.version>
+    <kotlin.compiler.incremental>true</kotlin.compiler.incremental>
+    <experimentalCoroutines>enable</experimentalCoroutines>
+    <kotlin.compiler.languageVersion>1.3</kotlin.compiler.languageVersion>
+    <kotlin.compiler.apiVersion>1.3</kotlin.compiler.apiVersion>
+    <kotlin.compiler.jvmTarget>${java.version}</kotlin.compiler.jvmTarget>
+  </properties>
+	<licenses>
+		<license>
+                        <name>The Apache License, Version 2.0</name>
+			<url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+		</license>
+	</licenses>
 	<dependencies>
 		<dependency>
 			<groupId>commons-io</groupId>
@@ -67,7 +103,7 @@
 		<dependency>
 			<groupId>org.slf4j</groupId>
 			<artifactId>slf4j-api</artifactId>
-			<version>1.7.5</version>
+			<version>${slf4j.version}</version>
 			<scope>compile</scope>
 		</dependency>
 		<dependency>
@@ -85,7 +121,7 @@
 		<dependency>
 			<groupId>org.slf4j</groupId>
 			<artifactId>slf4j-simple</artifactId>
-			<version>1.7.5</version>
+			<version>${slf4j.version}</version>
 			<scope>test</scope>
 		</dependency>
 		<dependency>
@@ -96,14 +132,16 @@
 	</dependencies>
 	<build>
 		<plugins>
-			<!--
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>
-				<version>3.0</version>
+        <version>3.8.0</version>
+        <!--$NO-MVN-MAN-VER$-->
 				<configuration>
-					<source>1.7</source>
-					<target>1.7</target>
+          <source>${source.java.version}</source>
+          <target>${target.java.version}</target>
+          <showWarnings>true</showWarnings>
+          <showDeprecation>true</showDeprecation>
 				</configuration>
 			</plugin>
 			<plugin>
@@ -111,15 +149,7 @@
 				<artifactId>maven-release-plugin</artifactId>
 				<version>2.5</version>
 			</plugin>
-			-->
 		</plugins>
-		<extensions>
-			<extension>
-				<groupId>com.google.code.maven-svn-wagon</groupId>
-				<artifactId>maven-svn-wagon</artifactId>
-				<version>1.4</version>
-			</extension>
-		</extensions>
 	</build>
 	<profiles>
 		<profile>
@@ -155,4 +185,26 @@
 			</build>
 		</profile>
 	</profiles>
+<repositories>
+    <repository>
+      <id>jcenter-bintray</id>
+      <url>https://jcenter.bintray.com/</url>
+      <releases>
+        <enabled>true</enabled>
+      </releases>
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
+    </repository>
+    <repository>
+      <id>raisercostin-bintray</id>
+      <url>https://dl.bintray.com/raisercostin/maven</url>
+      <releases>
+        <enabled>true</enabled>
+      </releases>
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
+    </repository>
+  </repositories>
 </project>
