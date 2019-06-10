@@ -1,50 +1,50 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <parent>
     <groupId>org.raisercostin.utils</groupId>
     <artifactId>maven-defaults</artifactId>
     <version>6</version>
   </parent>
-	<!-- Top level stuff -->
-	<groupId>org.raisercostin</groupId>
-	<artifactId>exiftool</artifactId>
-	<version>2.3.12-SNAPSHOT</version>
-	<packaging>jar</packaging>
-	<name>exiftool</name>
-        <description>Enhanced Java Integration for Phil Harvey's ExifTool.</description>
+  <!-- Top level stuff -->
+  <groupId>org.raisercostin</groupId>
+  <artifactId>exiftool</artifactId>
+  <version>2.3.12-SNAPSHOT</version>
+  <packaging>jar</packaging>
+  <name>exiftool</name>
+  <description>Enhanced Java Integration for Phil Harvey's ExifTool.</description>
   <url>${git.url}</url>
   <issueManagement>
     <system>Github</system>
     <url>https://github.com/raisercostin/${project.artifactId}/issues</url>
   </issueManagement>
-	<developers>
-		<developer>
-			<name>Riyad Kalla</name>
-			<email>software@thebuzzmedia.com</email>
-		</developer>
+  <developers>
+    <developer>
+      <name>Riyad Kalla</name>
+      <email>software@thebuzzmedia.com</email>
+    </developer>
     <developer>
       <name>Costin Grigore</name>
       <email>raisercostin@gmail.com</email>
       <organization>raisercostin</organization>
       <organizationUrl>http://raisercostin.org</organizationUrl>
     </developer>
-	</developers>
-	<scm>
+  </developers>
+  <scm>
     <connection>scm:git:${git.url}.git</connection>
     <developerConnection>scm:git:${git.url}.git</developerConnection>
     <url>${git.url}</url>
     <tag>${project.artifactId}-${project.version}</tag>
-	</scm>
-	<distributionManagement>
+  </scm>
+  <distributionManagement>
     <repository>
       <id>bintray</id>
       <url>https://api.bintray.com/maven/${bintray.user}/${bintray.repo}/${bintray.package}/;publish=1</url>
     </repository>
-    <!-- <snapshotRepository> <id>${org}-private-maven2-snapshots</id> <url>${dist.snapshot.url}</url> 
-			<uniqueVersion>false</uniqueVersion> </snapshotRepository> <site> <id>${org}-private-maven2-sites</id> 
-			<url>${dist.site.url}</url> </site> -->
-	</distributionManagement>
+    <!-- <snapshotRepository> <id>${org}-private-maven2-snapshots</id> <url>${dist.snapshot.url}</url> <uniqueVersion>false</uniqueVersion> </snapshotRepository> 
+      <site> <id>${org}-private-maven2-sites</id> <url>${dist.site.url}</url> </site> -->
+  </distributionManagement>
   <properties>
     <git.userOrGroup>raisercostin</git.userOrGroup>
     <git.repo>${project.artifactId}</git.repo>
@@ -71,8 +71,7 @@
     <logback.version>1.2.3</logback.version>
     <reactor.version>3.2.5.RELEASE</reactor.version>
     <spring.version>5.1.4.RELEASE</spring.version>
-    <!--http://mapstruct.org/documentation/ide-support/ : automatically run 
-			annotation processors within the incremental compilation -->
+    <!--http://mapstruct.org/documentation/ide-support/ : automatically run annotation processors within the incremental compilation -->
     <m2e.apt.activation>jdt_apt</m2e.apt.activation>
     <spring.boot.version>2.1.1.RELEASE</spring.boot.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -88,104 +87,104 @@
     <kotlin.compiler.apiVersion>1.3</kotlin.compiler.apiVersion>
     <kotlin.compiler.jvmTarget>${java.version}</kotlin.compiler.jvmTarget>
   </properties>
-	<licenses>
-		<license>
-                        <name>The Apache License, Version 2.0</name>
-			<url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
-		</license>
-	</licenses>
-	<dependencies>
-		<dependency>
-			<groupId>commons-io</groupId>
-			<artifactId>commons-io</artifactId>
-			<version>2.2</version>
-		</dependency>
-		<dependency>
-			<groupId>org.slf4j</groupId>
-			<artifactId>slf4j-api</artifactId>
-			<version>${slf4j.version}</version>
-			<scope>compile</scope>
-		</dependency>
-		<dependency>
-			<groupId>com.google.guava</groupId>
-			<artifactId>guava</artifactId>
-			<version>17.0</version>
-		</dependency>
-		<dependency>
-			<groupId>junit</groupId>
-			<artifactId>junit</artifactId>
-			<version>4.11</version>
-			<scope>test</scope>
-		</dependency>
-		<!-- For testing just use simple logging framework -->
-		<dependency>
-			<groupId>org.slf4j</groupId>
-			<artifactId>slf4j-simple</artifactId>
-			<version>${slf4j.version}</version>
-			<scope>test</scope>
-		</dependency>
-		<dependency>
-			<groupId>joda-time</groupId>
-			<artifactId>joda-time</artifactId>
-			<version>2.2</version>
-		</dependency>
-	</dependencies>
-	<build>
-		<plugins>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-compiler-plugin</artifactId>
+  <licenses>
+    <license>
+      <name>The Apache License, Version 2.0</name>
+      <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+    </license>
+  </licenses>
+  <dependencies>
+    <dependency>
+      <groupId>commons-io</groupId>
+      <artifactId>commons-io</artifactId>
+      <version>2.6</version>
+    </dependency>
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-api</artifactId>
+      <version>${slf4j.version}</version>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.google.guava</groupId>
+      <artifactId>guava</artifactId>
+      <version>27.1-jre</version>
+    </dependency>
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <version>4.11</version>
+      <scope>test</scope>
+    </dependency>
+    <!-- For testing just use simple logging framework -->
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-simple</artifactId>
+      <version>${slf4j.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>joda-time</groupId>
+      <artifactId>joda-time</artifactId>
+      <version>2.10.2</version>
+    </dependency>
+  </dependencies>
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
         <version>3.8.0</version>
-        <!--$NO-MVN-MAN-VER$-->
-				<configuration>
+        <!--$NO-MVN-MAN-VER$ -->
+        <configuration>
           <source>${source.java.version}</source>
           <target>${target.java.version}</target>
           <showWarnings>true</showWarnings>
           <showDeprecation>true</showDeprecation>
-				</configuration>
-			</plugin>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-release-plugin</artifactId>
-				<version>2.5.3</version>
-			</plugin>
-		</plugins>
-	</build>
-	<profiles>
-		<profile>
-			<id>release</id>
-			<build>
-				<plugins>
-					<plugin>
-						<groupId>org.apache.maven.plugins</groupId>
-						<artifactId>maven-javadoc-plugin</artifactId>
-						<version>2.7</version>
-						<executions>
-							<execution>
-								<id>attach-javadocs</id>
-								<goals>
-									<goal>jar</goal>
-								</goals>
-							</execution>
-						</executions>
-					</plugin>
-					<plugin>
-						<groupId>org.apache.maven.plugins</groupId>
-						<artifactId>maven-source-plugin</artifactId>
-						<executions>
-							<execution>
-								<id>attach-sources</id>
-								<goals>
-									<goal>jar</goal>
-								</goals>
-							</execution>
-						</executions>
-					</plugin>
-				</plugins>
-			</build>
-		</profile>
-	</profiles>
-<repositories>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-release-plugin</artifactId>
+        <version>2.5.3</version>
+      </plugin>
+    </plugins>
+  </build>
+  <profiles>
+    <profile>
+      <id>release</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-javadoc-plugin</artifactId>
+            <version>2.7</version>
+            <executions>
+              <execution>
+                <id>attach-javadocs</id>
+                <goals>
+                  <goal>jar</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-source-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>attach-sources</id>
+                <goals>
+                  <goal>jar</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
+  <repositories>
     <repository>
       <id>jcenter-bintray</id>
       <url>https://jcenter.bintray.com/</url>

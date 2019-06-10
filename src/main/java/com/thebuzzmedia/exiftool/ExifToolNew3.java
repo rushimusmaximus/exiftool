@@ -632,7 +632,7 @@ public class ExifToolNew3 implements RawExifTool {
 		// return getMSDOSName(file);
 		// else
 		// return file.getAbsolutePath();
-		if (CharMatcher.ASCII.matchesAllOf(file.getAbsolutePath())) {
+		if (CharMatcher.ascii().matchesAllOf(file.getAbsolutePath())) {
 			return file.getAbsolutePath();
 		}
 		return null;
