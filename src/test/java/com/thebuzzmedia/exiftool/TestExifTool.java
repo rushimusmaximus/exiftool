@@ -453,7 +453,7 @@ public class TestExifTool {
       tool.writeMetadata(new WriteOptions().withDeleteBackupFile(false), imageFile, data);
 
       // Finally check the updated value
-      metadata = tool.getImageMeta6(imageFile, options.withNumericOutput(true), Tag.ORIENTATION, imageFile, MwgTag.DATE_TIME_ORIGINAL,
+      metadata = tool.getImageMeta6(imageFile, options.withNumericOutput(true), Tag.ORIENTATION, MwgTag.DATE_TIME_ORIGINAL,
           MwgTag.CREATE_DATE, MwgTag.KEYWORDS);
       assertEquals("Orientation tag updated value is wrong", (Integer) 3, Tag.ORIENTATION.getValue(metadata));
       assertEquals("DateTimeOriginal tag is wrong", dateTimeOrig, MwgTag.DATE_TIME_ORIGINAL.getValue(metadata));
