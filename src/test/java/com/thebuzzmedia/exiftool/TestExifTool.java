@@ -529,8 +529,9 @@ public class TestExifTool {
   @Test
   public void testReadingOnWindowsEndOfLine() throws Exception {
     ExifToolNew3 exifTool = new ExifToolNew3(Feature.WINDOWS, Feature.STAY_OPEN);
-    Map<String, String> map = exifTool.getImageMeta(
-      new File("e:\\work\\electrica\\00-ICT\\FOCSANI\\__Echipamente AMR Telecomunicatii\\20  SDEE Focsani  27,1843148  45,69987857.jpg"),
+    URL url = getClass().getResource("/20131231_230955_Strada Frumoasă.png");
+    File imageFile = new File(url.toURI());
+    Map<String, String> map = exifTool.getImageMeta(imageFile,
       new ReadOptions()
       ,
       "GPSAltitude",
