@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.TreeMap;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.regex.Pattern;
 
@@ -185,15 +186,23 @@ public final class ExifProcess {
     if (closed)
       throw new IOException(ExifToolNew3.STREAM_CLOSED_MESSAGE);
     LOG.debug("Reading response back from ExifToolNew3...");
-    String line;
+    //String line;
     List<String> all = new ArrayList<String>();
-
-    while ((line = reader.readLine()) != null) {
+//    if(!keepAlive) {
+//      boolean result = process.waitFor(10, TimeUnit.SECONDS);
+//    }
+    while(true){
+      String line = reader.readLine();
       if (closed) {
         LOG.info("stream closed message");
         throw new IOException(ExifToolNew3.STREAM_CLOSED_MESSAGE);
       }
       LOG.debug("stream line read [" + line + "]");
+      if(!keepAlive && line==null) {
+        Preconditions.checkState(!process.isAlive());
+        //if no keep alive then the null should be returned
+        break;
+      }
       /*
        * When using a persistent ExifToolNew3 process, it terminates its output to us with a "{ready}" clause on a new
        * line, we need to look for it and break from this loop when we see it otherwise this process will hang
@@ -204,7 +213,7 @@ public final class ExifProcess {
       }
       all.add(line);
     }
-    Preconditions.checkNotNull(line, "Should wait to get {ready}");
+    //Preconditions.checkNotNull(line, "Should wait to get {ready}");
     String error = readError();
     if (error != null) {
       //
@@ -264,6 +273,7 @@ public final class ExifProcess {
             LOG.debug("", e);
           }
 
+          if(keepAlive)
           try {
             LOG.debug("Attempting to close ExifToolNew3 daemon process, issuing '-stay_open\\nFalse\\n' command...");
             writer.write("-stay_open\nFalse\n");
