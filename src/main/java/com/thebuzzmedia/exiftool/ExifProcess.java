@@ -160,11 +160,12 @@ public final class ExifProcess {
 		if (!keepAlive) {
 			throw new IOException("Not KeepAlive Process");
 		}
+		String eol = System.lineSeparator();
 		StringBuilder builder = new StringBuilder();
 		for (String arg : args) {
-			builder.append(arg).append("\n");
+			builder.append(arg).append(eol);
 		}
-		builder.append("-execute\n");
+		builder.append("-execute").append(eol);
 		LOG.info("exiftool " + Joiner.on(" ").join(args));
 		writeFlush(builder.toString());
 		return readResponse(args);

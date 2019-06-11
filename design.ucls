@@ -1,0 +1,564 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<class-diagram version="1.2.2" icons="true" automaticImage="PNG" always-add-relationships="true" generalizations="true" 
+  realizations="true" associations="true" dependencies="true" nesting-relationships="true" router="FAN">  
+  <class id="1" language="java" name="com.thebuzzmedia.exiftool.adapters.RawExifToolAdapter" project="exiftool" 
+    file="/exiftool/src/main/java/com/thebuzzmedia/exiftool/adapters/RawExifToolAdapter.java" binary="false" 
+    corner="BOTTOM_RIGHT">    
+    <position height="297" width="312" x="515" y="842"/>    
+    <display autosize="true" stereotype="true" package="true" initial-value="false" signature="true" 
+      sort-features="false" accessors="true" visibility="true">      
+      <attributes public="true" package="true" protected="true" private="true" static="true"/>      
+      <operations public="true" package="true" protected="true" private="true" static="true"/>    
+    </display>  
+  </class>  
+  <class id="2" language="java" name="com.thebuzzmedia.exiftool.adapters.ExifToolService" project="exiftool" 
+    file="/exiftool/src/main/java/com/thebuzzmedia/exiftool/adapters/ExifToolService.java" binary="false" 
+    corner="BOTTOM_RIGHT">    
+    <position height="459" width="445" x="1035" y="2295"/>    
+    <display autosize="true" stereotype="true" package="true" initial-value="false" signature="true" 
+      sort-features="false" accessors="true" visibility="true">      
+      <attributes public="true" package="true" protected="true" private="true" static="true"/>      
+      <operations public="true" package="true" protected="true" private="true" static="true"/>    
+    </display>  
+  </class>  
+  <class id="3" language="java" name="com.thebuzzmedia.exiftool.adapters.BaseRawExifTool" project="exiftool" 
+    file="/exiftool/src/main/java/com/thebuzzmedia/exiftool/adapters/BaseRawExifTool.java" binary="false" 
+    corner="BOTTOM_RIGHT">    
+    <position height="297" width="312" x="203" y="2295"/>    
+    <display autosize="true" stereotype="true" package="true" initial-value="false" signature="true" 
+      sort-features="false" accessors="true" visibility="true">      
+      <attributes public="true" package="true" protected="true" private="true" static="true"/>      
+      <operations public="true" package="true" protected="true" private="true" static="true"/>    
+    </display>  
+  </class>  
+  <class id="4" language="java" name="com.thebuzzmedia.exiftool.ExifToolNew2" project="exiftool" 
+    file="/exiftool/src/main/java/com/thebuzzmedia/exiftool/ExifToolNew2.java" binary="false" corner="BOTTOM_RIGHT">    
+    <position height="765" width="312" x="1344" y="842"/>    
+    <display autosize="true" stereotype="true" package="true" initial-value="false" signature="true" 
+      sort-features="false" accessors="true" visibility="true">      
+      <attributes public="true" package="true" protected="true" private="true" static="true"/>      
+      <operations public="true" package="true" protected="true" private="true" static="true"/>    
+    </display>  
+  </class>  
+  <class id="5" language="java" name="com.thebuzzmedia.exiftool.ExifToolNew3" project="exiftool" 
+    file="/exiftool/src/main/java/com/thebuzzmedia/exiftool/ExifToolNew3.java" binary="false" corner="BOTTOM_RIGHT">    
+    <position height="1017" width="332" x="951" y="842"/>    
+    <display autosize="true" stereotype="true" package="true" initial-value="false" signature="true" 
+      sort-features="false" accessors="true" visibility="true">      
+      <attributes public="true" package="true" protected="true" private="true" static="true"/>      
+      <operations public="true" package="true" protected="true" private="true" static="true"/>    
+    </display>  
+  </class>  
+  <enumeration id="6" language="java" name="com.thebuzzmedia.exiftool.ExifToolOld1.Tag" project="exiftool" 
+    file="/exiftool/src/main/java/com/thebuzzmedia/exiftool/ExifToolOld1.java" binary="false" corner="BOTTOM_RIGHT">    
+    <position height="1413" width="210" x="244" y="842"/>    
+    <display autosize="true" stereotype="true" package="true" initial-value="false" signature="true" 
+      sort-features="false" accessors="true" visibility="true">      
+      <attributes public="true" package="true" protected="true" private="true" static="true"/>      
+      <operations public="true" package="true" protected="true" private="true" static="true"/>    
+    </display>  
+  </enumeration>  
+  <enumeration id="7" language="java" name="com.thebuzzmedia.exiftool.ExifTool.Format" project="exiftool" 
+    file="/exiftool/src/main/java/com/thebuzzmedia/exiftool/ExifTool.java" binary="false" corner="BOTTOM_RIGHT">    
+    <position height="117" width="163" x="2214" y="2295"/>    
+    <display autosize="true" stereotype="true" package="true" initial-value="false" signature="true" 
+      sort-features="false" accessors="true" visibility="true">      
+      <attributes public="true" package="true" protected="true" private="true" static="true"/>      
+      <operations public="true" package="true" protected="true" private="true" static="true"/>    
+    </display>  
+  </enumeration>  
+  <enumeration id="8" language="java" name="com.thebuzzmedia.exiftool.ExifTool.MwgTag" project="exiftool" 
+    file="/exiftool/src/main/java/com/thebuzzmedia/exiftool/ExifTool.java" binary="false" corner="BOTTOM_RIGHT">    
+    <position height="423" width="181" x="2844" y="2295"/>    
+    <display autosize="true" stereotype="true" package="true" initial-value="false" signature="true" 
+      sort-features="false" accessors="true" visibility="true">      
+      <attributes public="true" package="true" protected="true" private="true" static="true"/>      
+      <operations public="true" package="true" protected="true" private="true" static="true"/>    
+    </display>  
+  </enumeration>  
+  <class id="9" language="java" name="com.thebuzzmedia.exiftool.CustomTag" project="exiftool" 
+    file="/exiftool/src/main/java/com/thebuzzmedia/exiftool/CustomTag.java" binary="false" corner="BOTTOM_RIGHT">    
+    <position height="243" width="186" x="1457" y="3694"/>    
+    <display autosize="true" stereotype="true" package="true" initial-value="false" signature="true" 
+      sort-features="false" accessors="true" visibility="true">      
+      <attributes public="true" package="true" protected="true" private="true" static="true"/>      
+      <operations public="true" package="true" protected="true" private="true" static="true"/>    
+    </display>  
+  </class>  
+  <class id="10" language="java" name="com.thebuzzmedia.exiftool.ExifTool.VersionNumberOld" project="exiftool" 
+    file="/exiftool/src/main/java/com/thebuzzmedia/exiftool/ExifTool.java" binary="false" corner="BOTTOM_RIGHT">    
+    <position height="153" width="255" x="1583" y="2295"/>    
+    <display autosize="true" stereotype="true" package="true" initial-value="false" signature="true" 
+      sort-features="false" accessors="true" visibility="true">      
+      <attributes public="true" package="true" protected="true" private="true" static="true"/>      
+      <operations public="true" package="true" protected="true" private="true" static="true"/>    
+    </display>  
+  </class>  
+  <class id="11" language="java" name="com.thebuzzmedia.exiftool.ExifToolOld1" project="exiftool" 
+    file="/exiftool/src/main/java/com/thebuzzmedia/exiftool/ExifToolOld1.java" binary="false" corner="BOTTOM_RIGHT">    
+    <position height="549" width="269" x="143" y="37"/>    
+    <display autosize="true" stereotype="true" package="true" initial-value="false" signature="true" 
+      sort-features="false" accessors="true" visibility="true">      
+      <attributes public="true" package="true" protected="true" private="true" static="true"/>      
+      <operations public="true" package="true" protected="true" private="true" static="true"/>    
+    </display>  
+  </class>  
+  <class id="12" language="java" name="com.thebuzzmedia.exiftool.RawExifTool.Factory" project="exiftool" 
+    file="/exiftool/src/main/java/com/thebuzzmedia/exiftool/RawExifTool.java" binary="false" corner="BOTTOM_RIGHT">    
+    <position height="135" width="250" x="848" y="37"/>    
+    <display autosize="true" stereotype="true" package="true" initial-value="false" signature="true" 
+      sort-features="false" accessors="true" visibility="true">      
+      <attributes public="true" package="true" protected="true" private="true" static="true"/>      
+      <operations public="true" package="true" protected="true" private="true" static="true"/>    
+    </display>  
+  </class>  
+  <enumeration id="13" language="java" name="com.thebuzzmedia.exiftool.MwgTag" project="exiftool" 
+    file="/exiftool/src/main/java/com/thebuzzmedia/exiftool/MwgTag.java" binary="false" corner="BOTTOM_RIGHT">    
+    <position height="459" width="181" x="1194" y="3694"/>    
+    <display autosize="true" stereotype="true" package="true" initial-value="false" signature="true" 
+      sort-features="false" accessors="true" visibility="true">      
+      <attributes public="true" package="true" protected="true" private="true" static="true"/>      
+      <operations public="true" package="true" protected="true" private="true" static="true"/>    
+    </display>  
+  </enumeration>  
+  <class id="14" language="java" name="com.thebuzzmedia.exiftool.ExifTool.CustomTag" project="exiftool" 
+    file="/exiftool/src/main/java/com/thebuzzmedia/exiftool/ExifTool.java" binary="false" corner="BOTTOM_RIGHT">    
+    <position height="225" width="186" x="3065" y="2295"/>    
+    <display autosize="true" stereotype="true" package="true" initial-value="false" signature="true" 
+      sort-features="false" accessors="true" visibility="true">      
+      <attributes public="true" package="true" protected="true" private="true" static="true"/>      
+      <operations public="true" package="true" protected="true" private="true" static="true"/>    
+    </display>  
+  </class>  
+  <enumeration id="15" language="java" name="com.thebuzzmedia.exiftool.ExifTool.Tag" project="exiftool" 
+    file="/exiftool/src/main/java/com/thebuzzmedia/exiftool/ExifTool.java" binary="false" corner="BOTTOM_RIGHT">    
+    <position height="-1" width="-1" x="1817" y="4885"/>    
+    <display autosize="true" stereotype="true" package="true" initial-value="false" signature="true" 
+      sort-features="false" accessors="true" visibility="true">      
+      <attributes public="true" package="true" protected="true" private="true" static="true"/>      
+      <operations public="true" package="true" protected="true" private="true" static="true"/>    
+    </display>  
+  </enumeration>  
+  <class id="16" language="java" name="com.thebuzzmedia.exiftool.Sidecar" project="exiftool" 
+    file="/exiftool/src/main/java/com/thebuzzmedia/exiftool/Sidecar.java" binary="false" corner="BOTTOM_RIGHT">    
+    <position height="117" width="177" x="1490" y="37"/>    
+    <display autosize="true" stereotype="true" package="true" initial-value="false" signature="true" 
+      sort-features="false" accessors="true" visibility="true">      
+      <attributes public="true" package="true" protected="true" private="true" static="true"/>      
+      <operations public="true" package="true" protected="true" private="true" static="true"/>    
+    </display>  
+  </class>  
+  <enumeration id="17" language="java" name="com.thebuzzmedia.exiftool.Tag" project="exiftool" 
+    file="/exiftool/src/main/java/com/thebuzzmedia/exiftool/Tag.java" binary="false" corner="BOTTOM_RIGHT">    
+    <position height="2007" width="302" x="1320" y="4193"/>    
+    <display autosize="true" stereotype="true" package="true" initial-value="false" signature="true" 
+      sort-features="false" accessors="true" visibility="true">      
+      <attributes public="true" package="true" protected="true" private="true" static="true"/>      
+      <operations public="true" package="true" protected="true" private="true" static="true"/>    
+    </display>  
+  </enumeration>  
+  <class id="18" language="java" name="com.thebuzzmedia.exiftool.ExifTool" project="exiftool" 
+    file="/exiftool/src/main/java/com/thebuzzmedia/exiftool/ExifTool.java" binary="false" corner="BOTTOM_RIGHT">    
+    <position height="873" width="324" x="2214" y="842"/>    
+    <display autosize="true" stereotype="true" package="true" initial-value="false" signature="true" 
+      sort-features="false" accessors="true" visibility="true">      
+      <attributes public="true" package="true" protected="true" private="true" static="true"/>      
+      <operations public="true" package="true" protected="true" private="true" static="true"/>    
+    </display>  
+  </class>  
+  <interface id="19" language="java" name="com.thebuzzmedia.exiftool.RawExifTool" project="exiftool" 
+    file="/exiftool/src/main/java/com/thebuzzmedia/exiftool/RawExifTool.java" binary="false" corner="BOTTOM_RIGHT">    
+    <position height="279" width="312" x="578" y="3694"/>    
+    <display autosize="true" stereotype="true" package="true" initial-value="false" signature="true" 
+      sort-features="false" accessors="true" visibility="true">      
+      <attributes public="true" package="true" protected="true" private="true" static="true"/>      
+      <operations public="true" package="true" protected="true" private="true" static="true"/>    
+    </display>  
+  </interface>  
+  <interface id="20" language="java" name="com.thebuzzmedia.exiftool.MetadataTag" project="exiftool" 
+    file="/exiftool/src/main/java/com/thebuzzmedia/exiftool/MetadataTag.java" binary="false" corner="BOTTOM_RIGHT">    
+    <position height="-1" width="-1" x="1832" y="4084"/>    
+    <display autosize="true" stereotype="true" package="true" initial-value="false" signature="true" 
+      sort-features="false" accessors="true" visibility="true">      
+      <attributes public="true" package="true" protected="true" private="true" static="true"/>      
+      <operations public="true" package="true" protected="true" private="true" static="true"/>    
+    </display>  
+  </interface>  
+  <class id="21" language="java" name="com.thebuzzmedia.exiftool.ReadOptions" project="exiftool" 
+    file="/exiftool/src/main/java/com/thebuzzmedia/exiftool/ReadOptions.java" binary="false" corner="BOTTOM_RIGHT">    
+    <position height="315" width="280" x="911" y="4193"/>    
+    <display autosize="true" stereotype="true" package="true" initial-value="false" signature="true" 
+      sort-features="false" accessors="true" visibility="true">      
+      <attributes public="true" package="true" protected="true" private="true" static="true"/>      
+      <operations public="true" package="true" protected="true" private="true" static="true"/>    
+    </display>  
+  </class>  
+  <class id="22" language="java" name="com.thebuzzmedia.exiftool.ExifToolNew" project="exiftool" 
+    file="/exiftool/src/main/java/com/thebuzzmedia/exiftool/ExifToolNew.java" binary="false" corner="BOTTOM_RIGHT">    
+    <position height="765" width="312" x="1138" y="37"/>    
+    <display autosize="true" stereotype="true" package="true" initial-value="false" signature="true" 
+      sort-features="false" accessors="true" visibility="true">      
+      <attributes public="true" package="true" protected="true" private="true" static="true"/>      
+      <operations public="true" package="true" protected="true" private="true" static="true"/>    
+    </display>  
+  </class>  
+  <enumeration id="23" language="java" name="com.thebuzzmedia.exiftool.ExifToolOld1.Format" project="exiftool" 
+    file="/exiftool/src/main/java/com/thebuzzmedia/exiftool/ExifToolOld1.java" binary="false" corner="BOTTOM_RIGHT">    
+    <position height="117" width="163" x="41" y="842"/>    
+    <display autosize="true" stereotype="true" package="true" initial-value="false" signature="true" 
+      sort-features="false" accessors="true" visibility="true">      
+      <attributes public="true" package="true" protected="true" private="true" static="true"/>      
+      <operations public="true" package="true" protected="true" private="true" static="true"/>    
+    </display>  
+  </enumeration>  
+  <class id="24" language="java" name="com.thebuzzmedia.exiftool.ExifTool.ReadOptionsOld" project="exiftool" 
+    file="/exiftool/src/main/java/com/thebuzzmedia/exiftool/ExifTool.java" binary="false" corner="BOTTOM_RIGHT">    
+    <position height="297" width="296" x="1878" y="2295"/>    
+    <display autosize="true" stereotype="true" package="true" initial-value="false" signature="true" 
+      sort-features="false" accessors="true" visibility="true">      
+      <attributes public="true" package="true" protected="true" private="true" static="true"/>      
+      <operations public="true" package="true" protected="true" private="true" static="true"/>    
+    </display>  
+  </class>  
+  <interface id="25" language="java" name="com.thebuzzmedia.exiftool.ExifTool.MetadataTag" project="exiftool" 
+    file="/exiftool/src/main/java/com/thebuzzmedia/exiftool/ExifTool.java" binary="false" corner="BOTTOM_RIGHT">    
+    <position height="117" width="121" x="3166" y="3694"/>    
+    <display autosize="true" stereotype="true" package="true" initial-value="false" signature="true" 
+      sort-features="false" accessors="true" visibility="true">      
+      <attributes public="true" package="true" protected="true" private="true" static="true"/>      
+      <operations public="true" package="true" protected="true" private="true" static="true"/>    
+    </display>  
+  </interface>  
+  <enumeration id="26" language="java" name="com.thebuzzmedia.exiftool.TagGroup" project="exiftool" 
+    file="/exiftool/src/main/java/com/thebuzzmedia/exiftool/TagGroup.java" binary="false" corner="BOTTOM_RIGHT">    
+    <position height="333" width="140" x="1014" y="3694"/>    
+    <display autosize="true" stereotype="true" package="true" initial-value="false" signature="true" 
+      sort-features="false" accessors="true" visibility="true">      
+      <attributes public="true" package="true" protected="true" private="true" static="true"/>      
+      <operations public="true" package="true" protected="true" private="true" static="true"/>    
+    </display>  
+  </enumeration>  
+  <enumeration id="27" language="java" name="com.thebuzzmedia.exiftool.ExifTool.FeatureOld" project="exiftool" 
+    file="/exiftool/src/main/java/com/thebuzzmedia/exiftool/ExifTool.java" binary="false" corner="BOTTOM_RIGHT">    
+    <position height="171" width="207" x="2417" y="2295"/>    
+    <display autosize="true" stereotype="true" package="true" initial-value="false" signature="true" 
+      sort-features="false" accessors="true" visibility="true">      
+      <attributes public="true" package="true" protected="true" private="true" static="true"/>      
+      <operations public="true" package="true" protected="true" private="true" static="true"/>    
+    </display>  
+  </enumeration>  
+  <enumeration id="28" language="java" name="com.thebuzzmedia.exiftool.ExifTool.TagGroup" project="exiftool" 
+    file="/exiftool/src/main/java/com/thebuzzmedia/exiftool/ExifTool.java" binary="false" corner="BOTTOM_RIGHT">    
+    <position height="261" width="140" x="2664" y="2295"/>    
+    <display autosize="true" stereotype="true" package="true" initial-value="false" signature="true" 
+      sort-features="false" accessors="true" visibility="true">      
+      <attributes public="true" package="true" protected="true" private="true" static="true"/>      
+      <operations public="true" package="true" protected="true" private="true" static="true"/>    
+    </display>  
+  </enumeration>  
+  <dependency id="29">    
+    <bendpoint x="1552" y="2295"/>    
+    <bendpoint x="1715" y="3694"/>    
+    <end type="SOURCE" refId="4"/>    
+    <end type="TARGET" refId="17"/>  
+  </dependency>  
+  <nesting id="30">    
+    <end type="SOURCE" refId="18"/>    
+    <end type="TARGET" refId="7"/>  
+  </nesting>  
+  <nesting id="31">    
+    <bendpoint x="3575" y="2295"/>    
+    <end type="SOURCE" refId="18"/>    
+    <end type="TARGET" refId="25"/>  
+  </nesting>  
+  <dependency id="32">    
+    <end type="SOURCE" refId="19"/>    
+    <end type="TARGET" refId="21"/>  
+  </dependency>  
+  <dependency id="33">    
+    <end type="SOURCE" refId="4"/>    
+    <end type="TARGET" refId="2"/>  
+  </dependency>  
+  <dependency id="34">    
+    <bendpoint x="524" y="3694"/>    
+    <end type="SOURCE" refId="3"/>    
+    <end type="TARGET" refId="21"/>  
+  </dependency>  
+  <dependency id="35">    
+    <bendpoint x="1004" y="2295"/>    
+    <bendpoint x="962" y="3694"/>    
+    <end type="SOURCE" refId="4"/>    
+    <end type="TARGET" refId="21"/>  
+  </dependency>  
+  <association id="36">    
+    <bendpoint x="1531" y="2295"/>    
+    <bendpoint x="1405" y="3694"/>    
+    <end type="SOURCE" refId="18" navigable="false">      
+      <attribute id="37" name="defReadOptions">        
+        <position height="0" width="0" x="0" y="0"/>      
+      </attribute>      
+      <multiplicity id="38" minimum="0" maximum="1">        
+        <position height="0" width="0" x="0" y="0"/>      
+      </multiplicity>    
+    </end>    
+    <end type="TARGET" refId="21" navigable="true"/>    
+    <display labels="true" multiplicity="true"/>  
+  </association>  
+  <dependency id="39">    
+    <end type="SOURCE" refId="2"/>    
+    <end type="TARGET" refId="26"/>  
+  </dependency>  
+  <nesting id="40">    
+    <end type="SOURCE" refId="18"/>    
+    <end type="TARGET" refId="24"/>  
+  </nesting>  
+  <realization id="41">    
+    <bendpoint x="962" y="2295"/>    
+    <end type="SOURCE" refId="4"/>    
+    <end type="TARGET" refId="19"/>  
+  </realization>  
+  <nesting id="42">    
+    <end type="SOURCE" refId="18"/>    
+    <end type="TARGET" refId="28"/>  
+  </nesting>  
+  <nesting id="43">    
+    <end type="SOURCE" refId="18"/>    
+    <end type="TARGET" refId="27"/>  
+  </nesting>  
+  <realization id="44">    
+    <bendpoint x="920" y="2295"/>    
+    <end type="SOURCE" refId="5"/>    
+    <end type="TARGET" refId="19"/>  
+  </realization>  
+  <realization id="45">    
+    <bendpoint x="1652" y="4193"/>    
+    <end type="SOURCE" refId="9"/>    
+    <end type="TARGET" refId="20"/>  
+  </realization>  
+  <dependency id="46">    
+    <bendpoint x="484" y="842"/>    
+    <bendpoint x="545" y="2295"/>    
+    <bendpoint x="545" y="3694"/>    
+    <end type="SOURCE" refId="12"/>    
+    <end type="TARGET" refId="21"/>  
+  </dependency>  
+  <dependency id="47">    
+    <bendpoint x="1510" y="2295"/>    
+    <bendpoint x="1694" y="3694"/>    
+    <bendpoint x="1694" y="4193"/>    
+    <end type="SOURCE" refId="5"/>    
+    <end type="TARGET" refId="20"/>  
+  </dependency>  
+  <realization id="48">    
+    <bendpoint x="587" y="2295"/>    
+    <end type="SOURCE" refId="1"/>    
+    <end type="TARGET" refId="19"/>  
+  </realization>  
+  <dependency id="49">    
+    <bendpoint x="172" y="2295"/>    
+    <bendpoint x="172" y="3694"/>    
+    <end type="SOURCE" refId="1"/>    
+    <end type="TARGET" refId="21"/>  
+  </dependency>  
+  <dependency id="50">    
+    <bendpoint x="1426" y="3694"/>    
+    <end type="SOURCE" refId="2"/>    
+    <end type="TARGET" refId="17"/>  
+  </dependency>  
+  <dependency id="51">    
+    <end type="SOURCE" refId="2"/>    
+    <end type="TARGET" refId="19"/>  
+  </dependency>  
+  <association id="52">    
+    <end type="SOURCE" refId="16" navigable="false">      
+      <attribute id="53" name="exifTool">        
+        <position height="0" width="0" x="0" y="0"/>      
+      </attribute>      
+      <multiplicity id="54" minimum="0" maximum="1">        
+        <position height="0" width="0" x="0" y="0"/>      
+      </multiplicity>    
+    </end>    
+    <end type="TARGET" refId="4" navigable="true"/>    
+    <display labels="true" multiplicity="true"/>  
+  </association>  
+  <realization id="55">    
+    <end type="SOURCE" refId="15"/>    
+    <end type="TARGET" refId="25"/>  
+  </realization>  
+  <dependency id="56">    
+    <bendpoint x="983" y="3694"/>    
+    <end type="SOURCE" refId="2"/>    
+    <end type="TARGET" refId="21"/>  
+  </dependency>  
+  <nesting id="57">    
+    <end type="SOURCE" refId="11"/>    
+    <end type="TARGET" refId="23"/>  
+  </nesting>  
+  <dependency id="58">    
+    <end type="SOURCE" refId="2"/>    
+    <end type="TARGET" refId="13"/>  
+  </dependency>  
+  <realization id="59">    
+    <end type="SOURCE" refId="14"/>    
+    <end type="TARGET" refId="25"/>  
+  </realization>  
+  <realization id="60">    
+    <end type="SOURCE" refId="8"/>    
+    <end type="TARGET" refId="25"/>  
+  </realization>  
+  <dependency id="61">    
+    <bendpoint x="1673" y="3694"/>    
+    <bendpoint x="1673" y="4193"/>    
+    <end type="SOURCE" refId="2"/>    
+    <end type="TARGET" refId="20"/>  
+  </dependency>  
+  <nesting id="62">    
+    <end type="SOURCE" refId="18"/>    
+    <end type="TARGET" refId="8"/>  
+  </nesting>  
+  <dependency id="63">    
+    <bendpoint x="941" y="2295"/>    
+    <bendpoint x="941" y="3694"/>    
+    <end type="SOURCE" refId="5"/>    
+    <end type="TARGET" refId="21"/>  
+  </dependency>  
+  <nesting id="64">    
+    <bendpoint x="857" y="2295"/>    
+    <bendpoint x="857" y="842"/>    
+    <end type="SOURCE" refId="19"/>    
+    <end type="TARGET" refId="12"/>  
+  </nesting>  
+  <generalization id="65">    
+    <end type="SOURCE" refId="2"/>    
+    <end type="TARGET" refId="1"/>  
+  </generalization>  
+  <realization id="66">    
+    <end type="SOURCE" refId="28"/>    
+    <end type="TARGET" refId="25"/>  
+  </realization>  
+  <dependency id="67">    
+    <bendpoint x="1313" y="842"/>    
+    <end type="SOURCE" refId="22"/>    
+    <end type="TARGET" refId="2"/>  
+  </dependency>  
+  <realization id="68">    
+    <bendpoint x="1268" y="4193"/>    
+    <end type="SOURCE" refId="26"/>    
+    <end type="TARGET" refId="20"/>  
+  </realization>  
+  <dependency id="69">    
+    <bendpoint x="3596" y="842"/>    
+    <bendpoint x="3596" y="2295"/>    
+    <bendpoint x="3596" y="3694"/>    
+    <bendpoint x="3596" y="4193"/>    
+    <end type="SOURCE" refId="22"/>    
+    <end type="TARGET" refId="20"/>  
+  </dependency>  
+  <realization id="70">    
+    <bendpoint x="878" y="842"/>    
+    <bendpoint x="878" y="2295"/>    
+    <end type="SOURCE" refId="22"/>    
+    <end type="TARGET" refId="19"/>  
+  </realization>  
+  <dependency id="71">    
+    <end type="SOURCE" refId="5"/>    
+    <end type="TARGET" refId="2"/>  
+  </dependency>  
+  <realization id="72">    
+    <bendpoint x="1289" y="4193"/>    
+    <end type="SOURCE" refId="13"/>    
+    <end type="TARGET" refId="20"/>  
+  </realization>  
+  <dependency id="73">    
+    <end type="SOURCE" refId="9"/>    
+    <end type="TARGET" refId="17"/>  
+  </dependency>  
+  <dependency id="74">    
+    <end type="SOURCE" refId="16"/>    
+    <end type="TARGET" refId="5"/>  
+  </dependency>  
+  <association id="75">    
+    <bendpoint x="899" y="842"/>    
+    <bendpoint x="899" y="2295"/>    
+    <bendpoint x="920" y="3694"/>    
+    <end type="SOURCE" refId="22" navigable="false">      
+      <attribute id="76" name="defReadOptions">        
+        <position height="0" width="0" x="0" y="0"/>      
+      </attribute>      
+      <multiplicity id="77" minimum="0" maximum="1">        
+        <position height="0" width="0" x="0" y="0"/>      
+      </multiplicity>    
+    </end>    
+    <end type="TARGET" refId="21" navigable="true"/>    
+    <display labels="true" multiplicity="true"/>  
+  </association>  
+  <dependency id="78">    
+    <end type="SOURCE" refId="2"/>    
+    <end type="TARGET" refId="9"/>  
+  </dependency>  
+  <nesting id="79">    
+    <end type="SOURCE" refId="11"/>    
+    <end type="TARGET" refId="6"/>  
+  </nesting>  
+  <association id="80">    
+    <bendpoint x="566" y="2295"/>    
+    <end type="SOURCE" refId="1" navigable="false">      
+      <attribute id="81" name="exifTool">        
+        <position height="0" width="0" x="0" y="0"/>      
+      </attribute>      
+      <multiplicity id="82" minimum="0" maximum="1">        
+        <position height="0" width="0" x="0" y="0"/>      
+      </multiplicity>    
+    </end>    
+    <end type="TARGET" refId="19" navigable="true"/>    
+    <display labels="true" multiplicity="true"/>  
+  </association>  
+  <nesting id="83">    
+    <end type="SOURCE" refId="18"/>    
+    <end type="TARGET" refId="10"/>  
+  </nesting>  
+  <realization id="84">    
+    <end type="SOURCE" refId="3"/>    
+    <end type="TARGET" refId="19"/>  
+  </realization>  
+  <nesting id="85">    
+    <end type="SOURCE" refId="18"/>    
+    <end type="TARGET" refId="14"/>  
+  </nesting>  
+  <nesting id="86">    
+    <end type="SOURCE" refId="18"/>    
+    <end type="TARGET" refId="15"/>  
+  </nesting>  
+  <dependency id="87">    
+    <end type="SOURCE" refId="12"/>    
+    <end type="TARGET" refId="5"/>  
+  </dependency>  
+  <dependency id="88">    
+    <end type="SOURCE" refId="18"/>    
+    <end type="TARGET" refId="2"/>  
+  </dependency>  
+  <realization id="89">    
+    <bendpoint x="983" y="2295"/>    
+    <end type="SOURCE" refId="18"/>    
+    <end type="TARGET" refId="19"/>  
+  </realization>  
+  <dependency id="90">    
+    <end type="SOURCE" refId="22"/>    
+    <end type="TARGET" refId="5"/>  
+  </dependency>  
+  <realization id="91">    
+    <end type="SOURCE" refId="17"/>    
+    <end type="TARGET" refId="20"/>  
+  </realization>  
+  <dependency id="92">    
+    <bendpoint x="920" y="842"/>    
+    <end type="SOURCE" refId="12"/>    
+    <end type="TARGET" refId="2"/>  
+  </dependency>  
+  <classifier-display autosize="true" stereotype="true" package="true" initial-value="false" signature="true" 
+    sort-features="false" accessors="true" visibility="true">    
+    <attributes public="true" package="true" protected="true" private="true" static="true"/>    
+    <operations public="true" package="true" protected="true" private="true" static="true"/>  
+  </classifier-display>  
+  <association-display labels="true" multiplicity="true"/>
+</class-diagram>
