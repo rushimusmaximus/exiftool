@@ -159,10 +159,10 @@ public class TestExifTool {
 
     tag = ExifTool.Tag.IMAGE_WIDTH;
     assertTrue(keys.contains(tag));
-    assertEquals(728, tag.parseValue(metadata.get(tag)));
+    assertEquals(Integer.valueOf(728), tag.parseValue(metadata.get(tag)));
 
     tag = ExifTool.Tag.IMAGE_HEIGHT;
-    assertEquals(825, tag.parseValue(metadata.get(tag)));
+    assertEquals(Integer.valueOf(825), tag.parseValue(metadata.get(tag)));
 
     tag = ExifTool.Tag.MODEL;
     assertEquals("P 45+", tag.parseValue(metadata.get(tag)));
@@ -177,20 +177,20 @@ public class TestExifTool {
     keys = metadata.keySet();
     tag = ExifTool.Tag.IMAGE_WIDTH;
     assertTrue(keys.contains(tag));
-    assertEquals(2560, tag.parseValue(metadata.get(tag)));
+    assertEquals(Integer.valueOf(2560), tag.parseValue(metadata.get(tag)));
 
     tag = ExifTool.Tag.IMAGE_HEIGHT;
-    assertEquals(1920, tag.parseValue(metadata.get(tag)));
+    assertEquals(Integer.valueOf(1920), tag.parseValue(metadata.get(tag)));
 
     tag = ExifTool.Tag.MODEL;
     assertEquals("Nexus S", tag.parseValue(metadata.get(tag)));
 
     tag = ExifTool.Tag.ISO;
-    assertEquals(50, tag.parseValue(metadata.get(tag)));
+    assertEquals(Integer.valueOf(50), tag.parseValue(metadata.get(tag)));
 
     tag = ExifTool.Tag.SHUTTER_SPEED;
     assertEquals("1/64", metadata.get(tag));
-    assertEquals(0.015625, tag.parseValue(metadata.get(tag)));
+    assertEquals(Double.valueOf(0.015625), tag.parseValue(metadata.get(tag)));
     log.info(runId + ": finished image 2");
     return true;
   }
@@ -219,9 +219,9 @@ public class TestExifTool {
   @Test
   public void testTag(){
     assertEquals("string value", "John Doe", ExifTool.Tag.AUTHOR.parseValue("John Doe"));
-    assertEquals("integer value", 200, ExifTool.Tag.ISO.parseValue("200"));
-    assertEquals("double value, from fraction", .25, ExifTool.Tag.SHUTTER_SPEED.parseValue("1/4"));
-    assertEquals("double value, from decimal", .25, ExifTool.Tag.SHUTTER_SPEED.parseValue(".25"));
+    assertEquals("integer value", Integer.valueOf(200), ExifTool.Tag.ISO.parseValue("200"));
+    assertEquals("double value, from fraction", Double.valueOf(0.25), ExifTool.Tag.SHUTTER_SPEED.parseValue("1/4"));
+    assertEquals("double value, from decimal", Double.valueOf(0.25), ExifTool.Tag.SHUTTER_SPEED.parseValue(".25"));
   }
 
   @Test

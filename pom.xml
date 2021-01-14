@@ -8,8 +8,12 @@
     <groupId>com.thebuzzmedia.exiftool</groupId>
     <artifactId>exiftool-lib</artifactId>
     <packaging>jar</packaging>
-    <version>2.3.0</version>
+    <version>2.3.1</version>
     <url>https://github.com/thebuzzmedia/exiftool</url>
+
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
 
     <developers>
         <developer>
@@ -26,8 +30,8 @@
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.0</version>
                 <configuration>
-                    <source>1.5</source>
-                    <target>1.5</target>
+                    <source>1.8</source>
+                    <target>1.8</target>
                 </configuration>
             </plugin>
         </plugins>
