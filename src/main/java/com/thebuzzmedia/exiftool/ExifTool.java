@@ -759,7 +759,7 @@ public class ExifTool {
         args.add(",");
       }
       if ( options.stripNewLines ) {
-        value = value.toString().replaceAll("\n"," ");
+        value = value.toString().replace("\n"," ");
       }
       arg = String.format("-%s=%s",tagName,value);
     }
